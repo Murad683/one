@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --color-carbon: #0A0A0A;
+  --color-accent: #A3E635;
+  --font-heading: "Manrope", "Plus Jakarta Sans", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+@layer base {
+  body {
+    background: #0A0A0A;
+    color: #FAFAFA;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Manrope', 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+/* ─── No Scrollbar Utility ─────────────────── */
+.no-scrollbar {
+  -ms-overflow-style: none;   /* IE and Edge */
+  scrollbar-width: none;      /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;              /* Chrome, Safari, Opera */
+}
+
+/* ─── Global Scroll Behavior ────────────────── */
+html {
+  scroll-behavior: smooth;
+}
