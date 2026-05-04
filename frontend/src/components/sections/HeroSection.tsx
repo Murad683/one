@@ -1,9 +1,21 @@
+import { useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { cockpitContainer, cockpitItem } from '../../utils/animations';
 
 const HeroSection = () => {
   const { scrollY } = useScroll();
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      // Force muted state before calling play
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(error => {
+        console.error("Autoplay was prevented:", error);
+      });
+    }
+  }, []);
 
   // Parallax: scroll video down slower than page (moves up visually relative to page, creating parallax)
   const y = useTransform(scrollY, [0, 800], [0, 200]);
@@ -20,6 +32,7 @@ const HeroSection = () => {
         className="absolute inset-0 w-full h-full z-0 pointer-events-none scale-110" // scale up slightly to prevent parallax revealing edges
       >
         <video
+          ref={videoRef}
           autoPlay
           muted
           loop
