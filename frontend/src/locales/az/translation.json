@@ -1,0 +1,198 @@
+{
+  "nav": {
+    "home": "Ana Səhifə",
+    "portfolio": "Portfolio",
+    "packages": "Paketlər",
+    "about": "Haqqımızda",
+    "contact": "Əlaqə",
+    "login": "Giriş"
+  },
+  "hero": {
+    "badge": "Rəqəmsal İnkişaf Şirkəti",
+    "title_line1": "Brendinizi",
+    "title_line2": "Gələcəyə Daşıyırıq",
+    "subtitle": "Strateji kreativ həllər, premium video istehsalı və rəqəmsal marketinq xidmətləri.",
+    "cta": "Xidmətlərimizə Bax →"
+  },
+  "marquee": {
+    "text": "REELS  ✦  GRAPHIC DESIGN  ✦  BRAND STRATEGY  ✦  CONTENT CREATION  ✦  ANALYTICS  ✦  COMMUNITY  ✦  "
+  },
+  "services": {
+    "badge": "Xidmətlərimiz",
+    "title": "Biz nə edirik"
+  },
+  "featured_portfolio": {
+    "badge": "İşlərimiz",
+    "title": "Seçilmiş İşlər",
+    "view_all": "Hamısına Bax →"
+  },
+  "portfolio_page": {
+    "badge": "İşlərimiz",
+    "title": "Portfolio",
+    "subtitle": "Müştərilərimiz üçün yaratdığımız seçilmiş layihələr."
+  },
+  "packages_page": {
+    "badge": "Qiymət Paketləri",
+    "title": "Sizin üçün doğru plan",
+    "subtitle": "Hər ölçüdə biznes üçün uyğun paketlər. Şəffaf qiymət, aydın nəticələr.",
+    "popular_badge": "Ən Populyar"
+  },
+  "about": {
+    "badge": "Biz Kimik",
+    "title": "Brendləri Quranlara Tərəfdaşıq",
+    "story_p1": "2019-cu ildə qurulan şirkətimiz, Azərbaycandakı ən innovativ brendlərə kreativ xidmətlər göstərməkdə ixtisaslaşmışdır. Biz yalnız görüntü yaratmır, brendlər üçün uzunmüddətli rəqəmsal miras qururuq.",
+    "story_p2": "Komandamız video rejissorlar, brend strateglar, veb developerlar və məzmun yaradıcılarından ibarətdir. Hər layihəyə fərdi yanaşaraq ölçülə bilən nəticələr çatdırırıq.",
+    "quote": "\"Biz sadəcə xidmət göstərmirik — brendlərin uzunmüddətli uğuruna sərmayə edirik.\"",
+    "team_badge": "Komandamız",
+    "team_title": "Bizimlə Tanış Olun"
+  },
+  "contact": {
+    "badge": "Əlaqə",
+    "title": "Bizimlə Əlaqə",
+    "subtitle": "Layihənizi müzakirə etmək istəyirsiniz? Biz dinləməyə hazırıq.",
+    "info_title": "Məlumatlar",
+    "label_address": "Ünvan",
+    "label_phone": "Telefon",
+    "label_email": "E-poçt",
+    "label_hours": "İş Saatları",
+    "value_address": "Bakı, Neftçilər pr. 14, AZ1000",
+    "value_phone": "+994 12 345 67 89",
+    "value_email": "salam@agensi.az",
+    "value_hours": "B.e – Cümə: 09:00 – 18:00",
+    "form_name": "Adınız *",
+    "form_email": "E-poçt ünvanınız *",
+    "form_company": "Şirkət adı (istəyə bağlı)",
+    "form_service_placeholder": "Xidmət seçin",
+    "form_service_video": "Video İstehsalı",
+    "form_service_brand": "Brend Dizaynı",
+    "form_service_smm": "SMM İdarəetməsi",
+    "form_service_web": "Veb Tərtibat",
+    "form_service_custom": "Fərdi Paket",
+    "form_message": "Layihənizi qısaca təsvir edin...",
+    "form_submit": "Mesaj Göndər →",
+    "map_placeholder": "Xəritə tezliklə"
+  },
+  "portal": {
+    "badge": "Müştəri Portalı",
+    "title": "Xoş Gəlmisiniz",
+    "subtitle": "Layihələrinizi izləmək və idarə etmək üçün daxil olun.",
+    "label_email": "E-poçt Ünvanı",
+    "label_password": "Şifrə",
+    "submit": "Daxil Ol",
+    "alert_message": "İstifadəçi kabineti tezliklə istifadəyə veriləcək. Zəhmət olmasa agentliklə əlaqə saxlayın.",
+    "forgot_text": "Şifrənizi unutmusunuz? Zəhmət olmasa",
+    "forgot_link": "menecerinizlə əlaqə saxlayın."
+  },
+  "footer": {
+    "tagline": "Brendləri gələcəyə daşıyan kreativ rəqəmsal tərəfdaşınız. Video, marketinq və dizayn xidmətləri.",
+    "pages": "Səhifələr",
+    "social": "Sosial Media",
+    "copyright": "© Bakı Texnoloji Layihələri 2026 — Bütün hüquqlar qorunur"
+  },
+  "data": {
+    "services": {
+      "video": { "title": "Video İstehsalı", "desc": "Reklam, korporativ filmlər, sosial media üçün kreativ video məzmun istehsalı." },
+      "marketing": { "title": "Rəqəmsal Marketinq", "desc": "Hədəfli kampaniyalar, SEO, SMM və performans marketinqi xidmətləri." },
+      "brand": { "title": "Brend Dizaynı", "desc": "Vizual kimlik, logo, brend kitabçası və kreativ dizayn sistemləri." },
+      "web": { "title": "Veb Tərtibat", "desc": "Sürətli, müasir və cavabdeh veb saytlar ve veb tətbiqlər." },
+      "analytics": { "title": "Analitika & Hesabat", "desc": "Aylıq performans hesabatları, KPI izlənməsi və biznes tövsiyələri." },
+      "smm": { "title": "SMM İdarəetməsi", "desc": "Sosial media hesablarının peşəkar idarə edilməsi və məzmun planlaması." }
+    },
+    "packages": {
+      "period_monthly": "/ ay",
+      "start": {
+        "name": "START",
+        "tagline": "Başlanğıc üçün ideal",
+        "features": {
+          "0": "2 video / ay",
+          "1": "SMM idarəetməsi (3 platform)",
+          "2": "Aylıq hesabat",
+          "3": "5 dizayn asset"
+        },
+        "cta": "Planı Seç",
+        "desc": "Kiçik bizneslər üçün nəzərdə tutulmuş başlanğıc paketi. Əsas rəqəmsal ehtiyaclarınızı qarşılayır."
+      },
+      "grow": {
+        "name": "GROW",
+        "tagline": "Böyüməyə hazır bizneslər üçün",
+        "features": {
+          "0": "5 video / ay",
+          "1": "SMM + Aylıq kampaniya",
+          "2": "Həftəlik analitika",
+          "3": "Brendinq paketi",
+          "4": "Prioritet dəstək"
+        },
+        "cta": "Planı Seç",
+        "desc": "Ən populyar seçimimiz. Orta ölçülü brendlər üçün tam rəqəmsal həll."
+      },
+      "premium": {
+        "name": "PREMIUM",
+        "tagline": "Böyük brendlər üçün",
+        "features": {
+          "0": "Limitsiz video",
+          "1": "Tam SMM idarəetməsi",
+          "2": "Hər gün hesabat & izləmə",
+          "3": "Tam brendinq sistemi",
+          "4": "Şəxsi menecer"
+        },
+        "cta": "Planı Seç",
+        "desc": "Korporativ brendlər üçün maksimum əhatə dairəsi və prioritet xidmət."
+      },
+      "ferdi": {
+        "name": "FƏRDİ",
+        "price_label": "Fərdi",
+        "tagline": "Xüsusi tələblər üçün fərdi həll",
+        "features": {
+          "0": "Fərdi paket hazırlanması",
+          "1": "Çevik ödəniş şərtləri",
+          "2": "Hər xidməti seçin",
+          "3": "SLA müqaviləsi"
+        },
+        "cta": "Bizimlə Əlaqə",
+        "desc": "Standart paketlər sizə uyğun gəlmirsə, bizimlə əlaqə saxlayın — birlikdə hazırlayaq."
+      }
+    },
+    "categories": {
+      "all": "Hamısı",
+      "video": "Video İstehsalı",
+      "brand": "Brend Dizaynı",
+      "smm": "SMM",
+      "web": "Veb Tərtibat"
+    },
+    "projects": {
+      "azer-kimya": { "title": "Azər Kimya Korporativ Film" },
+      "techaz-brand": { "title": "TechAZ Marka Yeniləməsi" },
+      "baku-foods": { "title": "Baku Foods SMM Kampaniyası" },
+      "capitalbank": { "title": "CapitalBank Veb Saytı" },
+      "silkroad": { "title": "Silk Road Festival Klipi" },
+      "greenlife": { "title": "GreenLife Brendinq Paketi" },
+      "azerconnect": { "title": "Azerconnect Sosial Media" },
+      "socar-ad": { "title": "SOCAR Reklam Filmi" },
+      "medplus": { "title": "MedPlus Korporativ Sayt" },
+      "motorshow": { "title": "Baku Motor Show Vizual Paketi" },
+      "edutech": { "title": "EduTech SMM Strategiyası" },
+      "caspian": { "title": "Caspian Shipping Filmi" }
+    },
+    "featured_projects": {
+      "0": { "title": "Azər Kimya — Korporativ Film", "category": "Video İstehsalı" },
+      "1": { "title": "TechAZ — Marka Yeniləməsi", "category": "Brend Dizaynı" },
+      "2": { "title": "Baku Foods — SMM Kampaniyası", "category": "SMM" }
+    },
+    "team": {
+      "roles": {
+        "ceo": "Kurucu & CEO",
+        "creative_director": "Kreativ Direktor",
+        "cameraman": "Baş Operator",
+        "brand_strategist": "Brend Stratejist",
+        "web_developer": "Veb Developer",
+        "smm_manager": "SMM Meneceri"
+      }
+    },
+    "stats": {
+      "projects": { "value": "320+", "label": "Tamamlanan Layihə" },
+      "clients": { "value": "48", "label": "Aktiv Müştəri" },
+      "experience": { "value": "5+", "label": "İllik Təcrübə" },
+      "team_size": { "value": "12", "label": "Komanda Üzvü" }
+    }
+  }
+}

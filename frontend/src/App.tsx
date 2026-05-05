@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import Layout from './components/layout/Layout';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
+import ScrollToTop from './components/utils/ScrollToTop';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -39,6 +40,7 @@ function App() {
     <ThemeProvider>
       <LanguageProvider>
         <Router>
+          <ScrollToTop />
           <AnimatedRoutes />
         </Router>
       </LanguageProvider>
