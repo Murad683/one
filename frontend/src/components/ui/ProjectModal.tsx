@@ -24,11 +24,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
     if (isOpen) {
       window.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
     }
 
     return () => {
       window.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
     };
   }, [isOpen, onClose]);
 
@@ -49,7 +51,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleBackdropClick}
-          className="fixed inset-0 z-[100] h-screen w-screen flex items-center justify-center backdrop-blur-sm px-0 sm:px-6"
+          className="fixed inset-0 z-[100] h-screen w-screen flex items-center justify-center backdrop-blur-sm px-4 sm:px-6"
           style={{ backgroundColor: 'var(--modal-backdrop)' }}
         >
           <motion.div
@@ -57,7 +59,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.4, ease: cinematicEasing }}
-            className="backdrop-blur-2xl border rounded-none sm:rounded-3xl max-w-4xl w-full p-0 relative overflow-hidden h-full sm:h-auto sm:max-h-[90vh] flex flex-col"
+            className="backdrop-blur-2xl border rounded-2xl sm:rounded-3xl max-w-4xl w-full p-0 relative overflow-hidden h-auto max-h-[85vh] sm:max-h-[90vh] flex flex-col shadow-2xl"
             style={{
               backgroundColor: 'var(--modal-bg)',
               borderColor: 'var(--card-border)',
@@ -94,7 +96,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
               </div>
 
               {/* Project Info Section */}
-              <div className="p-8 md:p-12">
+              <div className="p-6 md:p-12">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
                   <div className="flex-grow max-w-2xl">
                     <div className="flex items-center gap-3 mb-4">
@@ -103,13 +105,12 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
                       </span>
                     </div>
                     
-                    <h2 className="font-heading text-4xl md:text-5xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
+                    <h2 className="font-heading text-2xl md:text-5xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
                       {t(project.titleKey)}
                     </h2>
-
+                    
                     <div className="space-y-6">
-                      <p className="text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                        {/* Consolidating into one main description field */}
+                      <p className="text-base md:text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                         {t(project.descKey || 'about.story_p1')}
                       </p>
                     </div>

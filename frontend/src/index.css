@@ -77,8 +77,16 @@
     color: var(--text-primary);
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    overflow-x: hidden !important;
+    position: relative;
+    width: 100%;
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  html {
+    overflow-x: hidden !important;
+    scroll-behavior: smooth;
+    width: 100%;
   }
 
   h1, h2, h3, h4 {

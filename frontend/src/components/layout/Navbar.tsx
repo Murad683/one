@@ -57,12 +57,17 @@ const Navbar = () => {
         {/* Logo */}
         <div className="flex-shrink-0">
           <Link to="/" className="block">
+            {/* Desktop Logo Image */}
             <img
               src="/logo.jpg"
               alt="Logo"
-              className="h-6 md:h-7 w-auto object-contain rounded-sm"
+              className="hidden md:block h-7 w-auto object-contain rounded-sm"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
+            {/* Mobile Logo Text */}
+            <span className="md:hidden font-heading text-xl font-bold tracking-tighter" style={{ color: 'var(--text-primary)' }}>
+              ONE<span style={{ color: 'var(--accent-text)' }}>.</span>
+            </span>
           </Link>
         </div>
 

@@ -53,7 +53,7 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleBackdropClick}
-          className="fixed inset-0 z-[100] h-screen w-screen flex items-center justify-center backdrop-blur-sm px-0 sm:px-6"
+          className="fixed inset-0 z-[100] h-screen w-screen flex items-center justify-center backdrop-blur-sm px-4 sm:px-6"
           style={{ backgroundColor: 'var(--modal-backdrop)' }}
         >
           <motion.div
@@ -61,7 +61,7 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.4, ease: cinematicEasing }}
-            className="backdrop-blur-2xl border rounded-none sm:rounded-3xl max-w-xl w-full p-8 sm:p-10 relative overflow-y-auto no-scrollbar h-full sm:h-auto sm:max-h-[85vh]"
+            className="backdrop-blur-2xl border rounded-2xl sm:rounded-3xl max-w-xl w-full p-8 sm:p-10 relative overflow-y-auto no-scrollbar h-auto max-h-[85vh] sm:max-h-[90vh] shadow-2xl"
             style={{
               backgroundColor: 'var(--modal-bg)',
               borderColor: 'var(--card-border)',
@@ -130,7 +130,7 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
               <p className="text-xs uppercase tracking-widest font-medium mb-2" style={{ color: 'var(--accent-text)' }}>
                 {t(pkg.nameKey)}
               </p>
-              <h2 className="font-heading text-4xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+              <h2 className="font-heading text-2xl md:text-4xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
                 {pkg.priceKey ? t(pkg.priceKey) : pkg.price}
                 {pkg.periodKey && <span className="text-lg font-normal ml-2" style={{ color: 'var(--text-faint)' }}>{t(pkg.periodKey)}</span>}
               </h2>

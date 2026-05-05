@@ -17,6 +17,20 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   const { language, setLanguage } = useLang();
   const { toggleTheme, isDark } = useTheme();
 
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const navLinks = [
     { name: t('nav.home'), path: '/' },
     { name: t('nav.portfolio'), path: '/portfolio' },
@@ -82,8 +96,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-16">
-              <Link to="/" onClick={onClose}>
-                <img src="/logo.jpg" alt="Logo" className="h-6 w-auto rounded-sm" />
+              <Link to="/" onClick={onClose} className="font-heading text-2xl font-bold tracking-tighter">
+                ONE<span style={{ color: 'var(--accent-text)' }}>.</span>
               </Link>
               <button
                 onClick={onClose}

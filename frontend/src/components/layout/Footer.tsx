@@ -22,7 +22,7 @@ export default function Footer() {
 
   return (
     <footer
-      className="relative mt-32 transition-colors duration-300"
+      className="relative mt-32 overflow-hidden transition-colors duration-300"
       style={{ borderTop: '1px solid var(--border-subtle)' }}
     >
 

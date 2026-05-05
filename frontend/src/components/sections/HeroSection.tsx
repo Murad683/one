@@ -102,7 +102,7 @@ const HeroSection = () => {
         <motion.div variants={cockpitItem}>
           <Link
             to="/paketler"
-            className="inline-flex items-center gap-2 px-10 py-5 bg-accent font-semibold text-base rounded-full hover:bg-accent/90 transition-all duration-200 hover:scale-[1.02]"
+            className="inline-flex items-center gap-2 px-7 py-3.5 md:px-10 md:py-5 bg-accent font-semibold text-sm md:text-base rounded-full hover:bg-accent/90 transition-all duration-200 hover:scale-[1.02]"
             style={{ color: 'var(--accent-on-accent)' }}
           >
             {t('hero.cta')}

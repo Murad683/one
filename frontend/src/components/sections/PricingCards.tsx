@@ -146,7 +146,7 @@ const PricingCards = () => {
   };
 
   return (
-    <section className="relative">
+    <section className="relative overflow-hidden">
       <motion.div 
         variants={cockpitContainer}
         initial="hidden"
