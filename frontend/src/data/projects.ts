@@ -10,7 +10,7 @@ export const projects = [
   { id: 9,  title: 'MedPlus Korporativ Sayt',       category: 'Veb Tərtibat',    slug: 'medplus',       featured: false, thumbnailUrl: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800&q=80' },
   { id: 10, title: 'Baku Motor Show Vizual Paketi', category: 'Brend Dizaynı',   slug: 'motorshow',     featured: false, thumbnailUrl: 'https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?w=800&q=80' },
   { id: 11, title: 'EduTech SMM Strategiyası',      category: 'SMM',              slug: 'edutech',       featured: false, thumbnailUrl: 'https://images.unsplash.com/photo-1432821596592-e2c18b78144f?w=800&q=80' },
-  { id: 12, title: 'Caspian Shipping Filmi',        category: 'Video İstehsalı', slug: 'caspian',       featured: false, thumbnailUrl: 'https://images.unsplash.com/photo-1534080554556-9430c25d8048?w=800&q=80' },
+  { id: 12, title: 'Caspian Shipping Filmi',        category: 'Video İstehsalı', slug: 'caspian',       featured: false, thumbnailUrl: 'https://images.unsplash.com/photo-1494412552100-42e4e7a74ec6?w=800&q=80' },
 ]
 
 export const categories = ['Hamısı', 'Video İstehsalı', 'Brend Dizaynı', 'SMM', 'Veb Tərtibat']
