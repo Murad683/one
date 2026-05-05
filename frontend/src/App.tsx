@@ -11,13 +11,14 @@ import PackagesPage from './pages/PackagesPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import PortalLoginPage from './pages/PortalLoginPage';
-import ScrollToTop from './components/utils/ScrollToTop';
-
 function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence 
+      mode="wait" 
+      onExitComplete={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })}
+    >
       <Routes location={location} key={location.pathname}>
         {/* Main Website Routes */}
         <Route path="/" element={<Layout />}>
@@ -38,7 +39,6 @@ function App() {
     <ThemeProvider>
       <LanguageProvider>
         <Router>
-          <ScrollToTop />
           <AnimatedRoutes />
         </Router>
       </LanguageProvider>

@@ -95,7 +95,3 @@
   display: none;              /* Chrome, Safari, Opera */
 }
 
-/* ─── Global Scroll Behavior ────────────────── */
-html {
-  scroll-behavior: smooth;
-}
