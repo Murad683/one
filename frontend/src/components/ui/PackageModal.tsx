@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Play } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { packages } from '../../data/packages';
 import { cinematicEasing } from '../../utils/animations';
 import { useTheme } from '../../context/ThemeContext';
@@ -13,6 +14,7 @@ interface PackageModalProps {
 }
 
 const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => {
+  const { t } = useTranslation();
   const backdropRef = useRef<HTMLDivElement>(null);
   const { isDark } = useTheme();
 
@@ -126,30 +128,30 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
             {/* Content */}
             <div className="text-left">
               <p className="text-xs uppercase tracking-widest font-medium mb-2" style={{ color: 'var(--accent-text)' }}>
-                {pkg.name}
+                {t(pkg.nameKey)}
               </p>
               <h2 className="font-heading text-4xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-                {pkg.price}
-                {pkg.period && <span className="text-lg font-normal ml-2" style={{ color: 'var(--text-faint)' }}>{pkg.period}</span>}
+                {pkg.priceKey ? t(pkg.priceKey) : pkg.price}
+                {pkg.periodKey && <span className="text-lg font-normal ml-2" style={{ color: 'var(--text-faint)' }}>{t(pkg.periodKey)}</span>}
               </h2>
-              <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>{pkg.tagline}</p>
+              <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>{t(pkg.taglineKey)}</p>
               <p className="text-sm leading-relaxed mb-8" style={{ color: 'var(--text-secondary)' }}>
-                {pkg.desc}
+                {t(pkg.descKey)}
               </p>
 
               {/* Features list */}
               <div className="space-y-4 mb-8">
-                {pkg.features.map((feature, idx) => (
+                {pkg.featuresKeys.map((featureKey, idx) => (
                   <div key={idx} className="flex items-center gap-3">
                     <Check size={14} className="flex-shrink-0" style={{ color: 'var(--accent-text)' }} />
-                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t(featureKey)}</span>
                   </div>
                 ))}
               </div>
 
               {/* CTA button */}
               <button className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200" style={{ color: 'var(--accent-on-accent)' }}>
-                {pkg.cta}
+                {t(pkg.ctaKey)}
               </button>
             </div>
           </motion.div>

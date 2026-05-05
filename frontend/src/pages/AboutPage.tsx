@@ -1,10 +1,12 @@
 import { motion } from 'framer-motion';
-// Removed User import
+import { useTranslation } from 'react-i18next';
 import { team, stats } from '../data/team';
 import PageTransition from '../components/utils/PageTransition';
 import { cockpitContainer, cockpitItem } from '../utils/animations';
 
 const AboutPage = () => {
+  const { t } = useTranslation();
+
   return (
     <PageTransition className="min-h-screen transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {/* Section 1 — Story */}
@@ -15,18 +17,18 @@ const AboutPage = () => {
         className="pt-40 pb-32 px-6 md:px-24 max-w-5xl mx-auto"
       >
         <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
-          Biz Kimik
+          {t('about.badge')}
         </motion.p>
         <motion.h1 variants={cockpitItem} className="font-heading text-5xl md:text-6xl font-bold mb-10" style={{ color: 'var(--text-primary)' }}>
-          Brendləri Quranlara Tərəfdaşıq
+          {t('about.title')}
         </motion.h1>
 
         <motion.div variants={cockpitItem} className="text-lg leading-relaxed space-y-6" style={{ color: 'var(--text-secondary)' }}>
           <p>
-            2019-cu ildə qurulan şirkətimiz, Azərbaycandakı ən innovativ brendlərə kreativ xidmətlər göstərməkdə ixtisaslaşmışdır. Biz yalnız görüntü yaratmır, brendlər üçün uzunmüddətli rəqəmsal miras qururuq.
+            {t('about.story_p1')}
           </p>
           <p>
-            Komandamız video rejissorlar, brend strateglar, veb developerlar və məzmun yaradıcılarından ibarətdir. Hər layihəyə fərdi yanaşaraq ölçülə bilən nəticələr çatdırırıq.
+            {t('about.story_p2')}
           </p>
         </motion.div>
 
@@ -42,7 +44,7 @@ const AboutPage = () => {
                 {stat.value}
               </div>
               <div className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>
-                {stat.label}
+                {t(stat.labelKey)}
               </div>
             </div>
           ))}
@@ -51,8 +53,7 @@ const AboutPage = () => {
       {/* Quote */}
       <div className="py-24 text-center max-w-2xl mx-auto">
         <p className="font-heading text-2xl md:text-3xl font-light leading-relaxed italic" style={{ color: 'var(--text-secondary)' }}>
-          "Biz sadəcə xidmət göstərmirik —
-          brendlərin uzunmüddətli uğuruna sərmayə edirik."
+          {t('about.quote')}
         </p>
       </div>
 
@@ -67,10 +68,10 @@ const AboutPage = () => {
       >
         <div className="max-w-7xl mx-auto">
           <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
-            Komandamız
+            {t('about.team_badge')}
           </motion.p>
           <motion.h2 variants={cockpitItem} className="font-heading text-4xl md:text-5xl font-semibold mb-16" style={{ color: 'var(--text-primary)' }}>
-            Bizimlə Tanış Olun
+            {t('about.team_title')}
           </motion.h2>
 
           <motion.div variants={cockpitItem} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
@@ -93,7 +94,7 @@ const AboutPage = () => {
                   {member.name}
                 </h3>
                 <p className="text-xs" style={{ color: 'var(--accent-text)' }}>
-                  {member.role}
+                  {t(member.roleKey)}
                 </p>
               </motion.div>
             ))}

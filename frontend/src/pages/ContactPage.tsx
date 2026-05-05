@@ -1,17 +1,19 @@
 import { motion } from 'framer-motion';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import PageTransition from '../components/utils/PageTransition';
 import { cockpitContainer, cockpitItem } from '../utils/animations';
 import { useTheme } from '../context/ThemeContext';
 
 const ContactPage = () => {
+  const { t } = useTranslation();
   const { isDark } = useTheme();
 
   const contactItems = [
-    { icon: MapPin, label: 'Ünvan', value: 'Bakı, Neftçilər pr. 14, AZ1000' },
-    { icon: Phone, label: 'Telefon', value: '+994 12 345 67 89' },
-    { icon: Mail, label: 'E-poçt', value: 'salam@agensi.az' },
-    { icon: Clock, label: 'İş Saatları', value: 'B.e – Cümə: 09:00 – 18:00' },
+    { icon: MapPin, label: t('contact.label_address'), value: t('contact.value_address') },
+    { icon: Phone, label: t('contact.label_phone'), value: t('contact.value_phone') },
+    { icon: Mail, label: t('contact.label_email'), value: t('contact.value_email') },
+    { icon: Clock, label: t('contact.label_hours'), value: t('contact.value_hours') },
   ];
 
   const inputBaseStyles = "w-full rounded-xl px-5 py-4 text-sm focus:outline-none transition-colors";
@@ -28,13 +30,13 @@ const ContactPage = () => {
         {/* Header */}
         <div className="mb-20">
           <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
-            Əlaqə
+            {t('contact.badge')}
           </motion.p>
           <motion.h1 variants={cockpitItem} className="font-heading text-5xl md:text-6xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-            Bizimlə Əlaqə
+            {t('contact.title')}
           </motion.h1>
           <motion.p variants={cockpitItem} className="text-lg leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-            Layihənizi müzakirə etmək istəyirsiniz? Biz dinləməyə hazırıq.
+            {t('contact.subtitle')}
           </motion.p>
         </div>
 
@@ -44,7 +46,7 @@ const ContactPage = () => {
           {/* LEFT COLUMN — Contact info */}
           <motion.div variants={cockpitItem}>
             <h3 className="font-heading text-2xl font-semibold mb-10" style={{ color: 'var(--text-primary)' }}>
-              Məlumatlar
+              {t('contact.info_title')}
             </h3>
             <div className="space-y-8">
               {contactItems.map((item, idx) => (
@@ -75,7 +77,7 @@ const ContactPage = () => {
           <motion.div variants={cockpitItem}>
             <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
               <input
-                placeholder="Adınız *"
+                placeholder={t('contact.form_name')}
                 type="text"
                 required
                 className={inputBaseStyles}
@@ -87,7 +89,7 @@ const ContactPage = () => {
                 }}
               />
               <input
-                placeholder="E-poçt ünvanınız *"
+                placeholder={t('contact.form_email')}
                 type="email"
                 required
                 className={inputBaseStyles}
@@ -99,7 +101,7 @@ const ContactPage = () => {
                 }}
               />
               <input
-                placeholder="Şirkət adı (istəyə bağlı)"
+                placeholder={t('contact.form_company')}
                 type="text"
                 className={inputBaseStyles}
                 style={{
@@ -118,15 +120,15 @@ const ContactPage = () => {
                   color: 'var(--text-primary)',
                 }}
               >
-                <option value="" style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Xidmət seçin</option>
-                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Video İstehsalı</option>
-                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Brend Dizaynı</option>
-                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>SMM İdarəetməsi</option>
-                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Veb Tərtibat</option>
-                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Fərdi Paket</option>
+                <option value="" style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>{t('contact.form_service_placeholder')}</option>
+                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>{t('contact.form_service_video')}</option>
+                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>{t('contact.form_service_brand')}</option>
+                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>{t('contact.form_service_smm')}</option>
+                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>{t('contact.form_service_web')}</option>
+                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>{t('contact.form_service_custom')}</option>
               </select>
               <textarea
-                placeholder="Layihənizi qısaca təsvir edin..."
+                placeholder={t('contact.form_message')}
                 rows={5}
                 className={inputBaseStyles}
                 style={{
@@ -141,7 +143,7 @@ const ContactPage = () => {
                 className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200 mt-2"
                 style={{ color: 'var(--accent-on-accent)' }}
               >
-                Mesaj Göndər →
+                {t('contact.form_submit')}
               </button>
             </form>
           </motion.div>
@@ -158,7 +160,7 @@ const ContactPage = () => {
         >
           <div className="flex flex-col items-center gap-3" style={{ color: 'var(--text-ghost)' }}>
             <MapPin size={32} />
-            <span className="text-sm">Xəritə tezliklə</span>
+            <span className="text-sm">{t('contact.map_placeholder')}</span>
           </div>
         </motion.div>
 

@@ -1,13 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Camera, Link as LinkIcon, Play, Send } from 'lucide-react';
-
-const navLinks = [
-  { label: 'Ana Səhifə',  to: '/' },
-  { label: 'Portfolio',    to: '/portfolio' },
-  { label: 'Paketlər',    to: '/paketler' },
-  { label: 'Haqqımızda', to: '/haqqimizda' },
-  { label: 'Əlaqə',       to: '/elaqe' },
-];
+import { useTranslation } from 'react-i18next';
 
 const socialLinks = [
   { icon: Camera,   href: '#', label: 'Instagram' },
@@ -17,6 +10,16 @@ const socialLinks = [
 ];
 
 export default function Footer() {
+  const { t } = useTranslation();
+
+  const navLinks = [
+    { label: t('nav.home'),      to: '/' },
+    { label: t('nav.portfolio'), to: '/portfolio' },
+    { label: t('nav.packages'),  to: '/paketler' },
+    { label: t('nav.about'),     to: '/haqqimizda' },
+    { label: t('nav.contact'),   to: '/elaqe' },
+  ];
+
   return (
     <footer
       className="relative mt-32 transition-colors duration-300"
@@ -46,15 +49,14 @@ export default function Footer() {
               />
             </Link>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--text-faint)' }}>
-              Brendləri gələcəyə daşıyan kreativ rəqəmsal tərəfdaşınız.
-              Video, marketinq və dizayn xidmətləri.
+              {t('footer.tagline')}
             </p>
           </div>
 
           {/* Center: Nav links */}
           <div className="flex flex-col gap-4">
             <p className="text-[10px] uppercase tracking-widest font-medium mb-2" style={{ color: 'var(--text-ghost)' }}>
-              Səhifələr
+              {t('footer.pages')}
             </p>
             {navLinks.map((link) => (
               <Link
@@ -71,7 +73,7 @@ export default function Footer() {
           {/* Right: Social icons */}
           <div>
             <p className="text-[10px] uppercase tracking-widest font-medium mb-6" style={{ color: 'var(--text-ghost)' }}>
-              Sosial Media
+              {t('footer.social')}
             </p>
             <div className="flex gap-3">
               {socialLinks.map(({ icon: Icon, href, label }) => (
@@ -101,7 +103,7 @@ export default function Footer() {
 
         {/* Bottom: Copyright */}
         <p className="text-center text-xs leading-relaxed" style={{ color: 'var(--text-ghost)' }}>
-          © Bakı Texnoloji Layihələri 2026 — Bütün hüquqlar qorunur
+          {t('footer.copyright')}
         </p>
 
       </div>

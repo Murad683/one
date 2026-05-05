@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { packages } from '../../data/packages';
 import PackageModal from '../ui/PackageModal';
 import { cockpitContainer, cockpitItem } from '../../utils/animations';
 
-const PricingCard = ({ pkg, openModal }: { pkg: any, openModal: (pkg: any) => void }) => {
+const PricingCard = ({ pkg, openModal }: { pkg: typeof packages[number], openModal: (pkg: typeof packages[number]) => void }) => {
+  const { t } = useTranslation();
   const cardRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
@@ -58,7 +60,7 @@ const PricingCard = ({ pkg, openModal }: { pkg: any, openModal: (pkg: any) => vo
             boxShadow: '0 4px 20px rgba(163, 230, 53, 0.45), 0 2px 8px rgba(163, 230, 53, 0.3)',
           }}
         >
-          Ən Populyar
+          {t('packages_page.popular_badge')}
         </div>
       )}
 
@@ -67,24 +69,31 @@ const PricingCard = ({ pkg, openModal }: { pkg: any, openModal: (pkg: any) => vo
         <div className="text-center mb-8">
           {/* Package name */}
           <p className="text-xs uppercase tracking-[0.2em] font-medium mb-5" style={{ color: 'var(--text-faint)' }}>
-            {pkg.name}
+            {t(pkg.nameKey)}
           </p>
 
           {/* Price */}
           <div className="flex items-end justify-center gap-1">
-            <span className="font-heading text-5xl font-bold leading-none" style={{ color: 'var(--text-primary)' }}>
-              {pkg.price}
+            <span 
+              className={`font-heading ${
+                (pkg.priceKey ? t(pkg.priceKey) : pkg.price).length > 8 
+                  ? 'text-3xl' 
+                  : 'text-5xl'
+              } font-bold leading-none`} 
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {pkg.priceKey ? t(pkg.priceKey) : pkg.price}
             </span>
-            {pkg.period && (
+            {pkg.periodKey && (
               <span className="text-base font-normal mb-1" style={{ color: 'var(--text-faint)' }}>
-                {pkg.period}
+                {t(pkg.periodKey)}
               </span>
             )}
           </div>
 
           {/* Tagline */}
           <p className="text-sm mt-3 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-            {pkg.tagline}
+            {t(pkg.taglineKey)}
           </p>
         </div>
 
@@ -93,10 +102,10 @@ const PricingCard = ({ pkg, openModal }: { pkg: any, openModal: (pkg: any) => vo
 
         {/* ── FEATURES: left-aligned list, but the whole block is centered with mx-auto ── */}
         <ul className="space-y-3 mb-10 flex-1 w-fit mx-auto">
-          {pkg.features.map((feature: string, i: number) => (
+          {pkg.featuresKeys.map((featureKey: string, i: number) => (
             <li key={i} className="flex items-start gap-3">
               <Check size={13} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--accent-text)' }} />
-              <span className="text-sm text-left" style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+              <span className="text-sm text-left" style={{ color: 'var(--text-secondary)' }}>{t(featureKey)}</span>
             </li>
           ))}
         </ul>
@@ -116,7 +125,7 @@ const PricingCard = ({ pkg, openModal }: { pkg: any, openModal: (pkg: any) => vo
             : { borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }
           }
         >
-          {pkg.cta}
+          {t(pkg.ctaKey)}
         </button>
       </div>
     </motion.div>

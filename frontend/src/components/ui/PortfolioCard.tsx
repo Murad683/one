@@ -1,11 +1,12 @@
 import { useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { cinematicEasing } from '../../utils/animations';
 
 interface Project {
   id: number;
-  title: string;
-  category: string;
+  titleKey: string;
+  categoryKey: string;
   slug: string;
   thumbnailUrl?: string;
 }
@@ -15,6 +16,7 @@ interface PortfolioCardProps {
 }
 
 const PortfolioCard: React.FC<PortfolioCardProps> = ({ project }) => {
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleMouseEnter = () => {
@@ -46,7 +48,7 @@ const PortfolioCard: React.FC<PortfolioCardProps> = ({ project }) => {
       {/* Placeholder thumbnail */}
       <img
         src={project.thumbnailUrl}
-        alt={project.title}
+        alt={t(project.titleKey)}
         className="absolute inset-0 w-full h-full object-cover opacity-80"
       />
       {/* Silent hover video */}
@@ -67,10 +69,10 @@ const PortfolioCard: React.FC<PortfolioCardProps> = ({ project }) => {
       {/* Info */}
       <div className="absolute bottom-0 left-0 p-6 z-30">
         <p className="text-accent text-[10px] uppercase tracking-[0.2em] font-medium mb-2 opacity-90">
-          {project.category}
+          {t(project.categoryKey)}
         </p>
         <h3 className="text-white font-heading text-lg font-semibold leading-tight">
-          {project.title}
+          {t(project.titleKey)}
         </h3>
       </div>
 

@@ -1,10 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import * as LucideIcons from 'lucide-react';
 import { services } from '../../data/services';
 import { cockpitContainer, cockpitItem } from '../../utils/animations';
 
-const ServiceCard = ({ service }: { service: any }) => {
+const ServiceCard = ({ service }: { service: typeof services[number] }) => {
+  const { t } = useTranslation();
   const IconComponent = (LucideIcons as any)[service.icon];
   const cardRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -53,10 +55,10 @@ const ServiceCard = ({ service }: { service: any }) => {
           <IconComponent className="w-8 h-8 mb-6" style={{ color: 'var(--accent-text)' }} />
         )}
         <h3 className="font-heading text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-          {service.title}
+          {t(service.titleKey)}
         </h3>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-          {service.desc}
+          {t(service.descKey)}
         </p>
       </div>
     </motion.div>
@@ -64,6 +66,8 @@ const ServiceCard = ({ service }: { service: any }) => {
 };
 
 const ServicesSection = () => {
+  const { t } = useTranslation();
+
   return (
     <section className="py-32 px-6 md:px-16 transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <motion.div 
@@ -75,10 +79,10 @@ const ServicesSection = () => {
       >
         <div className="mb-20">
           <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
-            Xidmətlərimiz
+            {t('services.badge')}
           </motion.p>
           <motion.h2 variants={cockpitItem} className="font-heading text-4xl md:text-5xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Biz nə edirik
+            {t('services.title')}
           </motion.h2>
         </div>
 

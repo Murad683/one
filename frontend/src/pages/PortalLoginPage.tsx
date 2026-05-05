@@ -1,16 +1,18 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import PageTransition from '../components/utils/PageTransition';
 import { cockpitContainer, cockpitItem } from '../utils/animations';
 
 const PortalLoginPage = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('İstifadəçi kabineti tezliklə istifadəyə veriləcək. Zəhmət olmasa agentliklə əlaqə saxlayın.');
+    alert(t('portal.alert_message'));
   };
 
   return (
@@ -23,13 +25,13 @@ const PortalLoginPage = () => {
       >
         <div className="text-center mb-10">
           <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
-            Müştəri Portalı
+            {t('portal.badge')}
           </motion.p>
           <motion.h1 variants={cockpitItem} className="font-heading text-4xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-            Xoş Gəlmisiniz
+            {t('portal.title')}
           </motion.h1>
           <motion.p variants={cockpitItem} className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Layihələrinizi izləmək və idarə etmək üçün daxil olun.
+            {t('portal.subtitle')}
           </motion.p>
         </div>
 
@@ -44,7 +46,7 @@ const PortalLoginPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-xs uppercase tracking-wider mb-2 ml-1" style={{ color: 'var(--text-secondary)' }}>
-                E-poçt Ünvanı
+                {t('portal.label_email')}
               </label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 group-focus-within:text-accent transition-colors" style={{ color: 'var(--text-ghost)' }} />
@@ -67,7 +69,7 @@ const PortalLoginPage = () => {
 
             <div>
               <label className="block text-xs uppercase tracking-wider mb-2 ml-1" style={{ color: 'var(--text-secondary)' }}>
-                Şifrə
+                {t('portal.label_password')}
               </label>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 group-focus-within:text-accent transition-colors" style={{ color: 'var(--text-ghost)' }} />
@@ -93,15 +95,15 @@ const PortalLoginPage = () => {
               className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200 flex items-center justify-center gap-2 group mt-4"
               style={{ color: 'var(--accent-on-accent)' }}
             >
-              Daxil Ol
+              {t('portal.submit')}
               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </form>
 
           <div className="mt-8 text-center">
             <p className="text-[10px] leading-relaxed uppercase tracking-tighter" style={{ color: 'var(--text-ghost)' }}>
-              Şifrənizi unutmusunuz? Zəhmət olmasa <br />
-              <span className="cursor-pointer hover:opacity-80" style={{ color: 'var(--accent-text)', opacity: 0.6 }}>menecerinizlə əlaqə saxlayın.</span>
+              {t('portal.forgot_text')} <br />
+              <span className="cursor-pointer hover:opacity-80" style={{ color: 'var(--accent-text)', opacity: 0.6 }}>{t('portal.forgot_link')}</span>
             </p>
           </div>
         </motion.div>

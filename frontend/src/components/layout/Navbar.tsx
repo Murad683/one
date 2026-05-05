@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { Sun, Moon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useLang } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 
 const Navbar = () => {
+  const { t } = useTranslation();
   const { language, setLanguage } = useLang();
   const { toggleTheme, isDark } = useTheme();
   const { scrollY } = useScroll();
@@ -22,11 +24,11 @@ const Navbar = () => {
   });
 
   const navLinks = [
-    { name: 'Ana Səhifə', path: '/' },
-    { name: 'Portfolio', path: '/portfolio' },
-    { name: 'Paketlər', path: '/paketler' },
-    { name: 'Haqqımızda', path: '/haqqimizda' },
-    { name: 'Əlaqə', path: '/elaqe' },
+    { name: t('nav.home'), path: '/' },
+    { name: t('nav.portfolio'), path: '/portfolio' },
+    { name: t('nav.packages'), path: '/paketler' },
+    { name: t('nav.about'), path: '/haqqimizda' },
+    { name: t('nav.contact'), path: '/elaqe' },
   ];
 
   return (
@@ -90,7 +92,7 @@ const Navbar = () => {
             borderColor: 'var(--border-subtle)',
           }}
         >
-          {(['AZ', 'EN', 'RU'] as const).map((lang) => (
+          {(['az', 'en', 'ru'] as const).map((lang) => (
             <button
               key={lang}
               onClick={() => setLanguage(lang)}
@@ -104,7 +106,7 @@ const Navbar = () => {
                 backgroundColor: language === lang ? 'var(--glow-accent-subtle)' : 'transparent',
               }}
             >
-              {lang}
+              {lang.toUpperCase()}
             </button>
           ))}
         </div>
@@ -129,7 +131,7 @@ const Navbar = () => {
             color: 'var(--text-secondary)',
           }}
         >
-          Giriş
+          {t('nav.login')}
         </Link>
       </div>
     </motion.nav>

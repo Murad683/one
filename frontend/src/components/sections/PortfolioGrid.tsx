@@ -8,9 +8,20 @@ interface PortfolioGridProps {
 }
 
 const PortfolioGrid: React.FC<PortfolioGridProps> = ({ filter }) => {
-  const filtered = filter === 'Hamısı' 
+  // Mapping filter key to data category key if necessary
+  const filterToCategoryKeyMap: Record<string, string> = {
+    'all': 'all',
+    'Video İstehsalı': 'data.categories.video',
+    'Brend Dizaynı': 'data.categories.brand',
+    'SMM': 'data.categories.smm',
+    'Veb Tərtibat': 'data.categories.web',
+  };
+
+  const targetCategoryKey = filterToCategoryKeyMap[filter] || filter;
+
+  const filtered = targetCategoryKey === 'all' 
     ? projects 
-    : projects.filter((p) => p.category === filter);
+    : projects.filter((p) => p.categoryKey === targetCategoryKey);
 
   return (
     <div className="relative">

@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { cockpitContainer, cockpitItem } from '../../utils/animations';
 import { useTheme } from '../../context/ThemeContext';
 
 const HeroSection = () => {
+  const { t } = useTranslation();
   const { scrollY } = useScroll();
   const { isDark } = useTheme();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -78,15 +80,15 @@ const HeroSection = () => {
           className="text-xs font-medium uppercase tracking-[0.2em] mb-6"
           style={{ color: 'var(--accent-text)' }}
         >
-          Rəqəmsal İnkişaf Şirkəti
+          {t('hero.badge')}
         </motion.p>
 
         <motion.h1
           variants={cockpitItem}
           className="flex flex-col gap-2 mb-8"
         >
-          <span className="font-heading text-7xl md:text-8xl font-medium leading-[1.0]" style={{ color: 'var(--text-primary)' }}>Brendinizi</span>
-          <span className="font-heading text-7xl md:text-8xl font-medium leading-[1.0]" style={{ color: 'var(--text-primary)' }}>Gələcəyə Daşıyırıq</span>
+          <span className="font-heading text-7xl md:text-8xl font-medium leading-[1.0]" style={{ color: 'var(--text-primary)' }}>{t('hero.title_line1')}</span>
+          <span className="font-heading text-7xl md:text-8xl font-medium leading-[1.0]" style={{ color: 'var(--text-primary)' }}>{t('hero.title_line2')}</span>
         </motion.h1>
 
         <motion.p
@@ -94,7 +96,7 @@ const HeroSection = () => {
           className="text-lg md:text-xl font-light max-w-xl mx-auto mb-12 leading-relaxed"
           style={{ color: 'var(--text-muted)' }}
         >
-          Strateji kreativ həllər, premium video istehsalı və rəqəmsal marketinq xidmətləri.
+          {t('hero.subtitle')}
         </motion.p>
 
         <motion.div variants={cockpitItem}>
@@ -103,7 +105,7 @@ const HeroSection = () => {
             className="inline-flex items-center gap-2 px-10 py-5 bg-accent font-semibold text-base rounded-full hover:bg-accent/90 transition-all duration-200 hover:scale-[1.02]"
             style={{ color: 'var(--accent-on-accent)' }}
           >
-            Xidmətlərimizə Bax →
+            {t('hero.cta')}
           </Link>
         </motion.div>
       </motion.div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import FilterTabs from '../components/ui/FilterTabs';
 import PortfolioGrid from '../components/sections/PortfolioGrid';
 import SectionOrbs from '../components/ui/SectionOrbs';
@@ -7,7 +8,8 @@ import PageTransition from '../components/utils/PageTransition';
 import { cockpitContainer, cockpitItem } from '../utils/animations';
 
 const PortfolioPage = () => {
-  const [activeFilter, setActiveFilter] = useState('Hamısı');
+  const { t } = useTranslation();
+  const [activeFilter, setActiveFilter] = useState('all');
 
   return (
     <PageTransition className="relative pt-40 pb-32 px-6 md:px-16 min-h-screen overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -25,13 +27,13 @@ const PortfolioPage = () => {
           className="text-center mb-16"
         >
           <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
-            İşlərimiz
+            {t('portfolio_page.badge')}
           </motion.p>
           <motion.h1 variants={cockpitItem} className="font-heading text-5xl md:text-6xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-            Portfolio
+            {t('portfolio_page.title')}
           </motion.h1>
           <motion.p variants={cockpitItem} className="text-lg max-w-2xl mx-auto leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-            Müştərilərimiz üçün yaratdığımız seçilmiş layihələr.
+            {t('portfolio_page.subtitle')}
           </motion.p>
         </motion.div>
 

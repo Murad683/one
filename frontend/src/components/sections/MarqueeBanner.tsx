@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 
 const MarqueeBanner = () => {
-  const text = "REELS  ✦  GRAPHIC DESIGN  ✦  BRAND STRATEGY  ✦  CONTENT CREATION  ✦  ANALYTICS  ✦  COMMUNITY  ✦  ";
+  const { t } = useTranslation();
+  const text = t('marquee.text');
 
   return (
     <div

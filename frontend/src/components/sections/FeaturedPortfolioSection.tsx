@@ -1,29 +1,32 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { cockpitContainer, cockpitItem } from '../../utils/animations';
 
 const projects = [
   { 
-    title: 'Azər Kimya — Korporativ Film', 
-    category: 'Video İstehsalı',
+    titleKey: 'data.featured_projects.0.title', 
+    categoryKey: 'data.featured_projects.0.category',
     fullWidth: true,
     thumbnailUrl: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80'
   },
   { 
-    title: 'TechAZ — Marka Yeniləməsi', 
-    category: 'Brend Dizaynı',
+    titleKey: 'data.featured_projects.1.title', 
+    categoryKey: 'data.featured_projects.1.category',
     fullWidth: false,
     thumbnailUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80'
   },
   { 
-    title: 'Baku Foods — SMM Kampaniyası', 
-    category: 'SMM',
+    titleKey: 'data.featured_projects.2.title', 
+    categoryKey: 'data.featured_projects.2.category',
     fullWidth: false,
     thumbnailUrl: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80'
   },
 ];
 
 const FeaturedPortfolioSection = () => {
+  const { t } = useTranslation();
+
   return (
     <section className="py-32 px-6 md:px-16 transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <motion.div 
@@ -36,10 +39,10 @@ const FeaturedPortfolioSection = () => {
         <div className="flex justify-between items-end mb-16">
           <div>
             <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
-              İşlərimiz
+              {t('featured_portfolio.badge')}
             </motion.p>
             <motion.h2 variants={cockpitItem} className="font-heading text-4xl md:text-5xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-              Seçilmiş İşlər
+              {t('featured_portfolio.title')}
             </motion.h2>
           </div>
           <motion.div variants={cockpitItem}>
@@ -48,7 +51,7 @@ const FeaturedPortfolioSection = () => {
               className="text-sm transition-colors mb-2 inline-block hover:opacity-80"
               style={{ color: 'var(--text-faint)' }}
             >
-              Hamısına Bax →
+              {t('featured_portfolio.view_all')}
             </Link>
           </motion.div>
         </div>
@@ -66,7 +69,7 @@ const FeaturedPortfolioSection = () => {
             >
               <img
                 src={project.thumbnailUrl}
-                alt={project.title}
+                alt={t(project.titleKey)}
                 className="absolute inset-0 w-full h-full object-cover opacity-80"
               />
               {/* Bottom gradient overlay */}
@@ -75,10 +78,10 @@ const FeaturedPortfolioSection = () => {
               {/* Info at bottom */}
               <div className="absolute bottom-0 left-0 p-8 z-20">
                 <p className="text-accent text-xs uppercase tracking-widest mb-2">
-                  {project.category}
+                  {t(project.categoryKey)}
                 </p>
                 <h3 className="text-white font-heading text-xl md:text-2xl font-semibold">
-                  {project.title}
+                  {t(project.titleKey)}
                 </h3>
               </div>
 

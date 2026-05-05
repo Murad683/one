@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { categories } from '../../data/projects';
 
 interface FilterTabsProps {
@@ -7,26 +8,28 @@ interface FilterTabsProps {
 }
 
 const FilterTabs: React.FC<FilterTabsProps> = ({ active, onChange }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="flex gap-3 flex-wrap justify-center">
       {categories.map((cat) => (
         <motion.button
-          key={cat}
+          key={cat.key}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => onChange(cat)}
+          onClick={() => onChange(cat.key)}
           className={
-            active === cat
+            active === cat.key
               ? 'px-6 py-2.5 rounded-full bg-accent text-sm font-semibold transition-all shadow-[0_0_20px_rgba(163,230,53,0.2)]'
               : 'px-6 py-2.5 rounded-full border text-sm transition-all hover:opacity-80'
           }
           style={
-            active === cat
+            active === cat.key
               ? { color: 'var(--accent-on-accent)' }
               : { borderColor: 'var(--border-default)', color: 'var(--text-muted)' }
           }
         >
-          {cat}
+          {t(cat.translationKey)}
         </motion.button>
       ))}
     </div>
