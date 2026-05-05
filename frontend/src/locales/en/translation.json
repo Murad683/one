@@ -160,18 +160,18 @@
       "web": "Web Development"
     },
     "projects": {
-      "azer-kimya": { "title": "Azer Kimya Corporate Film" },
-      "techaz-brand": { "title": "TechAZ Brand Refresh" },
-      "baku-foods": { "title": "Baku Foods SMM Campaign" },
-      "capitalbank": { "title": "CapitalBank Website" },
-      "silkroad": { "title": "Silk Road Festival Clip" },
-      "greenlife": { "title": "GreenLife Branding Package" },
-      "azerconnect": { "title": "Azerconnect Social Media" },
-      "socar-ad": { "title": "SOCAR Ad Film" },
-      "medplus": { "title": "MedPlus Corporate Site" },
-      "motorshow": { "title": "Baku Motor Show Visual Package" },
-      "edutech": { "title": "EduTech SMM Strategy" },
-      "caspian": { "title": "Caspian Shipping Film" }
+      "azer-kimya": { "title": "Azer Kimya Corporate Film", "desc": "A high-end corporate film showcasing the production capabilities and innovation of Azer Kimya." },
+      "techaz-brand": { "title": "TechAZ Brand Refresh", "desc": "A complete visual identity overhaul for TechAZ, aligning the brand with modern technological trends." },
+      "baku-foods": { "title": "Baku Foods SMM Campaign", "desc": "A strategic digital marketing campaign for Baku Foods that resulted in a 40% increase in sales." },
+      "capitalbank": { "title": "CapitalBank Website", "desc": "A modern, fast, and user-friendly web platform delivering a premium digital banking experience." },
+      "silkroad": { "title": "Silk Road Festival Clip", "desc": "A dynamic video clip capturing the vibrant spirit and energy of the Silk Road Festival." },
+      "greenlife": { "title": "GreenLife Branding Package", "desc": "An eco-friendly visual branding strategy designed for sustainable and green products." },
+      "azerconnect": { "title": "Azerconnect Social Media", "desc": "Comprehensive social media management and creative content strategy for Azerconnect." },
+      "socar-ad": { "title": "SOCAR Ad Film", "desc": "A premium advertising film produced for the launch of SOCAR's new digital services." },
+      "medplus": { "title": "MedPlus Corporate Site", "desc": "A functional web solution for online management and scheduling of medical services." },
+      "motorshow": { "title": "Baku Motor Show Visual Package", "desc": "Creation of all visual materials and digital content for the Baku Motor Show exhibition." },
+      "edutech": { "title": "EduTech SMM Strategy", "desc": "A large-scale digital strategy to enhance the online presence of the EduTech platform." },
+      "caspian": { "title": "Caspian Shipping Film", "desc": "A documentary-style corporate film illustrating the operations of Caspian Shipping Company." }
     },
     "featured_projects": {
       "0": { "title": "Azer Kimya — Corporate Film", "category": "Video Production" },

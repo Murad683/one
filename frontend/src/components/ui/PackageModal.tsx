@@ -53,7 +53,7 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleBackdropClick}
-          className="fixed inset-0 z-[100] h-screen w-screen flex items-center justify-center backdrop-blur-sm px-6"
+          className="fixed inset-0 z-[100] h-screen w-screen flex items-center justify-center backdrop-blur-sm px-0 sm:px-6"
           style={{ backgroundColor: 'var(--modal-backdrop)' }}
         >
           <motion.div
@@ -61,7 +61,7 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.4, ease: cinematicEasing }}
-            className="backdrop-blur-2xl border rounded-3xl max-w-xl w-full p-10 relative overflow-y-auto no-scrollbar max-h-[85vh]"
+            className="backdrop-blur-2xl border rounded-none sm:rounded-3xl max-w-xl w-full p-8 sm:p-10 relative overflow-y-auto no-scrollbar h-full sm:h-auto sm:max-h-[85vh]"
             style={{
               backgroundColor: 'var(--modal-bg)',
               borderColor: 'var(--card-border)',

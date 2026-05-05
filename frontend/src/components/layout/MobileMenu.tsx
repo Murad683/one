@@ -1,0 +1,168 @@
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { NavLink, Link } from 'react-router-dom';
+import { X, Globe, Moon, Sun, ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useLang } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
+import { cinematicEasing } from '../../utils/animations';
+
+interface MobileMenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLang();
+  const { toggleTheme, isDark } = useTheme();
+
+  const navLinks = [
+    { name: t('nav.home'), path: '/' },
+    { name: t('nav.portfolio'), path: '/portfolio' },
+    { name: t('nav.packages'), path: '/paketler' },
+    { name: t('nav.about'), path: '/haqqimizda' },
+    { name: t('nav.contact'), path: '/elaqe' },
+  ];
+
+  const menuVariants = {
+    closed: {
+      x: '100%',
+      transition: {
+        duration: 0.5,
+        ease: cinematicEasing,
+      },
+    },
+    open: {
+      x: 0,
+      transition: {
+        duration: 0.5,
+        ease: cinematicEasing,
+      },
+    },
+  };
+
+  const itemVariants = {
+    closed: { opacity: 0, x: 20 },
+    open: (i: number) => ({
+      opacity: 1,
+      x: 0,
+      transition: {
+        delay: 0.2 + i * 0.1,
+        duration: 0.4,
+        ease: cinematicEasing,
+      },
+    }),
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-[110] backdrop-blur-md bg-black/40"
+          />
+
+          {/* Menu Panel */}
+          <motion.div
+            variants={menuVariants}
+            initial="closed"
+            animate="open"
+            exit="closed"
+            className="fixed top-0 right-0 h-screen w-[85%] max-w-[400px] z-[120] flex flex-col p-10 border-l"
+            style={{
+              backgroundColor: 'var(--modal-bg)',
+              borderColor: 'var(--card-border)',
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-16">
+              <Link to="/" onClick={onClose}>
+                <img src="/logo.jpg" alt="Logo" className="h-6 w-auto rounded-sm" />
+              </Link>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-full transition-colors hover:bg-white/10"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Nav Links */}
+            <nav className="flex flex-col gap-8 mb-16">
+              {navLinks.map((link, i) => (
+                <motion.div key={link.path} custom={i} variants={itemVariants}>
+                  <NavLink
+                    to={link.path}
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      `text-3xl font-heading font-bold flex items-center justify-between group transition-colors ${
+                        isActive ? 'text-accent' : 'text-primary hover:text-accent'
+                      }`
+                    }
+                  >
+                    {link.name}
+                    <ChevronRight size={20} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </NavLink>
+                </motion.div>
+              ))}
+            </nav>
+
+            {/* Bottom Controls */}
+            <div className="mt-auto space-y-10">
+              {/* Language Switcher */}
+              <motion.div variants={itemVariants} custom={6}>
+                <div className="flex items-center gap-3 mb-4 text-faint">
+                  <Globe size={16} />
+                  <span className="text-[10px] uppercase tracking-widest font-bold">{t('Language')}</span>
+                </div>
+                <div className="flex gap-4">
+                  {(['az', 'en', 'ru'] as const).map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => setLanguage(lang)}
+                      className={`text-sm font-bold transition-all ${
+                        language === lang ? 'text-accent' : 'text-ghost hover:text-primary'
+                      }`}
+                    >
+                      {lang.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Theme & Login */}
+              <motion.div variants={itemVariants} custom={7} className="flex items-center justify-between pt-8 border-t border-white/5">
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center gap-3 text-sm font-medium transition-colors hover:text-accent"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {isDark ? <Moon size={18} /> : <Sun size={18} />}
+                  {isDark ? 'Dark Mode' : 'Light Mode'}
+                </button>
+                
+                <Link
+                  to="/portal"
+                  onClick={onClose}
+                  className="px-6 py-2 rounded-full border text-xs font-bold uppercase tracking-widest"
+                  style={{ borderColor: 'var(--accent-text)', color: 'var(--accent-text)' }}
+                >
+                  {t('nav.login')}
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+export default MobileMenu;

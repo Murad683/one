@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PortfolioCard from '../ui/PortfolioCard';
+import ProjectModal from '../ui/ProjectModal';
 import { projects } from '../../data/projects';
 import { cinematicEasing } from '../../utils/animations';
 
@@ -8,6 +10,14 @@ interface PortfolioGridProps {
 }
 
 const PortfolioGrid: React.FC<PortfolioGridProps> = ({ filter }) => {
+  const [selectedProject, setSelectedProject] = useState<(typeof projects)[0] | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleProjectClick = (project: (typeof projects)[0]) => {
+    setSelectedProject(project);
+    setIsModalOpen(true);
+  };
+
   // Mapping filter key to data category key if necessary
   const filterToCategoryKeyMap: Record<string, string> = {
     'all': 'all',
@@ -43,11 +53,20 @@ const PortfolioGrid: React.FC<PortfolioGridProps> = ({ filter }) => {
                 ease: cinematicEasing
               }}
             >
-              <PortfolioCard project={project} />
+              <PortfolioCard 
+                project={project} 
+                onClick={() => handleProjectClick(project)}
+              />
             </motion.div>
           ))}
         </AnimatePresence>
       </motion.div>
+
+      <ProjectModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        project={selectedProject}
+      />
     </div>
   );
 };

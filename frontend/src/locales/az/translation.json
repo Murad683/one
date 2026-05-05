@@ -160,18 +160,18 @@
       "web": "Veb Tərtibat"
     },
     "projects": {
-      "azer-kimya": { "title": "Azər Kimya Korporativ Film" },
-      "techaz-brand": { "title": "TechAZ Marka Yeniləməsi" },
-      "baku-foods": { "title": "Baku Foods SMM Kampaniyası" },
-      "capitalbank": { "title": "CapitalBank Veb Saytı" },
-      "silkroad": { "title": "Silk Road Festival Klipi" },
-      "greenlife": { "title": "GreenLife Brendinq Paketi" },
-      "azerconnect": { "title": "Azerconnect Sosial Media" },
-      "socar-ad": { "title": "SOCAR Reklam Filmi" },
-      "medplus": { "title": "MedPlus Korporativ Sayt" },
-      "motorshow": { "title": "Baku Motor Show Vizual Paketi" },
-      "edutech": { "title": "EduTech SMM Strategiyası" },
-      "caspian": { "title": "Caspian Shipping Filmi" }
+      "azer-kimya": { "title": "Azər Kimya Korporativ Film", "desc": "Azər Kimya üçün hazırladığımız bu korporativ film şirkətin istehsalat gücünü və innovativ yanaşmasını əks etdirir." },
+      "techaz-brand": { "title": "TechAZ Marka Yeniləməsi", "desc": "TechAZ brendinin vizual kimliyini müasir texnoloji trendlərə uyğun olaraq tamamilə yenidən qurduq." },
+      "baku-foods": { "title": "Baku Foods SMM Kampaniyası", "desc": "Baku Foods üçün həyata keçirdiyimiz rəqəmsal marketinq kampaniyası satışların 40% artmasına səbəb olmuşdur." },
+      "capitalbank": { "title": "CapitalBank Veb Saytı", "desc": "Müasir, sürətli və istifadəçi dostu bankçılıq təcrübəsi təqdim edən veb platforma." },
+      "silkroad": { "title": "Silk Road Festival Klipi", "desc": "Festivalın ruhunu və enerjisini çatdıran dinamik video çarx." },
+      "greenlife": { "title": "GreenLife Brendinq Paketi", "desc": "Ekoloji təmiz məhsullar üçün təbiət dostu vizual brendinq strategiyası." },
+      "azerconnect": { "title": "Azerconnect Sosial Media", "desc": "Korporativ sosial media idarəetməsi və kreativ kontent strategiyası." },
+      "socar-ad": { "title": "SOCAR Reklam Filmi", "desc": "SOCAR-ın yeni xidmətləri üçün hazırladığımız premium reklam çarxı." },
+      "medplus": { "title": "MedPlus Korporativ Sayt", "desc": "Tibbi xidmətlərin onlayn idarə olunması üçün funksional veb həll." },
+      "motorshow": { "title": "Baku Motor Show Vizual Paketi", "desc": "Sərginin bütün vizual materiallarının və rəqəmsal kontentinin hazırlanması." },
+      "edutech": { "title": "EduTech SMM Strategiyası", "desc": "Təhsil platformasının rəqəmsal platformalarda tanınması üçün genişmiqyaslı strategiya." },
+      "caspian": { "title": "Caspian Shipping Filmi", "desc": "Xəzər Dəniz Gəmiçiliyinin fəaliyyətini əks etdirən sənədli-korporativ film." }
     },
     "featured_projects": {
       "0": { "title": "Azər Kimya — Korporativ Film", "category": "Video İstehsalı" },

@@ -9,13 +9,16 @@ interface Project {
   categoryKey: string;
   slug: string;
   thumbnailUrl?: string;
+  youtubeId?: string;
+  descKey?: string;
 }
 
 interface PortfolioCardProps {
   project: Project;
+  onClick?: () => void;
 }
 
-const PortfolioCard: React.FC<PortfolioCardProps> = ({ project }) => {
+const PortfolioCard: React.FC<PortfolioCardProps> = ({ project, onClick }) => {
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -44,6 +47,7 @@ const PortfolioCard: React.FC<PortfolioCardProps> = ({ project }) => {
       transition={{ duration: 0.3, ease: cinematicEasing }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={onClick}
     >
       {/* Placeholder thumbnail */}
       <img

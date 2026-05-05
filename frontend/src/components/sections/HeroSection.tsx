@@ -85,15 +85,15 @@ const HeroSection = () => {
 
         <motion.h1
           variants={cockpitItem}
-          className="flex flex-col gap-2 mb-8"
+          className="flex flex-col gap-2 mb-8 px-4"
         >
-          <span className="font-heading text-7xl md:text-8xl font-medium leading-[1.0]" style={{ color: 'var(--text-primary)' }}>{t('hero.title_line1')}</span>
-          <span className="font-heading text-7xl md:text-8xl font-medium leading-[1.0]" style={{ color: 'var(--text-primary)' }}>{t('hero.title_line2')}</span>
+          <span className="font-heading text-4xl sm:text-6xl md:text-8xl font-medium leading-[1.1] md:leading-[1.0]" style={{ color: 'var(--text-primary)' }}>{t('hero.title_line1')}</span>
+          <span className="font-heading text-4xl sm:text-6xl md:text-8xl font-medium leading-[1.1] md:leading-[1.0]" style={{ color: 'var(--text-primary)' }}>{t('hero.title_line2')}</span>
         </motion.h1>
 
         <motion.p
           variants={cockpitItem}
-          className="text-lg md:text-xl font-light max-w-xl mx-auto mb-12 leading-relaxed"
+          className="text-base md:text-xl font-light max-w-xl mx-auto mb-10 md:mb-12 leading-relaxed px-6"
           style={{ color: 'var(--text-muted)' }}
         >
           {t('hero.subtitle')}

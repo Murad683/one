@@ -39,7 +39,7 @@ const PricingCard = ({ pkg, openModal }: { pkg: typeof packages[number], openMod
       style={{
         backgroundColor: 'var(--card-bg)',
         borderColor: pkg.recommended ? 'var(--accent-text)' : 'var(--card-border)',
-        borderTopColor: 'var(--card-border-top)',
+        borderTopColor: pkg.recommended ? 'var(--accent-text)' : 'var(--card-border-top)',
         borderWidth: pkg.recommended ? '1.5px' : '1px',
       }}
     >
