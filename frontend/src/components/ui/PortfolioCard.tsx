@@ -32,8 +32,12 @@ const PortfolioCard: React.FC<PortfolioCardProps> = ({ project }) => {
 
   return (
     <motion.div
-      className="relative overflow-hidden rounded-2xl aspect-video cursor-pointer group bg-white/[0.04] border border-white/[0.05]"
-      style={{ borderTopColor: 'rgba(255,255,255,0.10)' }}
+      className="relative overflow-hidden rounded-2xl aspect-video cursor-pointer group border transition-colors duration-300"
+      style={{
+        backgroundColor: 'var(--card-bg)',
+        borderColor: 'var(--card-border)',
+        borderTopColor: 'var(--card-border-top)',
+      }}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3, ease: cinematicEasing }}
       onMouseEnter={handleMouseEnter}
@@ -71,7 +75,7 @@ const PortfolioCard: React.FC<PortfolioCardProps> = ({ project }) => {
       </div>
 
       {/* Subtle border reveal on hover */}
-      <div className="absolute inset-0 rounded-2xl border border-white/0 group-hover:border-white/10 transition-all duration-300 z-40" />
+      <div className="absolute inset-0 rounded-2xl border border-transparent group-hover:border-white/10 transition-all duration-300 z-40" />
     </motion.div>
   );
 };

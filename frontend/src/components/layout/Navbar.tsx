@@ -2,16 +2,23 @@ import { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { Sun, Moon } from 'lucide-react';
 import { useLang } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 
 const Navbar = () => {
   const { language, setLanguage } = useLang();
-  const [isDark, setIsDark] = useState(true);
+  const { toggleTheme, isDark } = useTheme();
   const { scrollY } = useScroll();
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    setIsScrolled(latest > 50);
+    const previous = scrollY.getPrevious() ?? 0;
+    // Hide if scrolling down and past 150px
+    if (latest > previous && latest > 150) {
+      setHidden(true);
+    } else {
+      setHidden(false);
+    }
   });
 
   const navLinks = [
@@ -24,22 +31,26 @@ const Navbar = () => {
 
   return (
     <motion.nav 
-      initial={false}
-      animate={{
-        backgroundColor: isScrolled ? "rgba(10, 10, 10, 0.75)" : "transparent",
-        borderBottom: isScrolled ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid transparent",
-        backdropFilter: isScrolled ? "blur(16px)" : "blur(0px)"
+      variants={{
+        visible: { y: 0, opacity: 1 },
+        hidden: { y: "-150%", opacity: 0 },
       }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed top-0 inset-x-0 z-50 py-4 px-8 md:px-16 flex items-center justify-between"
+      animate={hidden ? "hidden" : "visible"}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed top-6 left-0 right-0 mx-auto z-[100] w-[95%] max-w-5xl rounded-full px-6 py-3 flex items-center justify-between border backdrop-blur-xl transition-colors duration-300"
+      style={{
+        backgroundColor: 'var(--glass-bg)',
+        borderColor: 'var(--glass-border)',
+        boxShadow: 'var(--shadow-navbar)',
+      }}
     >
       {/* Logo */}
-      <div className="flex-1">
-        <Link to="/">
+      <div className="flex-shrink-0">
+        <Link to="/" className="block">
           <img
             src="/logo.jpg"
             alt="Agency Logo"
-            className="h-8 w-auto object-contain"
+            className="h-7 w-auto object-contain rounded-sm"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
             }}
@@ -48,16 +59,21 @@ const Navbar = () => {
       </div>
 
       {/* Nav center */}
-      <div className="hidden md:flex items-center gap-8">
+      <div className="hidden md:flex items-center gap-7">
         {navLinks.map((link) => (
           <NavLink
             key={link.path}
             to={link.path}
             className={({ isActive }) =>
-              `text-sm transition-colors duration-200 ${
-                isActive ? 'text-accent font-semibold' : 'text-white/50 font-normal hover:text-white'
+              `text-[13px] tracking-wide transition-all duration-300 ${
+                isActive
+                  ? 'font-semibold'
+                  : 'font-normal hover:opacity-100'
               }`
             }
+            style={({ isActive }) => ({
+              color: isActive ? 'var(--accent-text)' : 'var(--text-muted)',
+            })}
           >
             {link.name}
           </NavLink>
@@ -65,18 +81,28 @@ const Navbar = () => {
       </div>
 
       {/* Controls right */}
-      <div className="flex-1 flex items-center justify-end gap-6">
+      <div className="flex items-center gap-5">
         {/* Language toggle */}
-        <div className="flex items-center gap-2 bg-white/5 p-1 rounded-lg">
+        <div
+          className="flex items-center gap-1.5 p-1 rounded-full border transition-colors duration-300"
+          style={{
+            backgroundColor: 'var(--bg-elevated)',
+            borderColor: 'var(--border-subtle)',
+          }}
+        >
           {(['AZ', 'EN', 'RU'] as const).map((lang) => (
             <button
               key={lang}
               onClick={() => setLanguage(lang)}
-              className={`text-[10px] px-2 py-1 rounded transition-all ${
+              className={`text-[9px] font-bold px-2.5 py-1 rounded-full transition-all ${
                 language === lang
-                  ? 'text-accent border border-accent/40 bg-accent/5'
-                  : 'text-white/40 hover:text-white/70'
+                  ? 'border border-accent/20'
+                  : ''
               }`}
+              style={{
+                color: language === lang ? 'var(--accent-text)' : 'var(--text-ghost)',
+                backgroundColor: language === lang ? 'var(--glow-accent-subtle)' : 'transparent',
+              }}
             >
               {lang}
             </button>
@@ -85,16 +111,23 @@ const Navbar = () => {
 
         {/* Theme toggle */}
         <button
-          onClick={() => setIsDark(!isDark)}
-          className="text-white/60 hover:text-white transition-colors"
+          onClick={toggleTheme}
+          className="transition-colors duration-300 cursor-pointer hover:opacity-80"
+          style={{ color: 'var(--text-faint)' }}
+          aria-label="Toggle theme"
         >
-          {isDark ? <Moon size={18} /> : <Sun size={18} />}
+          {isDark ? <Moon size={16} /> : <Sun size={16} />}
         </button>
 
         {/* Login button */}
         <Link
           to="/portal"
-          className="text-sm px-5 py-2 rounded-full border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all"
+          className="text-[13px] px-6 py-2 rounded-full border transition-all font-medium hover:opacity-90"
+          style={{
+            backgroundColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.06)',
+            borderColor: 'var(--border-subtle)',
+            color: 'var(--text-secondary)',
+          }}
         >
           Giriş
         </Link>

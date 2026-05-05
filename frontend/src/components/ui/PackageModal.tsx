@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Play } from 'lucide-react';
 import { packages } from '../../data/packages';
 import { cinematicEasing } from '../../utils/animations';
+import { useTheme } from '../../context/ThemeContext';
 
 interface PackageModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface PackageModalProps {
 
 const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => {
   const backdropRef = useRef<HTMLDivElement>(null);
+  const { isDark } = useTheme();
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -49,31 +51,55 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleBackdropClick}
-          className="fixed inset-0 z-[100] h-screen w-screen flex items-center justify-center bg-black/80 backdrop-blur-sm px-6"
+          className="fixed inset-0 z-[100] h-screen w-screen flex items-center justify-center backdrop-blur-sm px-6"
+          style={{ backgroundColor: 'var(--modal-backdrop)' }}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.4, ease: cinematicEasing }}
-            className="bg-[rgba(18,18,18,0.95)] backdrop-blur-2xl border border-white/[0.07] rounded-3xl max-w-xl w-full p-10 relative overflow-y-auto no-scrollbar max-h-[85vh]"
+            className="backdrop-blur-2xl border rounded-3xl max-w-xl w-full p-10 relative overflow-y-auto no-scrollbar max-h-[85vh]"
+            style={{
+              backgroundColor: 'var(--modal-bg)',
+              borderColor: 'var(--card-border)',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
             <button
               onClick={onClose}
-              className="absolute top-5 right-5 text-white/40 hover:text-white transition-colors cursor-pointer"
+              className="absolute top-5 right-5 transition-colors cursor-pointer hover:opacity-70"
+              style={{ color: 'var(--text-faint)' }}
             >
               <X size={18} />
             </button>
 
             {/* Video section (YouTube Facade) */}
-            <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.05] mb-8 group">
+            <div
+              className="relative w-full aspect-video rounded-xl overflow-hidden border mb-8 group"
+              style={{
+                backgroundColor: 'var(--card-bg)',
+                borderColor: 'var(--card-border)',
+              }}
+            >
               {!pkg.videoSrc || pkg.videoSrc.includes('.mp4') ? (
                 // Facade state
                 <>
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#1A1A1A] to-[#0A0A0A]" />
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(163,230,53,0.15)_0%,transparent_50%)]" />
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: isDark
+                        ? 'linear-gradient(135deg, #1A1A1A, #0A0A0A)'
+                        : 'linear-gradient(135deg, #F0F0F0, #E0E0E0)',
+                    }}
+                  />
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background: `radial-gradient(circle at center, var(--glow-accent) 0%, transparent 50%)`,
+                    }}
+                  />
                   
                   <div className="absolute inset-0 flex items-center justify-center cursor-pointer transition-colors"
                     onClick={(e) => {
@@ -83,8 +109,14 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
                       }
                     }}
                   >
-                    <div className="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-full group-hover:scale-110 group-hover:bg-white/10 group-hover:border-accent/30 transition-all duration-300">
-                      <Play size={24} className="text-white/90 group-hover:text-accent transition-colors" fill="currentColor" />
+                    <div
+                      className="backdrop-blur-md border p-4 rounded-full group-hover:scale-110 transition-all duration-300"
+                      style={{
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                        borderColor: 'var(--border-default)',
+                      }}
+                    >
+                      <Play size={24} className="text-accent group-hover:text-accent transition-colors" fill="currentColor" />
                     </div>
                   </div>
                 </>
@@ -93,15 +125,15 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
 
             {/* Content */}
             <div className="text-left">
-              <p className="text-accent text-xs uppercase tracking-widest font-medium mb-2">
+              <p className="text-xs uppercase tracking-widest font-medium mb-2" style={{ color: 'var(--accent-text)' }}>
                 {pkg.name}
               </p>
-              <h2 className="font-heading text-4xl font-bold text-white mb-1">
+              <h2 className="font-heading text-4xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
                 {pkg.price}
-                {pkg.period && <span className="text-white/40 text-lg font-normal ml-2">{pkg.period}</span>}
+                {pkg.period && <span className="text-lg font-normal ml-2" style={{ color: 'var(--text-faint)' }}>{pkg.period}</span>}
               </h2>
-              <p className="text-white/50 text-sm mb-6">{pkg.tagline}</p>
-              <p className="text-white/60 text-sm leading-relaxed mb-8">
+              <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>{pkg.tagline}</p>
+              <p className="text-sm leading-relaxed mb-8" style={{ color: 'var(--text-secondary)' }}>
                 {pkg.desc}
               </p>
 
@@ -109,14 +141,14 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
               <div className="space-y-4 mb-8">
                 {pkg.features.map((feature, idx) => (
                   <div key={idx} className="flex items-center gap-3">
-                    <Check size={14} className="text-accent flex-shrink-0" />
-                    <span className="text-white/70 text-sm">{feature}</span>
+                    <Check size={14} className="flex-shrink-0" style={{ color: 'var(--accent-text)' }} />
+                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{feature}</span>
                   </div>
                 ))}
               </div>
 
               {/* CTA button */}
-              <button className="w-full py-4 bg-accent text-black font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200">
+              <button className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200" style={{ color: 'var(--accent-on-accent)' }}>
                 {pkg.cta}
               </button>
             </div>

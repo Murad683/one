@@ -6,7 +6,7 @@ import { cockpitContainer, cockpitItem } from '../utils/animations';
 
 const PackagesPage = () => {
   return (
-    <PageTransition className="relative py-32 px-6 md:px-16 min-h-screen bg-carbon overflow-hidden">
+    <PageTransition className="relative pt-40 pb-32 px-6 md:px-16 min-h-screen overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <SectionOrbs
         orbs={[
           { color: 'rgba(163, 230, 53, 0.08)', size: 'w-[600px] h-[600px]', position: 'top-32 left-[-100px]', blur: 'blur-[130px]', duration: 18 },
@@ -21,13 +21,13 @@ const PackagesPage = () => {
           animate="show"
           className="max-w-2xl mx-auto mb-16"
         >
-          <motion.p variants={cockpitItem} className="text-accent text-xs uppercase tracking-widest font-medium mb-4">
+          <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
             Qiymət Paketləri
           </motion.p>
-          <motion.h1 variants={cockpitItem} className="font-heading text-5xl md:text-6xl font-bold text-white mb-6">
+          <motion.h1 variants={cockpitItem} className="font-heading text-5xl md:text-6xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
             Sizin üçün doğru plan
           </motion.h1>
-          <motion.p variants={cockpitItem} className="text-white/50 text-lg leading-relaxed">
+          <motion.p variants={cockpitItem} className="text-lg leading-relaxed" style={{ color: 'var(--text-muted)' }}>
             Hər ölçüdə biznes üçün uyğun paketlər. Şəffaf qiymət, aydın nəticələr.
           </motion.p>
         </motion.div>

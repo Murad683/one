@@ -17,8 +17,13 @@ const FilterTabs: React.FC<FilterTabsProps> = ({ active, onChange }) => {
           onClick={() => onChange(cat)}
           className={
             active === cat
-              ? 'px-6 py-2.5 rounded-full bg-accent text-black text-sm font-semibold transition-all shadow-[0_0_20px_rgba(163,230,53,0.2)]'
-              : 'px-6 py-2.5 rounded-full border border-white/10 text-white/50 text-sm hover:text-white hover:border-white/30 transition-all'
+              ? 'px-6 py-2.5 rounded-full bg-accent text-sm font-semibold transition-all shadow-[0_0_20px_rgba(163,230,53,0.2)]'
+              : 'px-6 py-2.5 rounded-full border text-sm transition-all hover:opacity-80'
+          }
+          style={
+            active === cat
+              ? { color: 'var(--accent-on-accent)' }
+              : { borderColor: 'var(--border-default)', color: 'var(--text-muted)' }
           }
         >
           {cat}

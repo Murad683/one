@@ -1,19 +1,84 @@
 @import "tailwindcss";
 
 @theme {
-  --color-carbon: #0A0A0A;
+  --color-carbon: var(--bg-primary);
   --color-accent: #A3E635;
+  --color-accent-dark: #65A30D;
   --font-heading: "Manrope", "Plus Jakarta Sans", sans-serif;
   --font-body: "Inter", sans-serif;
 }
 
+/* ─── Dark Theme (Default) ─────────────────── */
+:root,
+.dark {
+  --bg-primary: #0A0A0A;
+  --bg-secondary: #111111;
+  --bg-elevated: rgba(255, 255, 255, 0.03);
+  --bg-elevated-hover: rgba(255, 255, 255, 0.06);
+  --text-primary: #FAFAFA;
+  --text-secondary: rgba(255, 255, 255, 0.70);
+  --text-muted: rgba(255, 255, 255, 0.50);
+  --text-faint: rgba(255, 255, 255, 0.40);
+  --text-ghost: rgba(255, 255, 255, 0.20);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --glass-bg: rgba(0, 0, 0, 0.30);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --card-bg: rgba(255, 255, 255, 0.03);
+  --card-border: rgba(255, 255, 255, 0.05);
+  --card-border-top: rgba(255, 255, 255, 0.10);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.10);
+  --modal-bg: rgba(18, 18, 18, 0.95);
+  --modal-backdrop: rgba(0, 0, 0, 0.80);
+  --glow-accent: rgba(163, 230, 53, 0.15);
+  --glow-accent-subtle: rgba(163, 230, 53, 0.07);
+  --overlay-hero-from: rgba(0, 0, 0, 0.50);
+  --overlay-hero-via: rgba(0, 0, 0, 0.60);
+  --shadow-navbar: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --accent-text: #A3E635;
+  --accent-on-accent: #000000;
+}
+
+/* ─── Light Theme ───────────────────────────── */
+.light {
+  --bg-primary: #F8F8F8;
+  --bg-secondary: #FFFFFF;
+  --bg-elevated: rgba(0, 0, 0, 0.03);
+  --bg-elevated-hover: rgba(0, 0, 0, 0.06);
+  --text-primary: #1A1A1A;
+  --text-secondary: rgba(0, 0, 0, 0.70);
+  --text-muted: rgba(0, 0, 0, 0.50);
+  --text-faint: rgba(0, 0, 0, 0.40);
+  --text-ghost: rgba(0, 0, 0, 0.15);
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-default: rgba(0, 0, 0, 0.10);
+  --glass-bg: rgba(255, 255, 255, 0.60);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --card-bg: rgba(0, 0, 0, 0.02);
+  --card-border: rgba(0, 0, 0, 0.06);
+  --card-border-top: rgba(0, 0, 0, 0.08);
+  --input-bg: rgba(0, 0, 0, 0.03);
+  --input-border: rgba(0, 0, 0, 0.10);
+  --modal-bg: rgba(255, 255, 255, 0.97);
+  --modal-backdrop: rgba(0, 0, 0, 0.40);
+  --glow-accent: rgba(101, 163, 13, 0.12);
+  --glow-accent-subtle: rgba(101, 163, 13, 0.06);
+  --overlay-hero-from: rgba(248, 248, 248, 0.50);
+  --overlay-hero-via: rgba(248, 248, 248, 0.70);
+  --shadow-navbar: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --accent-text: #65A30D;
+  --accent-on-accent: #000000;
+}
+
 @layer base {
   body {
-    background: #0A0A0A;
-    color: #FAFAFA;
+    background: var(--bg-primary);
+    color: var(--text-primary);
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4 {

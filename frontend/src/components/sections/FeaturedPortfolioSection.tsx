@@ -25,7 +25,7 @@ const projects = [
 
 const FeaturedPortfolioSection = () => {
   return (
-    <section className="py-32 px-6 md:px-16 bg-carbon">
+    <section className="py-32 px-6 md:px-16 transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <motion.div 
         variants={cockpitContainer}
         initial="hidden"
@@ -35,17 +35,18 @@ const FeaturedPortfolioSection = () => {
       >
         <div className="flex justify-between items-end mb-16">
           <div>
-            <motion.p variants={cockpitItem} className="text-accent text-xs uppercase tracking-widest font-medium mb-4">
+            <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
               İşlərimiz
             </motion.p>
-            <motion.h2 variants={cockpitItem} className="font-heading text-4xl md:text-5xl font-semibold text-white">
+            <motion.h2 variants={cockpitItem} className="font-heading text-4xl md:text-5xl font-semibold" style={{ color: 'var(--text-primary)' }}>
               Seçilmiş İşlər
             </motion.h2>
           </div>
           <motion.div variants={cockpitItem}>
             <Link
               to="/portfolio"
-              className="text-white/40 text-sm hover:text-accent transition-colors mb-2 inline-block"
+              className="text-sm transition-colors mb-2 inline-block hover:opacity-80"
+              style={{ color: 'var(--text-faint)' }}
             >
               Hamısına Bax →
             </Link>
@@ -58,9 +59,10 @@ const FeaturedPortfolioSection = () => {
               key={index}
               whileHover={{ y: -4 }}
               transition={{ duration: 0.2 }}
-              className={`relative overflow-hidden rounded-2xl aspect-video cursor-pointer group bg-white/[0.04] ${
+              className={`relative overflow-hidden rounded-2xl aspect-video cursor-pointer group ${
                 project.fullWidth ? 'md:col-span-2' : 'col-span-1'
               }`}
+              style={{ backgroundColor: 'var(--card-bg)' }}
             >
               <img
                 src={project.thumbnailUrl}

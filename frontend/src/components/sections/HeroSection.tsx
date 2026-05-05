@@ -2,9 +2,11 @@ import { useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { cockpitContainer, cockpitItem } from '../../utils/animations';
+import { useTheme } from '../../context/ThemeContext';
 
 const HeroSection = () => {
   const { scrollY } = useScroll();
+  const { isDark } = useTheme();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -37,17 +39,32 @@ const HeroSection = () => {
           muted
           loop
           playsInline
-          className="w-full h-full object-cover bg-[#0A0A0A]"
+          className="w-full h-full object-cover"
+          style={{ backgroundColor: 'var(--bg-primary)' }}
         >
           <source src="/videos/hero-bg.mp4" type="video/mp4" />
         </video>
       </motion.div>
 
       {/* Protective Top Gradient Mask for Navbar Readability */}
-      <div className="absolute top-0 inset-x-0 h-40 bg-gradient-to-b from-black/90 via-black/40 to-transparent z-10 pointer-events-none" />
+      <div
+        className="absolute top-0 inset-x-0 h-40 z-10 pointer-events-none"
+        style={{
+          background: isDark
+            ? 'linear-gradient(to bottom, rgba(0,0,0,0.90), rgba(0,0,0,0.40), transparent)'
+            : 'linear-gradient(to bottom, rgba(248,248,248,0.95), rgba(248,248,248,0.50), transparent)',
+        }}
+      />
 
       {/* Darker overlay to keep it moody and ensure text readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/60 to-carbon z-10 pointer-events-none" />
+      <div
+        className="absolute inset-0 z-10 pointer-events-none"
+        style={{
+          background: isDark
+            ? 'linear-gradient(to bottom, rgba(0,0,0,0.50), rgba(0,0,0,0.60), var(--bg-primary))'
+            : 'linear-gradient(to bottom, rgba(248,248,248,0.50), rgba(248,248,248,0.70), var(--bg-primary))',
+        }}
+      />
 
       {/* Content */}
       <motion.div
@@ -58,7 +75,8 @@ const HeroSection = () => {
       >
         <motion.p
           variants={cockpitItem}
-          className="text-accent text-xs font-medium uppercase tracking-[0.2em] mb-6"
+          className="text-xs font-medium uppercase tracking-[0.2em] mb-6"
+          style={{ color: 'var(--accent-text)' }}
         >
           Rəqəmsal İnkişaf Şirkəti
         </motion.p>
@@ -67,13 +85,14 @@ const HeroSection = () => {
           variants={cockpitItem}
           className="flex flex-col gap-2 mb-8"
         >
-          <span className="font-heading text-7xl md:text-8xl font-medium text-white leading-[1.0]">Brendinizi</span>
-          <span className="font-heading text-7xl md:text-8xl font-medium text-white leading-[1.0]">Gələcəyə Daşıyırıq</span>
+          <span className="font-heading text-7xl md:text-8xl font-medium leading-[1.0]" style={{ color: 'var(--text-primary)' }}>Brendinizi</span>
+          <span className="font-heading text-7xl md:text-8xl font-medium leading-[1.0]" style={{ color: 'var(--text-primary)' }}>Gələcəyə Daşıyırıq</span>
         </motion.h1>
 
         <motion.p
           variants={cockpitItem}
-          className="text-white/50 text-lg md:text-xl font-light max-w-xl mx-auto mb-12 leading-relaxed"
+          className="text-lg md:text-xl font-light max-w-xl mx-auto mb-12 leading-relaxed"
+          style={{ color: 'var(--text-muted)' }}
         >
           Strateji kreativ həllər, premium video istehsalı və rəqəmsal marketinq xidmətləri.
         </motion.p>
@@ -81,7 +100,8 @@ const HeroSection = () => {
         <motion.div variants={cockpitItem}>
           <Link
             to="/paketler"
-            className="inline-flex items-center gap-2 px-10 py-5 bg-accent text-black font-semibold text-base rounded-full hover:bg-accent/90 transition-all duration-200 hover:scale-[1.02]"
+            className="inline-flex items-center gap-2 px-10 py-5 bg-accent font-semibold text-base rounded-full hover:bg-accent/90 transition-all duration-200 hover:scale-[1.02]"
+            style={{ color: 'var(--accent-on-accent)' }}
           >
             Xidmətlərimizə Bax →
           </Link>

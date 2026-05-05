@@ -28,21 +28,25 @@ const PricingCard = ({ pkg, openModal }: { pkg: any, openModal: (pkg: any) => vo
       variants={cockpitItem}
       whileHover={{
         scale: 1.02,
-        borderColor: pkg.recommended ? 'rgba(163,230,53,0.35)' : 'rgba(163,230,53,0.15)',
-        boxShadow: '0 0 40px rgba(163,230,53,0.07)',
+        boxShadow: '0 0 40px var(--glow-accent-subtle)',
       }}
       onClick={() => openModal(pkg)}
-      className={`bg-white/[0.03] backdrop-blur-md rounded-3xl p-8 flex flex-col cursor-pointer border transition-colors relative overflow-hidden h-full ${
-        pkg.recommended ? 'border-accent/30 pt-10' : 'border-white/[0.05]'
+      className={`backdrop-blur-md rounded-3xl p-8 flex flex-col cursor-pointer border transition-colors duration-300 relative overflow-hidden h-full ${
+        pkg.recommended ? 'pt-10' : ''
       }`}
-      style={{ borderTopColor: 'rgba(255,255,255,0.10)' }}
+      style={{
+        backgroundColor: 'var(--card-bg)',
+        borderColor: pkg.recommended ? 'var(--accent-text)' : 'var(--card-border)',
+        borderTopColor: 'var(--card-border-top)',
+        borderWidth: pkg.recommended ? '1.5px' : '1px',
+      }}
     >
       {/* Spotlight glow effect */}
       <div
         className="pointer-events-none absolute -inset-px rounded-3xl transition-opacity duration-300 z-0"
         style={{
           opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(163, 230, 53, 0.15), transparent 40%)`,
+          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, var(--glow-accent), transparent 40%)`,
         }}
       />
 
@@ -62,37 +66,37 @@ const PricingCard = ({ pkg, openModal }: { pkg: any, openModal: (pkg: any) => vo
         {/* ── TOP: centered block ── */}
         <div className="text-center mb-8">
           {/* Package name */}
-          <p className="text-white/40 text-xs uppercase tracking-[0.2em] font-medium mb-5">
+          <p className="text-xs uppercase tracking-[0.2em] font-medium mb-5" style={{ color: 'var(--text-faint)' }}>
             {pkg.name}
           </p>
 
           {/* Price */}
           <div className="flex items-end justify-center gap-1">
-            <span className="font-heading text-5xl font-bold text-white leading-none">
+            <span className="font-heading text-5xl font-bold leading-none" style={{ color: 'var(--text-primary)' }}>
               {pkg.price}
             </span>
             {pkg.period && (
-              <span className="text-white/40 text-base font-normal mb-1">
+              <span className="text-base font-normal mb-1" style={{ color: 'var(--text-faint)' }}>
                 {pkg.period}
               </span>
             )}
           </div>
 
           {/* Tagline */}
-          <p className="text-white/50 text-sm mt-3 leading-relaxed">
+          <p className="text-sm mt-3 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
             {pkg.tagline}
           </p>
         </div>
 
         {/* ── DIVIDER ── */}
-        <div className="h-px bg-white/[0.06] mb-8" />
+        <div className="h-px mb-8" style={{ backgroundColor: 'var(--border-subtle)' }} />
 
         {/* ── FEATURES: left-aligned list, but the whole block is centered with mx-auto ── */}
         <ul className="space-y-3 mb-10 flex-1 w-fit mx-auto">
           {pkg.features.map((feature: string, i: number) => (
             <li key={i} className="flex items-start gap-3">
-              <Check size={13} className="text-accent mt-0.5 flex-shrink-0" />
-              <span className="text-white/60 text-sm text-left">{feature}</span>
+              <Check size={13} className="mt-0.5 flex-shrink-0" style={{ color: 'var(--accent-text)' }} />
+              <span className="text-sm text-left" style={{ color: 'var(--text-secondary)' }}>{feature}</span>
             </li>
           ))}
         </ul>
@@ -104,8 +108,12 @@ const PricingCard = ({ pkg, openModal }: { pkg: any, openModal: (pkg: any) => vo
             openModal(pkg);
           }}
           className={pkg.recommended
-            ? "w-full py-3 bg-accent text-black font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200"
-            : "w-full py-3 border border-white/10 text-white/70 text-sm rounded-full hover:border-accent/30 hover:text-white transition-all duration-200"
+            ? "w-full py-3 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200"
+            : "w-full py-3 border text-sm rounded-full transition-all duration-200 hover:opacity-80"
+          }
+          style={pkg.recommended
+            ? { color: 'var(--accent-on-accent)' }
+            : { borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }
           }
         >
           {pkg.cta}

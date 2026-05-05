@@ -18,7 +18,10 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="relative border-t border-white/[0.05] mt-32">
+    <footer
+      className="relative mt-32 transition-colors duration-300"
+      style={{ borderTop: '1px solid var(--border-subtle)' }}
+    >
 
       {/* Very subtle top glow */}
       <div
@@ -42,7 +45,7 @@ export default function Footer() {
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             </Link>
-            <p className="text-white/40 text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-faint)' }}>
               Brendləri gələcəyə daşıyan kreativ rəqəmsal tərəfdaşınız.
               Video, marketinq və dizayn xidmətləri.
             </p>
@@ -50,14 +53,15 @@ export default function Footer() {
 
           {/* Center: Nav links */}
           <div className="flex flex-col gap-4">
-            <p className="text-white/20 text-[10px] uppercase tracking-widest font-medium mb-2">
+            <p className="text-[10px] uppercase tracking-widest font-medium mb-2" style={{ color: 'var(--text-ghost)' }}>
               Səhifələr
             </p>
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className="text-white/50 text-sm hover:text-white transition-colors duration-200"
+                className="text-sm transition-colors duration-200 hover:opacity-80"
+                style={{ color: 'var(--text-muted)' }}
               >
                 {link.label}
               </Link>
@@ -66,7 +70,7 @@ export default function Footer() {
 
           {/* Right: Social icons */}
           <div>
-            <p className="text-white/20 text-[10px] uppercase tracking-widest font-medium mb-6">
+            <p className="text-[10px] uppercase tracking-widest font-medium mb-6" style={{ color: 'var(--text-ghost)' }}>
               Sosial Media
             </p>
             <div className="flex gap-3">
@@ -77,10 +81,13 @@ export default function Footer() {
                   aria-label={label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.07]
-                    flex items-center justify-center text-white/40
-                    hover:text-accent hover:border-accent/30 hover:bg-accent/5
-                    transition-all duration-200"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center hover:text-accent hover:border-accent/30 transition-all duration-200"
+                  style={{
+                    backgroundColor: 'var(--card-bg)',
+                    borderWidth: '1px',
+                    borderColor: 'var(--card-border)',
+                    color: 'var(--text-faint)',
+                  }}
                 >
                   <Icon size={16} />
                 </a>
@@ -90,10 +97,10 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-white/[0.05] mb-8" />
+        <div className="h-px mb-8" style={{ backgroundColor: 'var(--border-subtle)' }} />
 
         {/* Bottom: Copyright */}
-        <p className="text-center text-white/20 text-xs leading-relaxed">
+        <p className="text-center text-xs leading-relaxed" style={{ color: 'var(--text-ghost)' }}>
           © Bakı Texnoloji Layihələri 2026 — Bütün hüquqlar qorunur
         </p>
 

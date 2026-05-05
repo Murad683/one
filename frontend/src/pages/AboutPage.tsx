@@ -6,22 +6,22 @@ import { cockpitContainer, cockpitItem } from '../utils/animations';
 
 const AboutPage = () => {
   return (
-    <PageTransition className="min-h-screen bg-carbon">
+    <PageTransition className="min-h-screen transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {/* Section 1 — Story */}
       <motion.section 
         variants={cockpitContainer}
         initial="hidden"
         animate="show"
-        className="py-32 px-6 md:px-24 max-w-5xl mx-auto"
+        className="pt-40 pb-32 px-6 md:px-24 max-w-5xl mx-auto"
       >
-        <motion.p variants={cockpitItem} className="text-accent text-xs uppercase tracking-widest font-medium mb-4">
+        <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
           Biz Kimik
         </motion.p>
-        <motion.h1 variants={cockpitItem} className="font-heading text-5xl md:text-6xl font-bold text-white mb-10">
+        <motion.h1 variants={cockpitItem} className="font-heading text-5xl md:text-6xl font-bold mb-10" style={{ color: 'var(--text-primary)' }}>
           Brendləri Quranlara Tərəfdaşıq
         </motion.h1>
 
-        <motion.div variants={cockpitItem} className="text-white/60 text-lg leading-relaxed space-y-6">
+        <motion.div variants={cockpitItem} className="text-lg leading-relaxed space-y-6" style={{ color: 'var(--text-secondary)' }}>
           <p>
             2019-cu ildə qurulan şirkətimiz, Azərbaycandakı ən innovativ brendlərə kreativ xidmətlər göstərməkdə ixtisaslaşmışdır. Biz yalnız görüntü yaratmır, brendlər üçün uzunmüddətli rəqəmsal miras qururuq.
           </p>
@@ -31,13 +31,17 @@ const AboutPage = () => {
         </motion.div>
 
         {/* Stats row */}
-        <motion.div variants={cockpitItem} className="grid grid-cols-2 md:grid-cols-4 gap-10 mt-20 pt-20 border-t border-white/[0.06]">
+        <motion.div
+          variants={cockpitItem}
+          className="grid grid-cols-2 md:grid-cols-4 gap-10 mt-20 pt-20"
+          style={{ borderTop: '1px solid var(--border-subtle)' }}
+        >
           {stats.map((stat, idx) => (
             <div key={idx}>
-              <div className="font-heading text-5xl font-bold text-accent">
+              <div className="font-heading text-5xl font-bold" style={{ color: 'var(--accent-text)' }}>
                 {stat.value}
               </div>
-              <div className="text-white/50 text-sm mt-2">
+              <div className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>
                 {stat.label}
               </div>
             </div>
@@ -46,7 +50,7 @@ const AboutPage = () => {
       </motion.section>
       {/* Quote */}
       <div className="py-24 text-center max-w-2xl mx-auto">
-        <p className="font-heading text-2xl md:text-3xl font-light text-white/60 leading-relaxed italic">
+        <p className="font-heading text-2xl md:text-3xl font-light leading-relaxed italic" style={{ color: 'var(--text-secondary)' }}>
           "Biz sadəcə xidmət göstərmirik —
           brendlərin uzunmüddətli uğuruna sərmayə edirik."
         </p>
@@ -58,13 +62,14 @@ const AboutPage = () => {
         initial="hidden"
         whileInView="show"
         viewport={{ once: true, margin: "-10%" }}
-        className="py-24 px-6 md:px-16 border-t border-white/[0.04]"
+        className="py-24 px-6 md:px-16"
+        style={{ borderTop: '1px solid var(--border-subtle)' }}
       >
         <div className="max-w-7xl mx-auto">
-          <motion.p variants={cockpitItem} className="text-accent text-xs uppercase tracking-widest font-medium mb-4">
+          <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
             Komandamız
           </motion.p>
-          <motion.h2 variants={cockpitItem} className="font-heading text-4xl md:text-5xl font-semibold text-white mb-16">
+          <motion.h2 variants={cockpitItem} className="font-heading text-4xl md:text-5xl font-semibold mb-16" style={{ color: 'var(--text-primary)' }}>
             Bizimlə Tanış Olun
           </motion.h2>
 
@@ -72,18 +77,22 @@ const AboutPage = () => {
             {team.map((member, idx) => (
               <motion.div
                 key={idx}
-                whileHover={{ y: -4, borderColor: 'rgba(163,230,53,0.15)' }}
-                className="bg-white/[0.03] backdrop-blur-md border border-white/[0.05] rounded-2xl p-6 text-center transition-colors cursor-default"
+                whileHover={{ y: -4 }}
+                className="backdrop-blur-md border rounded-2xl p-6 text-center transition-colors cursor-default"
+                style={{
+                  backgroundColor: 'var(--card-bg)',
+                  borderColor: 'var(--card-border)',
+                }}
               >
                 <img
                   src={member.avatarUrl}
                   alt={member.name}
                   className="w-16 h-16 rounded-full object-cover mx-auto mb-4 grayscale hover:grayscale-0 transition-all duration-300"
                 />
-                <h3 className="font-heading text-sm font-semibold text-white mb-1">
+                <h3 className="font-heading text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
                   {member.name}
                 </h3>
-                <p className="text-accent text-xs">
+                <p className="text-xs" style={{ color: 'var(--accent-text)' }}>
                   {member.role}
                 </p>
               </motion.div>

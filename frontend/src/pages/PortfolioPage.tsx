@@ -10,7 +10,7 @@ const PortfolioPage = () => {
   const [activeFilter, setActiveFilter] = useState('Hamısı');
 
   return (
-    <PageTransition className="relative py-32 px-6 md:px-16 min-h-screen bg-carbon overflow-hidden">
+    <PageTransition className="relative pt-40 pb-32 px-6 md:px-16 min-h-screen overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <SectionOrbs
         orbs={[
           { color: 'rgba(163, 230, 53, 0.06)', size: 'w-[500px] h-[500px]', position: 'top-1/3 right-0', blur: 'blur-[120px]', duration: 20 },
@@ -24,13 +24,13 @@ const PortfolioPage = () => {
           animate="show"
           className="text-center mb-16"
         >
-          <motion.p variants={cockpitItem} className="text-accent text-xs uppercase tracking-widest font-medium mb-4">
+          <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
             İşlərimiz
           </motion.p>
-          <motion.h1 variants={cockpitItem} className="font-heading text-5xl md:text-6xl font-bold text-white mb-6">
+          <motion.h1 variants={cockpitItem} className="font-heading text-5xl md:text-6xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
             Portfolio
           </motion.h1>
-          <motion.p variants={cockpitItem} className="text-white/50 text-lg max-w-2xl mx-auto leading-relaxed">
+          <motion.p variants={cockpitItem} className="text-lg max-w-2xl mx-auto leading-relaxed" style={{ color: 'var(--text-muted)' }}>
             Müştərilərimiz üçün yaratdığımız seçilmiş layihələr.
           </motion.p>
         </motion.div>

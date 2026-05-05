@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { AnimatePresence } from 'framer-motion';
 import Layout from './components/layout/Layout';
 import { LanguageProvider } from './context/LanguageContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -34,12 +35,14 @@ function AnimatedRoutes() {
 
 function App() {
   return (
-    <LanguageProvider>
-      <Router>
-        <ScrollToTop />
-        <AnimatedRoutes />
-      </Router>
-    </LanguageProvider>
+    <ThemeProvider>
+      <LanguageProvider>
+        <Router>
+          <ScrollToTop />
+          <AnimatedRoutes />
+        </Router>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }
 

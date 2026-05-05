@@ -55,7 +55,7 @@ export const packages = [
   {
     id: 'ferdi',
     name: 'FƏRDİ',
-    price: 'Sizin üçün',
+    price: 'Xüsusi',
     period: '',
     tagline: 'Xüsusi tələblər üçün fərdi həll',
     recommended: false,

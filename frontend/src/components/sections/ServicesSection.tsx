@@ -28,30 +28,34 @@ const ServiceCard = ({ service }: { service: any }) => {
       onMouseLeave={() => setIsHovered(false)}
       whileHover={{
         scale: 1.01,
-        borderColor: 'rgba(163,230,53,0.2)',
-        boxShadow: '0 0 30px rgba(163,230,53,0.06)',
+        boxShadow: '0 0 30px var(--glow-accent-subtle)',
       }}
-      className="relative bg-white/[0.03] backdrop-blur-md border border-white/[0.05] rounded-2xl p-8 cursor-default overflow-hidden group"
-      style={{ borderTopColor: 'rgba(255,255,255,0.10)' }}
+      className="relative backdrop-blur-md rounded-2xl p-8 cursor-default overflow-hidden group transition-colors duration-300"
+      style={{
+        backgroundColor: 'var(--card-bg)',
+        borderWidth: '1px',
+        borderColor: 'var(--card-border)',
+        borderTopColor: 'var(--card-border-top)',
+      }}
     >
       {/* Spotlight glow effect */}
       <div
         className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-300 z-0"
         style={{
           opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(163, 230, 53, 0.15), transparent 40%)`,
+          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, var(--glow-accent), transparent 40%)`,
         }}
       />
       
       {/* Content wrapper to stay above the glow */}
       <div className="relative z-10">
         {IconComponent && (
-          <IconComponent className="w-8 h-8 text-accent mb-6" />
+          <IconComponent className="w-8 h-8 mb-6" style={{ color: 'var(--accent-text)' }} />
         )}
-        <h3 className="font-heading text-lg font-semibold text-white mb-3">
+        <h3 className="font-heading text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
           {service.title}
         </h3>
-        <p className="text-white/50 text-sm leading-relaxed">
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
           {service.desc}
         </p>
       </div>
@@ -61,7 +65,7 @@ const ServiceCard = ({ service }: { service: any }) => {
 
 const ServicesSection = () => {
   return (
-    <section className="py-32 px-6 md:px-16 bg-carbon">
+    <section className="py-32 px-6 md:px-16 transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <motion.div 
         variants={cockpitContainer}
         initial="hidden"
@@ -70,10 +74,10 @@ const ServicesSection = () => {
         className="max-w-7xl mx-auto"
       >
         <div className="mb-20">
-          <motion.p variants={cockpitItem} className="text-accent text-xs uppercase tracking-widest font-medium mb-4">
+          <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
             Xidmətlərimiz
           </motion.p>
-          <motion.h2 variants={cockpitItem} className="font-heading text-4xl md:text-5xl font-semibold text-white">
+          <motion.h2 variants={cockpitItem} className="font-heading text-4xl md:text-5xl font-semibold" style={{ color: 'var(--text-primary)' }}>
             Biz nə edirik
           </motion.h2>
         </div>
