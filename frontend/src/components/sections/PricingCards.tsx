@@ -76,7 +76,7 @@ const PricingCard = ({ pkg, openModal }: { pkg: typeof packages[number], openMod
           <div className="flex items-end justify-center gap-1">
             <span 
               className={`font-heading ${
-                (pkg.priceKey ? t(pkg.priceKey) : pkg.price).length > 8 
+                (pkg.priceKey ? t(pkg.priceKey) : (pkg.price || '')).toString().length > 8 
                   ? 'text-3xl' 
                   : 'text-5xl'
               } font-bold leading-none`} 
