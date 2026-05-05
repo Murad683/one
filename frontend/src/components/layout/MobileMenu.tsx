@@ -19,15 +19,15 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
 
   React.useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
+      document.body.classList.add('lock-scroll');
+      document.documentElement.classList.add('lock-scroll');
     } else {
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
+      document.body.classList.remove('lock-scroll');
+      document.documentElement.classList.remove('lock-scroll');
     }
     return () => {
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
+      document.body.classList.remove('lock-scroll');
+      document.documentElement.classList.remove('lock-scroll');
     };
   }, [isOpen]);
 

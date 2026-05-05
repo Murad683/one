@@ -25,14 +25,14 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
 
     if (isOpen) {
       window.addEventListener('keydown', handleEscape);
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('lock-scroll');
+      document.documentElement.classList.add('lock-scroll');
     }
 
     return () => {
       window.removeEventListener('keydown', handleEscape);
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
+      document.body.classList.remove('lock-scroll');
+      document.documentElement.classList.remove('lock-scroll');
     };
   }, [isOpen, onClose]);
 

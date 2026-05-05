@@ -103,3 +103,12 @@
   display: none;              /* Chrome, Safari, Opera */
 }
 
+/* ─── Scroll Lock Utility ─────────────────── */
+.lock-scroll {
+  overflow: hidden !important;
+  height: 100vh !important;
+  touch-action: none !important;
+  -webkit-overflow-scrolling: none !important;
+  overscroll-behavior: none !important;
+}
+
