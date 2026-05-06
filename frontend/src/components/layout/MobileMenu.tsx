@@ -76,7 +76,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[110] backdrop-blur-md bg-black/40"
+            className="fixed inset-0 z-[110] bg-black/60"
           />
 
           {/* Menu Panel */}
@@ -85,10 +85,12 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
             initial="closed"
             animate="open"
             exit="closed"
-            className="fixed top-0 right-0 h-screen w-[85%] max-w-[400px] z-[120] flex flex-col p-10 border-l"
+            className="fixed top-0 right-0 h-screen w-[85%] max-w-[400px] z-[120] flex flex-col p-10 border-l backdrop-blur-xl"
             style={{
               backgroundColor: 'var(--modal-bg)',
               borderColor: 'var(--card-border)',
+              willChange: 'transform',
+              transform: 'translateZ(0)',
             }}
           >
             {/* Header */}

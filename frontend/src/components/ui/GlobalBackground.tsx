@@ -27,7 +27,7 @@ const GlobalBackground = () => {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full blur-[120px]"
+        className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full blur-[40px] md:blur-[120px]"
         style={{
           background: 'radial-gradient(circle, rgba(163, 230, 53, 0.04) 0%, rgba(163, 230, 53, 0) 70%)',
         }}
@@ -42,7 +42,7 @@ const GlobalBackground = () => {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[140px]"
+        className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[60px] md:blur-[140px]"
         style={{
           background: 'radial-gradient(circle, rgba(100, 50, 200, 0.03) 0%, rgba(100, 50, 200, 0) 70%)',
         }}
