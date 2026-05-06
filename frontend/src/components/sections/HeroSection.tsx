@@ -30,10 +30,10 @@ const HeroSection = () => {
 
   return (
     <section className="min-h-screen relative flex items-center justify-center text-center px-6 overflow-hidden">
-      {/* Background video container with parallax, blur, and opacity */}
+      {/* Background video container - Hidden on mobile for performance */}
       <motion.div
         style={{ y, filter, opacity }}
-        className="absolute inset-0 w-full h-full z-0 pointer-events-none scale-110" // scale up slightly to prevent parallax revealing edges
+        className="hidden md:block absolute inset-0 w-full h-full z-0 pointer-events-none scale-110"
       >
         <video
           ref={videoRef}
@@ -48,23 +48,23 @@ const HeroSection = () => {
         </video>
       </motion.div>
 
-      {/* Protective Top Gradient Mask for Navbar Readability */}
+      {/* Protective Top Gradient Mask - Adjusted for mobile transparency */}
       <div
         className="absolute top-0 inset-x-0 h-40 z-10 pointer-events-none"
         style={{
           background: isDark
-            ? 'linear-gradient(to bottom, rgba(0,0,0,0.90), rgba(0,0,0,0.40), transparent)'
-            : 'linear-gradient(to bottom, rgba(248,248,248,0.95), rgba(248,248,248,0.50), transparent)',
+            ? 'linear-gradient(to bottom, rgba(0,0,0,0.80), transparent)'
+            : 'linear-gradient(to bottom, rgba(248,248,248,0.80), transparent)',
         }}
       />
 
-      {/* Darker overlay to keep it moody and ensure text readability */}
+      {/* Main Overlay - Made transparent on mobile to show GlobalBackground */}
       <div
-        className="absolute inset-0 z-10 pointer-events-none"
+        className="absolute inset-0 z-10 pointer-events-none transition-colors duration-500"
         style={{
           background: isDark
-            ? 'linear-gradient(to bottom, rgba(0,0,0,0.50), rgba(0,0,0,0.60), var(--bg-primary))'
-            : 'linear-gradient(to bottom, rgba(248,248,248,0.50), rgba(248,248,248,0.70), var(--bg-primary))',
+            ? 'linear-gradient(to bottom, rgba(0,0,0,0.30), rgba(0,0,0,0.40), transparent)'
+            : 'linear-gradient(to bottom, rgba(248,248,248,0.30), rgba(248,248,248,0.50), transparent)',
         }}
       />
 

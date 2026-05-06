@@ -59,14 +59,14 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.4, ease: cinematicEasing }}
-            className="backdrop-blur-2xl border rounded-2xl sm:rounded-3xl max-w-xl w-full p-8 sm:p-10 relative overflow-y-auto no-scrollbar h-auto max-h-[85vh] sm:max-h-[90vh] shadow-2xl overscroll-contain"
+            className="backdrop-blur-2xl border rounded-2xl sm:rounded-3xl max-w-xl w-full p-0 relative overflow-hidden h-auto max-h-[85vh] sm:max-h-[90vh] flex flex-col shadow-2xl overscroll-contain"
             style={{
               backgroundColor: 'var(--modal-bg)',
               borderColor: 'var(--card-border)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
+            {/* Close button - Fixed at the top */}
             <button
               onClick={onClose}
               className="absolute top-5 right-5 z-50 p-2 rounded-full backdrop-blur-md border transition-all cursor-pointer hover:bg-white/10"
@@ -79,82 +79,85 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
               <X size={20} />
             </button>
 
-            {/* Video section (YouTube Facade) */}
-            <div
-              className="relative w-full aspect-video rounded-xl overflow-hidden border mb-8 group"
-              style={{
-                backgroundColor: 'var(--card-bg)',
-                borderColor: 'var(--card-border)',
-              }}
-            >
-              {!pkg.videoSrc || pkg.videoSrc.includes('.mp4') ? (
-                // Facade state
-                <>
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: isDark
-                        ? 'linear-gradient(135deg, #1A1A1A, #0A0A0A)'
-                        : 'linear-gradient(135deg, #F0F0F0, #E0E0E0)',
-                    }}
-                  />
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: `radial-gradient(circle at center, var(--glow-accent) 0%, transparent 50%)`,
-                    }}
-                  />
-                  
-                  <div className="absolute inset-0 flex items-center justify-center cursor-pointer transition-colors"
-                    onClick={(e) => {
-                      const container = e.currentTarget.parentElement;
-                      if (container) {
-                        container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
-                      }
-                    }}
-                  >
+            {/* Scrollable Content Area */}
+            <div className="overflow-y-auto no-scrollbar p-8 sm:p-10 overscroll-contain">
+              {/* Video section (YouTube Facade) */}
+              <div
+                className="relative w-full aspect-video rounded-xl overflow-hidden border mb-8 group"
+                style={{
+                  backgroundColor: 'var(--card-bg)',
+                  borderColor: 'var(--card-border)',
+                }}
+              >
+                {!pkg.videoSrc || pkg.videoSrc.includes('.mp4') ? (
+                  // Facade state
+                  <>
                     <div
-                      className="backdrop-blur-md border p-4 rounded-full group-hover:scale-110 transition-all duration-300"
+                      className="absolute inset-0"
                       style={{
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                        borderColor: 'var(--border-default)',
+                        background: isDark
+                          ? 'linear-gradient(135deg, #1A1A1A, #0A0A0A)'
+                          : 'linear-gradient(135deg, #F0F0F0, #E0E0E0)',
+                      }}
+                    />
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background: `radial-gradient(circle at center, var(--glow-accent) 0%, transparent 50%)`,
+                      }}
+                    />
+                    
+                    <div className="absolute inset-0 flex items-center justify-center cursor-pointer transition-colors"
+                      onClick={(e) => {
+                        const container = e.currentTarget.parentElement;
+                        if (container) {
+                          container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+                        }
                       }}
                     >
-                      <Play size={24} className="text-accent group-hover:text-accent transition-colors" fill="currentColor" />
+                      <div
+                        className="backdrop-blur-md border p-4 rounded-full group-hover:scale-110 transition-all duration-300"
+                        style={{
+                          backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                          borderColor: 'var(--border-default)',
+                        }}
+                      >
+                        <Play size={24} className="text-accent group-hover:text-accent transition-colors" fill="currentColor" />
+                      </div>
                     </div>
-                  </div>
-                </>
-              ) : null}
-            </div>
-
-            {/* Content */}
-            <div className="text-left">
-              <p className="text-xs uppercase tracking-widest font-medium mb-2" style={{ color: 'var(--accent-text)' }}>
-                {t(pkg.nameKey)}
-              </p>
-              <h2 className="font-heading text-2xl md:text-4xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-                {pkg.priceKey ? t(pkg.priceKey) : pkg.price}
-                {pkg.periodKey && <span className="text-lg font-normal ml-2" style={{ color: 'var(--text-faint)' }}>{t(pkg.periodKey)}</span>}
-              </h2>
-              <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>{t(pkg.taglineKey)}</p>
-              <p className="text-sm leading-relaxed mb-8" style={{ color: 'var(--text-secondary)' }}>
-                {t(pkg.descKey)}
-              </p>
-
-              {/* Features list */}
-              <div className="space-y-4 mb-8">
-                {pkg.featuresKeys.map((featureKey, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <Check size={14} className="flex-shrink-0" style={{ color: 'var(--accent-text)' }} />
-                    <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t(featureKey)}</span>
-                  </div>
-                ))}
+                  </>
+                ) : null}
               </div>
 
-              {/* CTA button */}
-              <button className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200" style={{ color: 'var(--accent-on-accent)' }}>
-                {t(pkg.ctaKey)}
-              </button>
+              {/* Content */}
+              <div className="text-left">
+                <p className="text-xs uppercase tracking-widest font-medium mb-2" style={{ color: 'var(--accent-text)' }}>
+                  {t(pkg.nameKey)}
+                </p>
+                <h2 className="font-heading text-2xl md:text-4xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                  {pkg.priceKey ? t(pkg.priceKey) : pkg.price}
+                  {pkg.periodKey && <span className="text-lg font-normal ml-2" style={{ color: 'var(--text-faint)' }}>{t(pkg.periodKey)}</span>}
+                </h2>
+                <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>{t(pkg.taglineKey)}</p>
+                <p className="text-sm leading-relaxed mb-8" style={{ color: 'var(--text-secondary)' }}>
+                  {t(pkg.descKey)}
+                </p>
+
+                {/* Features list */}
+                <div className="space-y-4 mb-8">
+                  {pkg.featuresKeys.map((featureKey: string, idx: number) => (
+                    <div key={idx} className="flex items-center gap-3">
+                      <Check size={14} className="flex-shrink-0" style={{ color: 'var(--accent-text)' }} />
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t(featureKey)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA button */}
+                <button className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200" style={{ color: 'var(--accent-on-accent)' }}>
+                  {t(pkg.ctaKey)}
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>
