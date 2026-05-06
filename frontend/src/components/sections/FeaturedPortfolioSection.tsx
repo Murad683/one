@@ -20,7 +20,7 @@ const FeaturedPortfolioSection = () => {
   };
 
   return (
-    <section className="py-32 px-6 md:px-16 transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <section className="py-32 px-6 md:px-16 transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
       <motion.div 
         variants={cockpitContainer}
         initial="hidden"

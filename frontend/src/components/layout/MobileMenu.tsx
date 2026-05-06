@@ -20,14 +20,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   React.useEffect(() => {
     if (isOpen) {
       document.body.classList.add('lock-scroll');
-      document.documentElement.classList.add('lock-scroll');
     } else {
       document.body.classList.remove('lock-scroll');
-      document.documentElement.classList.remove('lock-scroll');
     }
     return () => {
       document.body.classList.remove('lock-scroll');
-      document.documentElement.classList.remove('lock-scroll');
     };
   }, [isOpen]);
 

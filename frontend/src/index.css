@@ -22,8 +22,8 @@
   --text-ghost: rgba(255, 255, 255, 0.20);
   --border-subtle: rgba(255, 255, 255, 0.05);
   --border-default: rgba(255, 255, 255, 0.10);
-  --glass-bg: rgba(0, 0, 0, 0.30);
-  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-bg: rgba(0, 0, 0, 0.10);
+  --glass-border: rgba(255, 255, 255, 0.05);
   --card-bg: rgba(255, 255, 255, 0.03);
   --card-border: rgba(255, 255, 255, 0.05);
   --card-border-top: rgba(255, 255, 255, 0.10);
@@ -38,6 +38,7 @@
   --shadow-navbar: 0 8px 32px rgba(0, 0, 0, 0.3);
   --accent-text: #A3E635;
   --accent-on-accent: #000000;
+  --bg-image: url('/dark-back.jpg');
 }
 
 /* ─── Light Theme ───────────────────────────── */
@@ -53,8 +54,8 @@
   --text-ghost: rgba(0, 0, 0, 0.15);
   --border-subtle: rgba(0, 0, 0, 0.06);
   --border-default: rgba(0, 0, 0, 0.10);
-  --glass-bg: rgba(255, 255, 255, 0.60);
-  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.30);
+  --glass-border: rgba(0, 0, 0, 0.05);
   --card-bg: rgba(0, 0, 0, 0.02);
   --card-border: rgba(0, 0, 0, 0.06);
   --card-border-top: rgba(0, 0, 0, 0.08);
@@ -69,6 +70,7 @@
   --shadow-navbar: 0 8px 32px rgba(0, 0, 0, 0.08);
   --accent-text: #65A30D;
   --accent-on-accent: #000000;
+  --bg-image: url('/light-back.jpg');
 }
 
 @layer base {
@@ -89,26 +91,34 @@
     width: 100%;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: 'Manrope', 'Plus Jakarta Sans', sans-serif;
   }
 }
 
 /* ─── No Scrollbar Utility ─────────────────── */
 .no-scrollbar {
-  -ms-overflow-style: none;   /* IE and Edge */
-  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
+
 .no-scrollbar::-webkit-scrollbar {
-  display: none;              /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
 }
 
 /* ─── Scroll Lock Utility ─────────────────── */
 .lock-scroll {
   overflow: hidden !important;
-  height: 100vh !important;
+  /* Remove height: 100vh to prevent jump to top */
   touch-action: none !important;
   -webkit-overflow-scrolling: none !important;
   overscroll-behavior: none !important;
+  /* Prevent layout shift when scrollbar disappears (optional but good) */
+  padding-right: var(--scrollbar-width, 0px);
 }
-

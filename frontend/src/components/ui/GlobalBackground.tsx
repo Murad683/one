@@ -3,6 +3,20 @@ import { motion } from 'framer-motion';
 const GlobalBackground = () => {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+      {/* Base Background Image Layer */}
+      <div 
+        className="absolute inset-0 z-[-2] transition-all duration-700"
+        style={{ 
+          backgroundImage: 'var(--bg-image)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.6
+        }}
+      />
+      
+      {/* Subtle Overlay to ensure readability */}
+      <div className="absolute inset-0 z-[-1]" style={{ backgroundColor: 'var(--bg-primary)', opacity: 0.4 }} />
+
       <motion.div
         animate={{
           x: [0, 40, 0],

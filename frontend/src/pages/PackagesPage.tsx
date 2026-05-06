@@ -9,7 +9,7 @@ const PackagesPage = () => {
   const { t } = useTranslation();
 
   return (
-    <PageTransition className="relative pt-40 pb-32 px-6 md:px-16 min-h-screen overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <PageTransition className="relative pt-40 pb-32 px-6 md:px-16 min-h-screen overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
       <SectionOrbs
         orbs={[
           { color: 'rgba(163, 230, 53, 0.08)', size: 'w-[600px] h-[600px]', position: 'top-32 left-[-100px]', blur: 'blur-[130px]', duration: 18 },

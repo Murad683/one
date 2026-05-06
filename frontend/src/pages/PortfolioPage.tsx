@@ -12,7 +12,7 @@ const PortfolioPage = () => {
   const [activeFilter, setActiveFilter] = useState('all');
 
   return (
-    <PageTransition className="relative pt-40 pb-32 px-6 md:px-16 min-h-screen overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <PageTransition className="relative pt-40 pb-32 px-6 md:px-16 min-h-screen overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
       <SectionOrbs
         orbs={[
           { color: 'rgba(163, 230, 53, 0.06)', size: 'w-[500px] h-[500px]', position: 'top-1/3 right-0', blur: 'blur-[120px]', duration: 20 },

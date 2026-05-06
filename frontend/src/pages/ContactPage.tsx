@@ -19,7 +19,7 @@ const ContactPage = () => {
   const inputBaseStyles = "w-full rounded-xl px-5 py-4 text-sm focus:outline-none transition-colors";
 
   return (
-    <PageTransition className="min-h-screen transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <PageTransition className="min-h-screen transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
       <motion.div 
         variants={cockpitContainer}
         initial="hidden"

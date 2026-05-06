@@ -16,7 +16,7 @@ const PortalLoginPage = () => {
   };
 
   return (
-    <PageTransition className="min-h-screen flex flex-col items-center justify-center px-6 pt-32 pb-20 transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <PageTransition className="min-h-screen flex flex-col items-center justify-center px-6 pt-32 pb-20 transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
       <motion.div
         variants={cockpitContainer}
         initial="hidden"

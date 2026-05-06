@@ -69,7 +69,7 @@ const ServicesSection = () => {
   const { t } = useTranslation();
 
   return (
-    <section className="py-32 px-6 md:px-16 overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <section className="py-32 px-6 md:px-16 overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
       <motion.div 
         variants={cockpitContainer}
         initial="hidden"

@@ -9,7 +9,7 @@ const MarqueeBanner = () => {
     <div
       className="w-full overflow-hidden py-12 relative flex items-center transition-colors duration-300"
       style={{
-        backgroundColor: 'var(--bg-primary)',
+        backgroundColor: 'transparent',
         borderTop: '1px solid var(--border-subtle)',
         borderBottom: '1px solid var(--border-subtle)',
       }}

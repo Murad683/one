@@ -24,13 +24,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
     if (isOpen) {
       window.addEventListener('keydown', handleEscape);
       document.body.classList.add('lock-scroll');
-      document.documentElement.classList.add('lock-scroll');
     }
 
     return () => {
       window.removeEventListener('keydown', handleEscape);
       document.body.classList.remove('lock-scroll');
-      document.documentElement.classList.remove('lock-scroll');
     };
   }, [isOpen, onClose]);
 
@@ -59,7 +57,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.4, ease: cinematicEasing }}
-            className="backdrop-blur-2xl border rounded-2xl sm:rounded-3xl max-w-4xl w-full p-0 relative overflow-hidden h-auto max-h-[85vh] sm:max-h-[90vh] flex flex-col shadow-2xl"
+            className="backdrop-blur-2xl border rounded-2xl sm:rounded-3xl max-w-4xl w-full p-0 relative overflow-hidden h-auto max-h-[85vh] sm:max-h-[90vh] flex flex-col shadow-2xl overscroll-contain"
             style={{
               backgroundColor: 'var(--modal-bg)',
               borderColor: 'var(--card-border)',
@@ -80,7 +78,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
             </button>
 
             {/* Video / Content scrollable area */}
-            <div className="overflow-y-auto no-scrollbar">
+            <div className="overflow-y-auto no-scrollbar overscroll-contain">
               {/* YouTube Video Section */}
               <div className="relative w-full aspect-video bg-black">
                 <iframe

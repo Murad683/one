@@ -40,14 +40,14 @@ const Navbar = () => {
 
   return (
     <>
-      <motion.nav 
+      <motion.nav
         variants={{
           visible: { y: 0, opacity: 1 },
           hidden: { y: "-150%", opacity: 0 },
         }}
         animate={hidden ? "hidden" : "visible"}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed top-6 left-0 right-0 mx-auto z-[100] w-[92%] md:w-[95%] max-w-5xl rounded-full px-5 md:px-6 py-2.5 md:py-3 flex items-center justify-between border backdrop-blur-xl transition-colors duration-300"
+        className="fixed top-6 left-0 right-0 mx-auto z-[100] w-[92%] md:w-[95%] max-w-5xl rounded-full px-5 md:px-6 py-2.5 md:py-3 flex items-center justify-between border backdrop-blur-sm transition-colors duration-300"
         style={{
           backgroundColor: 'var(--glass-bg)',
           borderColor: 'var(--glass-border)',
@@ -78,8 +78,7 @@ const Navbar = () => {
               key={link.path}
               to={link.path}
               className={({ isActive }) =>
-                `text-[13px] tracking-wide transition-all duration-300 ${
-                  isActive ? 'font-semibold' : 'font-normal hover:opacity-100'
+                `text-[13px] tracking-wide transition-all duration-300 ${isActive ? 'font-semibold' : 'font-normal hover:opacity-100'
                 }`
               }
               style={({ isActive }) => ({
@@ -102,9 +101,8 @@ const Navbar = () => {
               <button
                 key={lang}
                 onClick={() => setLanguage(lang)}
-                className={`text-[9px] font-bold px-2.5 py-1 rounded-full transition-all ${
-                  language === lang ? 'border border-accent/20' : ''
-                }`}
+                className={`text-[9px] font-bold px-2.5 py-1 rounded-full transition-all ${language === lang ? 'border border-accent/20' : ''
+                  }`}
                 style={{
                   color: language === lang ? 'var(--accent-text)' : 'var(--text-ghost)',
                   backgroundColor: language === lang ? 'var(--glow-accent-subtle)' : 'transparent',
@@ -159,9 +157,9 @@ const Navbar = () => {
         </div>
       </motion.nav>
 
-      <MobileMenu 
-        isOpen={isMobileMenuOpen} 
-        onClose={() => setIsMobileMenuOpen(false)} 
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
       />
     </>
   );

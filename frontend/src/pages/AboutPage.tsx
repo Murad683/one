@@ -8,7 +8,7 @@ const AboutPage = () => {
   const { t } = useTranslation();
 
   return (
-    <PageTransition className="min-h-screen transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <PageTransition className="min-h-screen transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
       {/* Section 1 — Story */}
       <motion.section 
         variants={cockpitContainer}
