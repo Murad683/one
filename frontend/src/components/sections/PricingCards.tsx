@@ -33,7 +33,7 @@ const PricingCard = ({ pkg, openModal }: { pkg: typeof packages[number], openMod
         boxShadow: '0 0 40px var(--glow-accent-subtle)',
       }}
       onClick={() => openModal(pkg)}
-      className={`backdrop-blur-md rounded-3xl p-8 flex flex-col cursor-pointer border transition-colors duration-300 relative overflow-hidden h-full ${
+      className={`md:backdrop-blur-md rounded-3xl p-8 flex flex-col cursor-pointer border transition-colors duration-300 relative overflow-hidden h-full ${
         pkg.recommended ? 'pt-10' : ''
       }`}
       style={{

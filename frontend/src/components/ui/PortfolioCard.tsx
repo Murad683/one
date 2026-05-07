@@ -37,7 +37,7 @@ const PortfolioCard: React.FC<PortfolioCardProps> = ({ project, onClick }) => {
 
   return (
     <motion.div
-      className="relative overflow-hidden rounded-2xl aspect-video cursor-pointer group border transition-colors duration-300"
+      className="relative overflow-hidden rounded-2xl aspect-video cursor-pointer group border transition-colors duration-300 will-change-transform"
       style={{
         backgroundColor: 'var(--card-bg)',
         borderColor: 'var(--card-border)',

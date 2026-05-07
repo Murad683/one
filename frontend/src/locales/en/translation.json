@@ -9,7 +9,7 @@
   },
   "hero": {
     "badge": "Digital Development Agency",
-    "title_line1": "Carrying Your Brand",
+    "title_line1": "Taking Your Brand",
     "title_line2": "Into The Future",
     "subtitle": "Strategic creative solutions, premium video production and digital marketing services.",
     "cta": "See Our Services →"
@@ -91,12 +91,30 @@
   },
   "data": {
     "services": {
-      "video": { "title": "Video Production", "desc": "Creative video content production for ads, corporate films, and social media." },
-      "marketing": { "title": "Digital Marketing", "desc": "Targeted campaigns, SEO, SMM and performance marketing services." },
-      "brand": { "title": "Brand Design", "desc": "Visual identity, logos, brand books and creative design systems." },
-      "web": { "title": "Web Development", "desc": "Fast, modern and responsive websites and web applications." },
-      "analytics": { "title": "Analytics & Reports", "desc": "Monthly performance reports, KPI tracking and business recommendations." },
-      "smm": { "title": "SMM Management", "desc": "Professional management of social media accounts and content planning." }
+      "video": {
+        "title": "Video Production",
+        "desc": "Creative video content production for ads, corporate films, and social media."
+      },
+      "marketing": {
+        "title": "Digital Marketing",
+        "desc": "Targeted campaigns, SEO, SMM and performance marketing services."
+      },
+      "brand": {
+        "title": "Brand Design",
+        "desc": "Visual identity, logos, brand books and creative design systems."
+      },
+      "web": {
+        "title": "Web Development",
+        "desc": "Fast, modern and responsive websites and web applications."
+      },
+      "analytics": {
+        "title": "Analytics & Reports",
+        "desc": "Monthly performance reports, KPI tracking and business recommendations."
+      },
+      "smm": {
+        "title": "SMM Management",
+        "desc": "Professional management of social media accounts and content planning."
+      }
     },
     "packages": {
       "period_monthly": "/ month",
@@ -160,23 +178,68 @@
       "web": "Web Development"
     },
     "projects": {
-      "azer-kimya": { "title": "Azer Kimya Corporate Film", "desc": "A high-end corporate film showcasing the production capabilities and innovation of Azer Kimya." },
-      "techaz-brand": { "title": "TechAZ Brand Refresh", "desc": "A complete visual identity overhaul for TechAZ, aligning the brand with modern technological trends." },
-      "baku-foods": { "title": "Baku Foods SMM Campaign", "desc": "A strategic digital marketing campaign for Baku Foods that resulted in a 40% increase in sales." },
-      "capitalbank": { "title": "CapitalBank Website", "desc": "A modern, fast, and user-friendly web platform delivering a premium digital banking experience." },
-      "silkroad": { "title": "Silk Road Festival Clip", "desc": "A dynamic video clip capturing the vibrant spirit and energy of the Silk Road Festival." },
-      "greenlife": { "title": "GreenLife Branding Package", "desc": "An eco-friendly visual branding strategy designed for sustainable and green products." },
-      "azerconnect": { "title": "Azerconnect Social Media", "desc": "Comprehensive social media management and creative content strategy for Azerconnect." },
-      "socar-ad": { "title": "SOCAR Ad Film", "desc": "A premium advertising film produced for the launch of SOCAR's new digital services." },
-      "medplus": { "title": "MedPlus Corporate Site", "desc": "A functional web solution for online management and scheduling of medical services." },
-      "motorshow": { "title": "Baku Motor Show Visual Package", "desc": "Creation of all visual materials and digital content for the Baku Motor Show exhibition." },
-      "edutech": { "title": "EduTech SMM Strategy", "desc": "A large-scale digital strategy to enhance the online presence of the EduTech platform." },
-      "caspian": { "title": "Caspian Shipping Film", "desc": "A documentary-style corporate film illustrating the operations of Caspian Shipping Company." }
+      "azer-kimya": {
+        "title": "Azer Kimya Corporate Film",
+        "desc": "A high-end corporate film showcasing the production capabilities and innovation of Azer Kimya."
+      },
+      "techaz-brand": {
+        "title": "TechAZ Brand Refresh",
+        "desc": "A complete visual identity overhaul for TechAZ, aligning the brand with modern technological trends."
+      },
+      "baku-foods": {
+        "title": "Baku Foods SMM Campaign",
+        "desc": "A strategic digital marketing campaign for Baku Foods that resulted in a 40% increase in sales."
+      },
+      "capitalbank": {
+        "title": "CapitalBank Website",
+        "desc": "A modern, fast, and user-friendly web platform delivering a premium digital banking experience."
+      },
+      "silkroad": {
+        "title": "Silk Road Festival Clip",
+        "desc": "A dynamic video clip capturing the vibrant spirit and energy of the Silk Road Festival."
+      },
+      "greenlife": {
+        "title": "GreenLife Branding Package",
+        "desc": "An eco-friendly visual branding strategy designed for sustainable and green products."
+      },
+      "azerconnect": {
+        "title": "Azerconnect Social Media",
+        "desc": "Comprehensive social media management and creative content strategy for Azerconnect."
+      },
+      "socar-ad": {
+        "title": "SOCAR Ad Film",
+        "desc": "A premium advertising film produced for the launch of SOCAR's new digital services."
+      },
+      "medplus": {
+        "title": "MedPlus Corporate Site",
+        "desc": "A functional web solution for online management and scheduling of medical services."
+      },
+      "motorshow": {
+        "title": "Baku Motor Show Visual Package",
+        "desc": "Creation of all visual materials and digital content for the Baku Motor Show exhibition."
+      },
+      "edutech": {
+        "title": "EduTech SMM Strategy",
+        "desc": "A large-scale digital strategy to enhance the online presence of the EduTech platform."
+      },
+      "caspian": {
+        "title": "Caspian Shipping Film",
+        "desc": "A documentary-style corporate film illustrating the operations of Caspian Shipping Company."
+      }
     },
     "featured_projects": {
-      "0": { "title": "Azer Kimya — Corporate Film", "category": "Video Production" },
-      "1": { "title": "TechAZ — Brand Refresh", "category": "Brand Design" },
-      "2": { "title": "Baku Foods — SMM Campaign", "category": "SMM" }
+      "0": {
+        "title": "Azer Kimya — Corporate Film",
+        "category": "Video Production"
+      },
+      "1": {
+        "title": "TechAZ — Brand Refresh",
+        "category": "Brand Design"
+      },
+      "2": {
+        "title": "Baku Foods — SMM Campaign",
+        "category": "SMM"
+      }
     },
     "team": {
       "roles": {
@@ -189,10 +252,22 @@
       }
     },
     "stats": {
-      "projects": { "value": "320+", "label": "Completed Projects" },
-      "clients": { "value": "48", "label": "Active Clients" },
-      "experience": { "value": "5+", "label": "Years of Experience" },
-      "team_size": { "value": "12", "label": "Team Members" }
+      "projects": {
+        "value": "320+",
+        "label": "Completed Projects"
+      },
+      "clients": {
+        "value": "48",
+        "label": "Active Clients"
+      },
+      "experience": {
+        "value": "5+",
+        "label": "Years of Experience"
+      },
+      "team_size": {
+        "value": "12",
+        "label": "Team Members"
+      }
     }
   }
 }

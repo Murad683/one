@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import FilterTabs from '../components/ui/FilterTabs';
 import PortfolioGrid from '../components/sections/PortfolioGrid';
-import SectionOrbs from '../components/ui/SectionOrbs';
 import PageTransition from '../components/utils/PageTransition';
 import { cockpitContainer, cockpitItem } from '../utils/animations';
 
@@ -13,12 +12,6 @@ const PortfolioPage = () => {
 
   return (
     <PageTransition className="relative pt-40 pb-32 px-6 md:px-16 min-h-screen overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
-      <SectionOrbs
-        orbs={[
-          { color: 'rgba(163, 230, 53, 0.06)', size: 'w-[500px] h-[500px]', position: 'top-1/3 right-0', blur: 'blur-[120px]', duration: 20 },
-          { color: 'rgba(100, 50, 200, 0.05)', size: 'w-[400px] h-[400px]', position: 'bottom-1/3 left-0', blur: 'blur-[100px]', duration: 24 },
-        ]}
-      />
       <div className="max-w-7xl mx-auto relative z-10">
         <motion.div
           variants={cockpitContainer}
