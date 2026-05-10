@@ -2,36 +2,31 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PortfolioCard from '../ui/PortfolioCard';
 import ProjectModal from '../ui/ProjectModal';
-import { projects } from '../../data/projects';
 import { cinematicEasing } from '../../utils/animations';
+import { useProjects } from '../../hooks/useSiteData';
 
 interface PortfolioGridProps {
   filter: string;
 }
 
 const PortfolioGrid: React.FC<PortfolioGridProps> = ({ filter }) => {
-  const [selectedProject, setSelectedProject] = useState<(typeof projects)[0] | null>(null);
+  const { data: projects, loading } = useProjects();
+  const [selectedProject, setSelectedProject] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleProjectClick = (project: (typeof projects)[0]) => {
+  const handleProjectClick = (project: any) => {
     setSelectedProject(project);
     setIsModalOpen(true);
   };
 
-  // Mapping filter key to data category key if necessary
-  const filterToCategoryKeyMap: Record<string, string> = {
-    'all': 'all',
-    'Video İstehsalı': 'data.categories.video',
-    'Brend Dizaynı': 'data.categories.brand',
-    'SMM': 'data.categories.smm',
-    'Veb Tərtibat': 'data.categories.web',
-  };
+  if (loading) return null;
 
-  const targetCategoryKey = filterToCategoryKeyMap[filter] || filter;
-
-  const filtered = targetCategoryKey === 'all' 
+  const filtered = filter === 'all' 
     ? projects 
-    : projects.filter((p) => p.categoryKey === targetCategoryKey);
+    : projects.filter((p) => {
+        const catName = p.category ? p.category.name : (p.categoryLegacy || '');
+        return catName === filter;
+      });
 
   return (
     <div className="relative">
@@ -40,7 +35,7 @@ const PortfolioGrid: React.FC<PortfolioGridProps> = ({ filter }) => {
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
         <AnimatePresence mode="popLayout">
-          {filtered.map((project, index) => (
+          {filtered.map((project: any, index: number) => (
             <motion.div
               key={project.id}
               layout

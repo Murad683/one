@@ -1,11 +1,21 @@
 import { motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
-import { team, stats } from '../data/team';
 import PageTransition from '../components/utils/PageTransition';
 import { cockpitContainer, cockpitItem } from '../utils/animations';
+import { useSiteSettings, useTeam } from '../hooks/useSiteData';
+import { assetUrl } from '../utils/api';
 
 const AboutPage = () => {
-  const { t } = useTranslation();
+  const { data: settings, loading: settingsLoading } = useSiteSettings();
+  const { data: team, loading: teamLoading } = useTeam();
+
+  if (settingsLoading || teamLoading || !settings) return null;
+
+  let stats = [];
+  try {
+    stats = typeof settings.aboutStats === 'string' ? JSON.parse(settings.aboutStats) : (settings.aboutStats || []);
+  } catch (e) {
+    stats = [];
+  }
 
   return (
     <PageTransition className="min-h-screen transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
@@ -17,19 +27,16 @@ const AboutPage = () => {
         className="pt-40 pb-32 px-6 md:px-24 max-w-5xl mx-auto"
       >
         <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
-          {t('about.badge')}
+          {settings.aboutTopLabel}
         </motion.p>
         <motion.h1 variants={cockpitItem} className="font-heading text-5xl md:text-6xl font-bold mb-10" style={{ color: 'var(--text-primary)' }}>
-          {t('about.title')}
+          {settings.aboutMainHeading}
         </motion.h1>
 
         <motion.div variants={cockpitItem} className="text-lg leading-relaxed space-y-6" style={{ color: 'var(--text-secondary)' }}>
-          <p>
-            {t('about.story_p1')}
-          </p>
-          <p>
-            {t('about.story_p2')}
-          </p>
+          <div className="whitespace-pre-line">
+            {settings.aboutDescription}
+          </div>
         </motion.div>
 
         {/* Stats row */}
@@ -38,22 +45,23 @@ const AboutPage = () => {
           className="grid grid-cols-2 md:grid-cols-4 gap-10 mt-20 pt-20"
           style={{ borderTop: '1px solid var(--border-subtle)' }}
         >
-          {stats.map((stat, idx) => (
+          {stats.map((stat: any, idx: number) => (
             <div key={idx}>
               <div className="font-heading text-5xl font-bold" style={{ color: 'var(--accent-text)' }}>
                 {stat.value}
               </div>
-              <div className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>
-                {t(stat.labelKey)}
+              <div className="text-sm mt-2 uppercase tracking-widest font-medium" style={{ color: 'var(--text-muted)' }}>
+                {stat.label}
               </div>
             </div>
           ))}
         </motion.div>
       </motion.section>
+
       {/* Quote */}
       <div className="py-24 text-center max-w-2xl mx-auto">
         <p className="font-heading text-2xl md:text-3xl font-light leading-relaxed italic" style={{ color: 'var(--text-secondary)' }}>
-          {t('about.quote')}
+          {settings.aboutQuote}
         </p>
       </div>
 
@@ -66,27 +74,27 @@ const AboutPage = () => {
         className="py-24 px-6 md:px-16"
         style={{ borderTop: '1px solid var(--border-subtle)' }}
       >
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
           <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
-            {t('about.team_badge')}
+            {settings.aboutTeamBadge}
           </motion.p>
           <motion.h2 variants={cockpitItem} className="font-heading text-4xl md:text-5xl font-semibold mb-16" style={{ color: 'var(--text-primary)' }}>
-            {t('about.team_title')}
+            {settings.aboutTeamTitle}
           </motion.h2>
 
-          <motion.div variants={cockpitItem} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {team.map((member, idx) => (
+          <motion.div variants={cockpitItem} className="flex flex-wrap justify-center gap-6">
+            {team.map((member: any, idx: number) => (
               <motion.div
-                key={idx}
+                key={member.id || idx}
                 whileHover={{ y: -4 }}
-                className="backdrop-blur-md border rounded-2xl p-6 text-center transition-colors cursor-default"
+                className="w-full sm:w-48 backdrop-blur-md border rounded-2xl p-6 text-center transition-colors cursor-default"
                 style={{
                   backgroundColor: 'var(--card-bg)',
                   borderColor: 'var(--card-border)',
                 }}
               >
                 <img
-                  src={member.avatarUrl}
+                  src={assetUrl(member.avatarUrl) || "/avatar-icon.png"}
                   alt={member.name}
                   className="w-16 h-16 rounded-full object-cover mx-auto mb-4 grayscale hover:grayscale-0 transition-all duration-300"
                 />
@@ -94,7 +102,7 @@ const AboutPage = () => {
                   {member.name}
                 </h3>
                 <p className="text-xs" style={{ color: 'var(--accent-text)' }}>
-                  {t(member.roleKey)}
+                  {member.role}
                 </p>
               </motion.div>
             ))}

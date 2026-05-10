@@ -2,7 +2,6 @@ import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Layout from './components/layout/Layout';
-import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ScrollToTop from './components/utils/ScrollToTop';
 
@@ -53,12 +52,10 @@ function AnimatedRoutes() {
 function App() {
   return (
     <ThemeProvider>
-      <LanguageProvider>
         <Router>
           <ScrollToTop />
           <AnimatedRoutes />
         </Router>
-      </LanguageProvider>
     </ThemeProvider>
   );
 }

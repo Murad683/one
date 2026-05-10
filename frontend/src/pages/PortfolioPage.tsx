@@ -1,14 +1,39 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 import FilterTabs from '../components/ui/FilterTabs';
 import PortfolioGrid from '../components/sections/PortfolioGrid';
 import PageTransition from '../components/utils/PageTransition';
 import { cockpitContainer, cockpitItem } from '../utils/animations';
+import { useSiteSettings, useProjects } from '../hooks/useSiteData';
 
 const PortfolioPage = () => {
-  const { t } = useTranslation();
+  const { data: settings, loading: settingsLoading } = useSiteSettings();
+  const { data: projects, loading: projectsLoading } = useProjects();
   const [activeFilter, setActiveFilter] = useState('all');
+
+  const categories = useMemo(() => {
+    const cats = new Map();
+    // Default "All" category
+    cats.set('all', { key: 'all', label: 'HAMISI' });
+    
+    projects.forEach(p => {
+      const cat = p.category;
+      if (cat && cat.name) {
+        cats.set(cat.name, {
+          key: cat.name,
+          label: cat.name.toUpperCase()
+        });
+      } else if (p.categoryLegacy) {
+        cats.set(p.categoryLegacy, {
+          key: p.categoryLegacy,
+          label: p.categoryLegacy.toUpperCase()
+        });
+      }
+    });
+    return Array.from(cats.values());
+  }, [projects]);
+
+  if (settingsLoading || projectsLoading || !settings) return null;
 
   return (
     <PageTransition className="relative pt-40 pb-32 px-6 md:px-16 min-h-screen overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
@@ -20,18 +45,18 @@ const PortfolioPage = () => {
           className="text-center mb-16"
         >
           <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
-            {t('portfolio_page.badge')}
+            {settings.portfolioTopLabel || "İşlərimiz"}
           </motion.p>
           <motion.h1 variants={cockpitItem} className="font-heading text-5xl md:text-6xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-            {t('portfolio_page.title')}
+            {settings.portfolioMainHeading || "Portfolio"}
           </motion.h1>
           <motion.p variants={cockpitItem} className="text-lg max-w-2xl mx-auto leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-            {t('portfolio_page.subtitle')}
+            {settings.portfolioSubtext}
           </motion.p>
         </motion.div>
 
         <div className="mb-16 relative z-20">
-          <FilterTabs active={activeFilter} onChange={setActiveFilter} />
+          <FilterTabs categories={categories} active={activeFilter} onChange={setActiveFilter} />
         </div>
 
         <div className="relative z-10">

@@ -2,19 +2,16 @@ import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Play } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { packages } from '../../data/packages';
 import { cinematicEasing } from '../../utils/animations';
 import { useTheme } from '../../context/ThemeContext';
 
 interface PackageModalProps {
   isOpen: boolean;
   onClose: () => void;
-  pkg: (typeof packages)[0] | null;
+  pkg: any | null;
 }
 
 const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => {
-  const { t } = useTranslation();
   const backdropRef = useRef<HTMLDivElement>(null);
   const { isDark } = useTheme();
 
@@ -42,6 +39,11 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
 
   if (!pkg) return null;
 
+  const name = pkg.name;
+  const price = pkg.priceLabel || '';
+  const description = pkg.description;
+  const features = pkg.features || [];
+
   const modalContent = (
     <AnimatePresence>
       {isOpen && (
@@ -66,7 +68,6 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button - Fixed at the top */}
             <button
               onClick={onClose}
               className="absolute top-5 right-5 z-50 p-2 rounded-full backdrop-blur-md border transition-all cursor-pointer hover:bg-white/10"
@@ -79,9 +80,7 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
               <X size={20} />
             </button>
 
-            {/* Scrollable Content Area */}
             <div className="overflow-y-auto no-scrollbar p-8 sm:p-10 overscroll-contain">
-              {/* Video section (YouTube Facade) */}
               <div
                 className="relative w-full aspect-video rounded-xl overflow-hidden border mb-8 group"
                 style={{
@@ -90,7 +89,6 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
                 }}
               >
                 {!pkg.videoSrc || pkg.videoSrc.includes('.mp4') ? (
-                  // Facade state
                   <>
                     <div
                       className="absolute inset-0"
@@ -109,9 +107,15 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
                     
                     <div className="absolute inset-0 flex items-center justify-center cursor-pointer transition-colors"
                       onClick={(e) => {
+                        if (!pkg.youtubeUrl) return;
+                        // Extract ID if full URL is provided
+                        let videoId = pkg.youtubeUrl;
+                        if (pkg.youtubeUrl.includes('v=')) videoId = pkg.youtubeUrl.split('v=')[1].split('&')[0];
+                        else if (pkg.youtubeUrl.includes('be/')) videoId = pkg.youtubeUrl.split('be/')[1].split('?')[0];
+
                         const container = e.currentTarget.parentElement;
                         if (container) {
-                          container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+                          container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}?autoplay=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
                         }
                       }}
                     >
@@ -129,33 +133,43 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
                 ) : null}
               </div>
 
-              {/* Content */}
               <div className="text-left">
                 <p className="text-xs uppercase tracking-widest font-medium mb-2" style={{ color: 'var(--accent-text)' }}>
-                  {t(pkg.nameKey)}
+                  {name}
                 </p>
-                <h2 className="font-heading text-2xl md:text-4xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-                  {pkg.priceKey ? t(pkg.priceKey) : pkg.price}
-                  {pkg.periodKey && <span className="text-lg font-normal ml-2" style={{ color: 'var(--text-faint)' }}>{t(pkg.periodKey)}</span>}
-                </h2>
-                <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>{t(pkg.taglineKey)}</p>
-                <p className="text-sm leading-relaxed mb-8" style={{ color: 'var(--text-secondary)' }}>
-                  {t(pkg.descKey)}
-                </p>
+                <div className="flex items-baseline gap-1 mb-1">
+                  {price.includes('/') ? (
+                    <>
+                      <h2 className="font-heading text-3xl md:text-5xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                        {price.split('/')[0].trim()}
+                      </h2>
+                      <span className="text-sm md:text-base font-medium opacity-50" style={{ color: 'var(--text-secondary)' }}>
+                        / {price.split('/')[1].trim()}
+                      </span>
+                    </>
+                  ) : (
+                    <h2 className="font-heading text-3xl md:text-5xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                      {price}
+                    </h2>
+                  )}
+                </div>
+                <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>{description}</p>
 
-                {/* Features list */}
                 <div className="space-y-4 mb-8">
-                  {pkg.featuresKeys.map((featureKey: string, idx: number) => (
+                  {features.map((feature: string, idx: number) => (
                     <div key={idx} className="flex items-center gap-3">
                       <Check size={14} className="flex-shrink-0" style={{ color: 'var(--accent-text)' }} />
-                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t(featureKey)}</span>
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{feature}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* CTA button */}
-                <button className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200" style={{ color: 'var(--accent-on-accent)' }}>
-                  {t(pkg.ctaKey)}
+                <button 
+                  onClick={() => window.location.href = '/elaqe'}
+                  className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200" 
+                  style={{ color: 'var(--accent-on-accent)' }}
+                >
+                  {pkg.buttonText || "Planı Seç"}
                 </button>
               </div>
             </div>

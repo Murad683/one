@@ -1,15 +1,17 @@
 import { motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
-import { categories } from '../../data/projects';
+
+interface Category {
+  key: string;
+  label: string;
+}
 
 interface FilterTabsProps {
+  categories: Category[];
   active: string;
   onChange: (cat: string) => void;
 }
 
-const FilterTabs: React.FC<FilterTabsProps> = ({ active, onChange }) => {
-  const { t } = useTranslation();
-
+const FilterTabs: React.FC<FilterTabsProps> = ({ categories, active, onChange }) => {
   return (
     <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-4 md:flex-wrap md:justify-center md:pb-0 px-2">
       {categories.map((cat) => (
@@ -29,7 +31,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({ active, onChange }) => {
               : { borderColor: 'var(--border-default)', color: 'var(--text-muted)' }
           }
         >
-          {t(cat.translationKey)}
+          {cat.label}
         </motion.button>
       ))}
     </div>

@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  postgres:
+    container_name: bakutech_postgres
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bakutech_db
+    ports:
+      - "5433:5432" # Map host port 5433 to container port 5432 to avoid native conflict
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    name: bakutech_db_data

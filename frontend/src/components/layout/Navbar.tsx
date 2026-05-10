@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { Sun, Moon, Menu } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { useLang } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import MobileMenu from './MobileMenu';
 
 const Navbar = () => {
-  const { t } = useTranslation();
-  const { language, setLanguage } = useLang();
   const { toggleTheme, isDark } = useTheme();
   const { scrollY } = useScroll();
   const location = useLocation();
@@ -31,11 +27,11 @@ const Navbar = () => {
   });
 
   const navLinks = [
-    { name: t('nav.home'), path: '/' },
-    { name: t('nav.portfolio'), path: '/portfolio' },
-    { name: t('nav.packages'), path: '/paketler' },
-    { name: t('nav.about'), path: '/haqqimizda' },
-    { name: t('nav.contact'), path: '/elaqe' },
+    { name: 'ANA SƏHİFƏ', path: '/' },
+    { name: 'PORTFOLİO', path: '/portfolio' },
+    { name: 'PAKETLƏR', path: '/paketler' },
+    { name: 'HAQQIMIZDA', path: '/haqqimizda' },
+    { name: 'ƏLAQƏ', path: '/elaqe' },
   ];
 
   return (
@@ -92,27 +88,6 @@ const Navbar = () => {
 
         {/* Controls right (Desktop) */}
         <div className="hidden md:flex items-center gap-5">
-          {/* Language toggle */}
-          <div
-            className="flex items-center gap-1.5 p-1 rounded-full border transition-colors duration-300"
-            style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
-          >
-            {(['az', 'en', 'ru'] as const).map((lang) => (
-              <button
-                key={lang}
-                onClick={() => setLanguage(lang)}
-                className={`text-[9px] font-bold px-2.5 py-1 rounded-full transition-all ${language === lang ? 'border border-accent/20' : ''
-                  }`}
-                style={{
-                  color: language === lang ? 'var(--accent-text)' : 'var(--text-ghost)',
-                  backgroundColor: language === lang ? 'var(--glow-accent-subtle)' : 'transparent',
-                }}
-              >
-                {lang.toUpperCase()}
-              </button>
-            ))}
-          </div>
-
           <button
             onClick={toggleTheme}
             className="transition-colors duration-300 cursor-pointer hover:opacity-80"
@@ -130,7 +105,7 @@ const Navbar = () => {
               color: 'var(--text-secondary)',
             }}
           >
-            {t('nav.login')}
+            GİRİŞ
           </Link>
         </div>
 
@@ -145,7 +120,7 @@ const Navbar = () => {
               color: 'var(--text-secondary)',
             }}
           >
-            {t('nav.login')}
+            GİRİŞ
           </Link>
           <button
             onClick={() => setIsMobileMenuOpen(true)}

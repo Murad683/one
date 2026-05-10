@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String
+  name         String
+  role         Role          @default(CLIENT)
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deliverables Deliverable[]
+}
+
+model Project {
+  id             String    @id @default(cuid())
+  thumbnailUrl   String?
+  youtubeId      String?
+  categoryLegacy String?
+  isPublished    Boolean   @default(false)
+  sortOrder      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  isFeatured     Boolean   @default(false)
+  categoryId     String?
+  externalUrl    String?
+  year           Int?
+  serviceTitle   String?
+  description    String
+  title          String
+  category       Category? @relation(fields: [categoryId], references: [id])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  projects  Project[]
+}
+
+model Package {
+  id          String   @id @default(cuid())
+  isPopular   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  priceLabel  String
+  buttonText  String   @default("Planı Seç")
+  buttonUrl   String   @default("/contact")
+  youtubeUrl  String?
+  description String
+  features    String[]
+  name        String
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  iconName    String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  description String
+  title       String
+}
+
+model TeamMember {
+  id          String   @id @default(cuid())
+  avatarUrl   String?
+  linkedinUrl String?
+  twitterUrl  String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String
+  role        String
+}
+
+model Deliverable {
+  id         String            @id @default(cuid())
+  clientId   String
+  type       DeliverableType
+  status     DeliverableStatus @default(PENDING)
+  month      Int
+  year       Int
+  fileUrl    String?
+  fileSize   BigInt?
+  fileName   String?
+  mimeType   String?
+  notes      String?
+  uploadedAt DateTime?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  client     User              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, year, month])
+}
+
+model SiteSettings {
+  id                   String   @id @default("global")
+  aboutStats           String   @default("[]")
+  heroCtaText          String   @default("Bizimlə Əlaqə")
+  heroCtaUrl           String   @default("/contact")
+  heroVideoUrl         String?
+  marqueeWords         String   @default("[]")
+  companyAddress       String   @default("")
+  companyPhone         String   @default("")
+  companyEmail         String   @default("")
+  companyWorkingHours  String   @default("")
+  googleMapsEmbed      String?
+  socialLinks          String   @default("{}")
+  updatedAt            DateTime @updatedAt
+  aboutDescription     String   @default("")
+  aboutMainHeading     String   @default("Brendləri Quranlara Tərəfdaşıq")
+  aboutQuote           String   @default("")
+  aboutTeamBadge       String   @default("KOMANDAMIZ")
+  aboutTeamTitle       String   @default("Kreativ Zehinlər")
+  aboutTopLabel        String   @default("BİZ KİMİK")
+  contactAddressLabel  String   @default("ÜNVAN")
+  contactEmailLabel    String   @default("E-POÇT")
+  contactHoursLabel    String   @default("İŞ SAATLARI")
+  contactInfoTitle     String   @default("Məlumatlarımız")
+  contactMainHeading   String   @default("Bizimlə Əlaqə")
+  contactPhoneLabel    String   @default("TELEFON")
+  contactSubtext       String   @default("")
+  contactTopLabel      String   @default("ƏLAQƏ")
+  footerPagesTitle     String   @default("SƏHİFƏLƏR")
+  footerShortText      String   @default("")
+  footerSocialTitle    String   @default("SOSİAL MEDİA")
+  heroBadge            String   @default("Rəqəmsal İnkişaf Şirkəti")
+  heroHeading1         String   @default("")
+  heroHeading2         String   @default("")
+  heroSubtext          String   @default("")
+  packagesMainHeading  String   @default("Sizin üçün doğru plan")
+  packagesSubtext      String   @default("")
+  packagesTopLabel     String   @default("QİYMƏT PAKETLƏRİ")
+  portfolioMainHeading String   @default("")
+  portfolioTopLabel    String   @default("PORTFOLİO")
+}
+
+model ContactSubmission {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  companyName String?
+  serviceId   String?
+  serviceName String?
+  message     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model SiteContent {
+  id        String   @id
+  key       String   @unique
+  value     String
+  page      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+enum DeliverableStatus {
+  PENDING
+  PROCESSING
+  READY
+  ARCHIVED
+}
+
+enum DeliverableType {
+  VIDEO_1
+  VIDEO_2
+  DESIGNS
+  OTHER
+}

@@ -1,23 +1,31 @@
 import { Link } from 'react-router-dom';
-import { Camera, Link as LinkIcon, Play, Send } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-
-const socialLinks = [
-  { icon: Camera,   href: '#', label: 'Instagram' },
-  { icon: LinkIcon, href: '#', label: 'LinkedIn'  },
-  { icon: Play,     href: '#', label: 'YouTube'   },
-  { icon: Send,     href: '#', label: 'X (Twitter)' },
-];
+import { Camera, Globe, Video, Send } from 'lucide-react';
+import { useSiteSettings } from '../../hooks/useSiteData';
 
 export default function Footer() {
-  const { t } = useTranslation();
+  const { data: settings, loading } = useSiteSettings();
+
+  if (loading || !settings) return null;
+
+  let socialData: any = {};
+  try {
+    socialData = typeof settings.socialLinks === 'string' ? JSON.parse(settings.socialLinks) : (settings.socialLinks || {});
+  } catch (e) {
+    socialData = {};
+  }
+  const socialLinks = [
+    { icon: Camera, href: socialData.instagram || '#', label: 'Instagram' },
+    { icon: Globe,  href: socialData.linkedin || '#',  label: 'LinkedIn'  },
+    { icon: Video,   href: socialData.youtube || '#',   label: 'YouTube'   },
+    { icon: Send,      href: socialData.twitter || '#',   label: 'Telegram'  },
+  ];
 
   const navLinks = [
-    { label: t('nav.home'),      to: '/' },
-    { label: t('nav.portfolio'), to: '/portfolio' },
-    { label: t('nav.packages'),  to: '/paketler' },
-    { label: t('nav.about'),     to: '/haqqimizda' },
-    { label: t('nav.contact'),   to: '/elaqe' },
+    { label: 'ANA SƏHİFƏ',      to: '/' },
+    { label: 'PORTFOLİO', to: '/portfolio' },
+    { label: 'PAKETLƏR',  to: '/paketler' },
+    { label: 'HAQQIMIZDA',     to: '/haqqimizda' },
+    { label: 'ƏLAQƏ',   to: '/elaqe' },
   ];
 
   return (
@@ -25,8 +33,6 @@ export default function Footer() {
       className="relative mt-32 overflow-hidden transition-colors duration-300"
       style={{ borderTop: '1px solid var(--border-subtle)' }}
     >
-
-      {/* Very subtle top glow */}
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-px"
         style={{ background: 'linear-gradient(90deg, transparent, rgba(163,230,53,0.3), transparent)' }}
@@ -34,11 +40,7 @@ export default function Footer() {
       />
 
       <div className="max-w-7xl mx-auto px-6 md:px-16 py-20">
-
-        {/* Top row: Logo+tagline left, Social icons right */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-12 mb-16">
-
-          {/* Left: Brand */}
           <div className="max-w-xs">
             <Link to="/">
               <img
@@ -49,14 +51,13 @@ export default function Footer() {
               />
             </Link>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--text-faint)' }}>
-              {t('footer.tagline')}
+              {settings.footerShortText}
             </p>
           </div>
 
-          {/* Center: Nav links */}
           <div className="flex flex-col gap-4">
             <p className="text-[10px] uppercase tracking-widest font-medium mb-2" style={{ color: 'var(--text-ghost)' }}>
-              {t('footer.pages')}
+              {settings.footerPagesTitle || "SƏHİFƏLƏR"}
             </p>
             {navLinks.map((link) => (
               <Link
@@ -70,10 +71,9 @@ export default function Footer() {
             ))}
           </div>
 
-          {/* Right: Social icons */}
           <div>
             <p className="text-[10px] uppercase tracking-widest font-medium mb-6" style={{ color: 'var(--text-ghost)' }}>
-              {t('footer.social')}
+              {settings.footerSocialTitle || "SOSİAL MEDİA"}
             </p>
             <div className="flex gap-3">
               {socialLinks.map(({ icon: Icon, href, label }) => (
@@ -98,14 +98,11 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Divider */}
         <div className="h-px mb-8" style={{ backgroundColor: 'var(--border-subtle)' }} />
 
-        {/* Bottom: Copyright */}
         <p className="text-center text-xs leading-relaxed" style={{ color: 'var(--text-ghost)' }}>
-          {t('footer.copyright')}
+          © Bakı Texnoloji Layihələri 2026 — Bütün hüquqlar qorunur
         </p>
-
       </div>
     </footer>
   );

@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables
+.env
+
+# Uploaded files
+uploads/
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+/src/generated/prisma

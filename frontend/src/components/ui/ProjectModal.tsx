@@ -2,18 +2,16 @@ import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ExternalLink, Calendar, Tag } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { projects } from '../../data/projects';
 import { cinematicEasing } from '../../utils/animations';
+import { assetUrl } from '../../utils/api';
 
 interface ProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  project: (typeof projects)[0] | null;
+  project: any | null;
 }
 
 const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project }) => {
-  const { t } = useTranslation();
   const backdropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,6 +38,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
 
   if (!project) return null;
 
+  const categoryName = project.category ? project.category.name : (project.categoryLegacy || '');
+
   const modalContent = (
     <AnimatePresence>
       {isOpen && (
@@ -64,7 +64,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
             <button
               onClick={onClose}
               className="absolute top-5 right-5 z-50 p-2 rounded-full backdrop-blur-md border transition-all cursor-pointer hover:bg-white/10"
@@ -77,51 +76,54 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
               <X size={20} />
             </button>
 
-            {/* Video / Content scrollable area */}
             <div className="overflow-y-auto no-scrollbar overscroll-contain">
-              {/* YouTube Video Section */}
               <div className="relative w-full aspect-video bg-black">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src={`https://www.youtube.com/embed/${project.youtubeId}?autoplay=0`}
-                  title={t(project.titleKey)}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="w-full h-full"
-                ></iframe>
+                {project.youtubeId ? (
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${project.youtubeId}?autoplay=0`}
+                    title={project.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full"
+                  ></iframe>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white/40">
+                    <img src={assetUrl(project.thumbnailUrl) || "/portfolio.jpeg"} className="w-full h-full object-cover opacity-50" alt="" />
+                    <p className="absolute">Video tezliklə əlavə olunacaq</p>
+                  </div>
+                )}
               </div>
 
-              {/* Project Info Section */}
               <div className="p-6 md:p-12">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
                   <div className="flex-grow max-w-2xl">
                     <div className="flex items-center gap-3 mb-4">
                       <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-accent/10 text-accent border border-accent/20">
-                        {t(project.categoryKey)}
+                        {categoryName}
                       </span>
                     </div>
                     
                     <h2 className="font-heading text-2xl md:text-5xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
-                      {t(project.titleKey)}
+                      {project.title}
                     </h2>
                     
                     <div className="space-y-6">
                       <p className="text-base md:text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                        {t(project.descKey || 'about.story_p1')}
+                        {project.description}
                       </p>
                     </div>
                   </div>
 
-                  {/* Sidebar Info */}
                   <div className="w-full md:w-64 flex-shrink-0 space-y-8 pt-2">
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
                         <Tag size={16} className="text-accent" />
                         <div>
                           <p className="text-[10px] uppercase tracking-widest text-faint mb-1">Xidmət</p>
-                          <p className="text-sm font-medium text-primary">{t(project.categoryKey)}</p>
+                          <p className="text-sm font-medium text-primary">{categoryName}</p>
                         </div>
                       </div>
                       
@@ -129,21 +131,24 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
                         <Calendar size={16} className="text-accent" />
                         <div>
                           <p className="text-[10px] uppercase tracking-widest text-faint mb-1">İl</p>
-                          <p className="text-sm font-medium text-primary">2024</p>
+                          <p className="text-sm font-medium text-primary">{project.year || '2024'}</p>
                         </div>
                       </div>
                     </div>
 
-                    <button 
-                      className="w-full py-4 border rounded-full font-semibold text-sm flex items-center justify-center gap-2 hover:bg-white/5 transition-all duration-300"
-                      style={{ borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
-                    >
-                      Canlı Bax <ExternalLink size={14} />
-                    </button>
+                    {project.externalUrl && (
+                      <a 
+                        href={project.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-4 border rounded-full font-semibold text-sm flex items-center justify-center gap-2 hover:bg-white/5 transition-all duration-300"
+                        style={{ borderColor: 'var(--border-default)', color: 'var(--text-primary)' }}
+                      >
+                        Canlı Bax <ExternalLink size={14} />
+                      </a>
+                    )}
                   </div>
                 </div>
-
-                {/* Additional images or details could go here */}
               </div>
             </div>
           </motion.div>

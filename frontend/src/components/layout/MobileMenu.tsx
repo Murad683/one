@@ -1,9 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavLink, Link } from 'react-router-dom';
-import { X, Globe, Moon, Sun, ChevronRight } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { useLang } from '../../context/LanguageContext';
+import { X, Moon, Sun, ChevronRight } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { cinematicEasing } from '../../utils/animations';
 
@@ -13,8 +11,6 @@ interface MobileMenuProps {
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
-  const { t } = useTranslation();
-  const { language, setLanguage } = useLang();
   const { toggleTheme, isDark } = useTheme();
 
   React.useEffect(() => {
@@ -29,11 +25,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   const navLinks = [
-    { name: t('nav.home'), path: '/' },
-    { name: t('nav.portfolio'), path: '/portfolio' },
-    { name: t('nav.packages'), path: '/paketler' },
-    { name: t('nav.about'), path: '/haqqimizda' },
-    { name: t('nav.contact'), path: '/elaqe' },
+    { name: 'ANA SƏHİFƏ', path: '/' },
+    { name: 'PORTFOLİO', path: '/portfolio' },
+    { name: 'PAKETLƏR', path: '/paketler' },
+    { name: 'HAQQIMIZDA', path: '/haqqimizda' },
+    { name: 'ƏLAQƏ', path: '/elaqe' },
   ];
 
   const menuVariants = {
@@ -129,27 +125,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
 
             {/* Bottom Controls */}
             <div className="mt-auto space-y-10">
-              {/* Language Switcher */}
-              <motion.div variants={itemVariants} custom={6}>
-                <div className="flex items-center gap-3 mb-4 text-faint">
-                  <Globe size={16} />
-                  <span className="text-[10px] uppercase tracking-widest font-bold">{t('Language')}</span>
-                </div>
-                <div className="flex gap-4">
-                  {(['az', 'en', 'ru'] as const).map((lang) => (
-                    <button
-                      key={lang}
-                      onClick={() => setLanguage(lang)}
-                      className={`text-sm font-bold transition-all ${
-                        language === lang ? 'text-accent' : 'text-ghost hover:text-primary'
-                      }`}
-                    >
-                      {lang.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-
               {/* Theme & Login */}
               <motion.div variants={itemVariants} custom={7} className="flex items-center justify-between pt-8 border-t border-white/5">
                 <button
@@ -167,7 +142,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                   className="px-6 py-2 rounded-full border text-xs font-bold uppercase tracking-widest"
                   style={{ borderColor: 'var(--accent-text)', color: 'var(--accent-text)' }}
                 >
-                  {t('nav.login')}
+                  GİRİŞ
                 </Link>
               </motion.div>
             </div>

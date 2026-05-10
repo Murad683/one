@@ -1,13 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 import * as LucideIcons from 'lucide-react';
-import { services } from '../../data/services';
 import { cockpitContainer, cockpitItem } from '../../utils/animations';
+import { useServices, useSiteSettings } from '../../hooks/useSiteData';
 
-const ServiceCard = ({ service }: { service: typeof services[number] }) => {
-  const { t } = useTranslation();
-  const IconComponent = (LucideIcons as any)[service.icon];
+const ServiceCard = ({ service }: { service: any }) => {
+  const IconComponent = (LucideIcons as any)[service.iconName || 'Wrench'];
   const cardRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
@@ -40,7 +38,6 @@ const ServiceCard = ({ service }: { service: typeof services[number] }) => {
         borderTopColor: 'var(--card-border-top)',
       }}
     >
-      {/* Spotlight glow effect */}
       <div
         className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-300 z-0"
         style={{
@@ -49,16 +46,15 @@ const ServiceCard = ({ service }: { service: typeof services[number] }) => {
         }}
       />
       
-      {/* Content wrapper to stay above the glow */}
       <div className="relative z-10">
         {IconComponent && (
           <IconComponent className="w-8 h-8 mb-6" style={{ color: 'var(--accent-text)' }} />
         )}
         <h3 className="font-heading text-lg font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-          {t(service.titleKey)}
+          {service.title}
         </h3>
         <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-          {t(service.descKey)}
+          {service.description}
         </p>
       </div>
     </motion.div>
@@ -66,7 +62,10 @@ const ServiceCard = ({ service }: { service: typeof services[number] }) => {
 };
 
 const ServicesSection = () => {
-  const { t } = useTranslation();
+  const { data: services, loading: servicesLoading } = useServices();
+  const { data: settings, loading: settingsLoading } = useSiteSettings();
+
+  if (servicesLoading || settingsLoading) return null;
 
   return (
     <section className="py-32 px-6 md:px-16 overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
@@ -79,10 +78,10 @@ const ServicesSection = () => {
       >
         <div className="mb-20">
           <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
-            {t('services.badge')}
+            {settings?.servicesTopLabel || "Xidmətlərimiz"}
           </motion.p>
           <motion.h2 variants={cockpitItem} className="font-heading text-4xl md:text-5xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-            {t('services.title')}
+            {settings?.servicesMainHeading || "Biz nə edirik"}
           </motion.h2>
         </div>
 
@@ -91,7 +90,7 @@ const ServicesSection = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {services.map((service, index) => (
-            <ServiceCard key={index} service={service} />
+            <ServiceCard key={service.id || index} service={service} />
           ))}
         </motion.div>
       </motion.div>

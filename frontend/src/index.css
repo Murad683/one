@@ -95,7 +95,7 @@
 
 /* ─── Light Theme ───────────────────────────── */
 .light {
-  --bg-primary: #F8F8F8;
+  --bg-primary: #E1EFE7;
   --bg-secondary: #FFFFFF;
   --bg-elevated: rgba(0, 0, 0, 0.03);
   --bg-elevated-hover: rgba(0, 0, 0, 0.06);
@@ -108,17 +108,17 @@
   --border-default: rgba(0, 0, 0, 0.10);
   --glass-bg: rgba(255, 255, 255, 0.30);
   --glass-border: rgba(0, 0, 0, 0.05);
-  --card-bg: rgba(0, 0, 0, 0.02);
+  --card-bg: rgba(255, 255, 255, 0.40);
   --card-border: rgba(0, 0, 0, 0.06);
-  --card-border-top: rgba(0, 0, 0, 0.08);
-  --input-bg: rgba(0, 0, 0, 0.03);
+  --card-border-top: rgba(255, 255, 255, 0.50);
+  --input-bg: rgba(255, 255, 255, 0.50);
   --input-border: rgba(0, 0, 0, 0.10);
   --modal-bg: rgba(255, 255, 255, 0.97);
   --modal-backdrop: rgba(0, 0, 0, 0.40);
   --glow-accent: rgba(101, 163, 13, 0.12);
   --glow-accent-subtle: rgba(101, 163, 13, 0.06);
-  --overlay-hero-from: rgba(248, 248, 248, 0.50);
-  --overlay-hero-via: rgba(248, 248, 248, 0.70);
+  --overlay-hero-from: rgba(255, 255, 255, 0.50);
+  --overlay-hero-via: rgba(225, 239, 231, 0.80);
   --shadow-navbar: 0 8px 32px rgba(0, 0, 0, 0.08);
   --accent-text: #65A30D;
   --accent-on-accent: #000000;

@@ -1,9 +1,19 @@
-import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
+import { useSiteSettings } from '../../hooks/useSiteData';
 
 const MarqueeBanner = () => {
-  const { t } = useTranslation();
-  const text = t('marquee.text');
+  const { data: settings, loading } = useSiteSettings();
+  
+  if (loading || !settings) return <div className="h-40" />;
+
+  let words = [];
+  try {
+    words = typeof settings.marqueeWords === 'string' ? JSON.parse(settings.marqueeWords) : (settings.marqueeWords || []);
+  } catch (e) {
+    words = [];
+  }
+  
+  const text = words.length > 0 ? words.join('  ✦  ') + '  ✦  ' : '';
 
   return (
     <div
@@ -20,10 +30,10 @@ const MarqueeBanner = () => {
         transition={{ ease: "linear", duration: 30, repeat: Infinity }}
       >
         <div className="flex whitespace-nowrap">
-          <span className="font-heading text-7xl font-black tracking-widest px-4" style={{ color: 'var(--text-ghost)' }}>
+          <span className="font-heading text-7xl font-black tracking-widest px-4 uppercase" style={{ color: 'var(--text-ghost)' }}>
             {text}
           </span>
-          <span className="font-heading text-7xl font-black tracking-widest px-4" style={{ color: 'var(--text-ghost)' }}>
+          <span className="font-heading text-7xl font-black tracking-widest px-4 uppercase" style={{ color: 'var(--text-ghost)' }}>
             {text}
           </span>
         </div>
