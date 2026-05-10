@@ -117,8 +117,8 @@
   --modal-backdrop: rgba(0, 0, 0, 0.40);
   --glow-accent: rgba(101, 163, 13, 0.12);
   --glow-accent-subtle: rgba(101, 163, 13, 0.06);
-  --overlay-hero-from: rgba(255, 255, 255, 0.50);
-  --overlay-hero-via: rgba(225, 239, 231, 0.80);
+  --overlay-hero-from: transparent;
+  --overlay-hero-via: rgba(225, 239, 231, 0.35);
   --shadow-navbar: 0 8px 32px rgba(0, 0, 0, 0.08);
   --accent-text: #65A30D;
   --accent-on-accent: #000000;
