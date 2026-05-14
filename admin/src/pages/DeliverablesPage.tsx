@@ -156,8 +156,8 @@ const PreviewOverlay = ({
     }
     return (
       <div className="flex flex-col items-center justify-center p-12 bg-slate-900 rounded-2xl shadow-2xl border border-slate-800 max-w-md w-full text-center">
-        <FileX className="h-16 w-16 text-slate-500 mb-4" />
-        <p className="text-sm text-slate-300">
+        <FileX className="h-16 w-16 text-muted mb-4" />
+        <p className="text-sm text-faint">
           Bu fayl növü üçün önizləmə yoxdur. Zəhmət olmasa yükləyin.
         </p>
       </div>
@@ -166,7 +166,7 @@ const PreviewOverlay = ({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col bg-slate-950/95 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex flex-col bg-sidebar-active/95 backdrop-blur-sm"
       onMouseDown={onClose}
     >
       {/* Header Controls - High Z-index */}
@@ -184,7 +184,7 @@ const PreviewOverlay = ({
           {url && (
             <button
               onClick={handleDownload}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors backdrop-blur-md"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-surface/10 hover:bg-surface/20 rounded-lg transition-colors backdrop-blur-md"
             >
               <Download className="h-4 w-4" />
               Yüklə
@@ -192,7 +192,7 @@ const PreviewOverlay = ({
           )}
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors backdrop-blur-md"
+            className="p-2 rounded-lg text-faint hover:text-white hover:bg-surface/10 transition-colors backdrop-blur-md"
             aria-label="Bağla"
           >
             <X className="h-6 w-6" />
@@ -386,7 +386,7 @@ export const DeliverablesPage = () => {
             </span>
           </button>
         ) : (
-          <span className="text-slate-400 text-xs italic">Fayl yoxdur</span>
+          <span className="text-faint text-xs italic">Fayl yoxdur</span>
         ),
     },
     {
@@ -449,11 +449,11 @@ export const DeliverablesPage = () => {
     <div className="space-y-4">
       <section className="space-y-4">
         <div>
-          <h2 className="text-xl font-semibold text-slate-950">Fayl Kateqoriyaları (Növlər)</h2>
+          <h2 className="text-xl font-semibold text-heading">Fayl Kateqoriyaları (Növlər)</h2>
         </div>
         <div className="flex flex-wrap gap-2">
           {Array.isArray(categories) && categories.map((category) => (
-            <div key={category.id} className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-slate-200">
+            <div key={category.id} className="inline-flex items-center gap-2 rounded-full bg-surface px-3 py-2 text-sm shadow-sm ring-1 ring-edge">
               {renamingId === category.id ? (
                 <>
                   <input
@@ -463,7 +463,7 @@ export const DeliverablesPage = () => {
                       if (event.key === 'Enter') saveRename(category);
                       if (event.key === 'Escape') setRenamingId('');
                     }}
-                    className="w-32 rounded border border-slate-300 px-2 py-1 text-sm outline-none"
+                    className="w-32 rounded border border-field-border bg-field px-2 py-1 text-sm text-heading outline-none"
                     autoFocus
                   />
                   <Button size="sm" onClick={() => saveRename(category)}>Yadda Saxla</Button>
@@ -472,17 +472,17 @@ export const DeliverablesPage = () => {
                 <>
                   <span>{category.name} {category.isVideo && <span className="text-[10px] text-blue-500 font-bold">(VIDEO)</span>}</span>
                   <button type="button" onClick={() => { setRenamingId(category.id); setRenameValue(category.name); }}>
-                    <Edit2 className="h-3.5 w-3.5 text-slate-500" />
+                    <Edit2 className="h-3.5 w-3.5 text-muted" />
                   </button>
                   <button type="button" onClick={() => setDeleteCategory(category)}>
-                    <X className="h-3.5 w-3.5 text-slate-500" />
+                    <X className="h-3.5 w-3.5 text-muted" />
                   </button>
                 </>
               )}
             </div>
           ))}
         </div>
-        <div className="flex flex-col sm:flex-row max-w-2xl gap-3 w-full bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <div className="flex flex-col sm:flex-row max-w-2xl gap-3 w-full bg-surface-alt p-4 rounded-xl border border-edge">
           <Input
             placeholder="Yeni növ adı (məs: Drone Çəkiliş)..."
             value={newCategory}
@@ -495,9 +495,9 @@ export const DeliverablesPage = () => {
               id="isVideo" 
               checked={isNewCategoryVideo} 
               onChange={(e) => setIsNewCategoryVideo(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
+              className="h-4 w-4 rounded border-field-border text-blue-600 focus:ring-blue-600"
             />
-            <label htmlFor="isVideo" className="text-sm font-medium text-slate-700">Video kateqoriyasıdır?</label>
+            <label htmlFor="isVideo" className="text-sm font-medium text-body">Video kateqoriyasıdır?</label>
           </div>
           <Button onClick={addCategory} className="shrink-0">
             <Plus className="h-4 w-4" />
@@ -508,8 +508,8 @@ export const DeliverablesPage = () => {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Layihə Faylları</h1>
-          <p className="mt-1 text-sm text-slate-500">Müştərilərə göndərilən faylları idarə edin.</p>
+          <h1 className="text-2xl font-semibold text-heading">Layihə Faylları</h1>
+          <p className="mt-1 text-sm text-muted">Müştərilərə göndərilən faylları idarə edin.</p>
         </div>
         <Button onClick={() => openModal()} className="w-full sm:w-auto">
           <Plus className="h-4 w-4" />
@@ -518,7 +518,7 @@ export const DeliverablesPage = () => {
       </div>
       <div className="relative">
         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          <Search className="h-4 w-4 text-slate-400" />
+          <Search className="h-4 w-4 text-faint" />
         </div>
         <Input
           placeholder="Müştəri adı və ya e-poçt ilə axtarın..."
@@ -575,7 +575,7 @@ export const DeliverablesPage = () => {
             error={errors.date?.message}
             {...register('date', { required: 'Tarix mütləqdir' })}
           />
-          <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
+          <div className="flex justify-end gap-3 border-t border-edge pt-4">
             <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
               Ləğv Et
             </Button>
@@ -628,11 +628,11 @@ export const DeliverablesPage = () => {
       >
         <div className="flex flex-col gap-4">
           <div
-            className="rounded-lg bg-slate-50 p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap border border-slate-100 max-h-[60vh] overflow-y-auto"
+            className="rounded-lg bg-surface-alt p-4 text-sm text-body leading-relaxed whitespace-pre-wrap border border-edge-light max-h-[60vh] overflow-y-auto"
           >
             {feedbackView}
           </div>
-          <div className="flex justify-end border-t border-slate-200 pt-3">
+          <div className="flex justify-end border-t border-edge pt-3">
             <Button variant="secondary" onClick={() => setFeedbackView(null)}>
               Bağla
             </Button>

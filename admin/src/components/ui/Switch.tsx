@@ -29,14 +29,14 @@ const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
         >
           <span
             aria-hidden="true"
-            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out ${
               checked ? 'translate-x-5' : 'translate-x-0'
             }`}
           />
         </button>
         <div className="flex flex-col">
           <span className="text-sm font-medium text-gray-900">{label}</span>
-          {description && <span className="text-sm text-gray-500">{description}</span>}
+          {description && <span className="text-sm text-muted">{description}</span>}
         </div>
       </div>
     );

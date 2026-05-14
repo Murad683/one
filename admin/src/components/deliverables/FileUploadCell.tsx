@@ -83,7 +83,7 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
   if (uploadState === 'uploading') {
     return (
       <div className="flex w-full min-w-[200px] flex-col justify-center">
-        <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center justify-between text-xs text-muted">
           <span className="truncate">Uploading...</span>
           <span>{progress}%</span>
         </div>
@@ -143,7 +143,7 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
             <FileIcon className="h-5 w-5 text-gray-400" />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-gray-700" title={deliverable.fileName || ''}>
+            <span className="text-sm font-medium text-body" title={deliverable.fileName || ''}>
               {truncatedName}
             </span>
             <span className="text-xs text-gray-400">

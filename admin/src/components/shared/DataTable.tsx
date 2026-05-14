@@ -29,7 +29,7 @@ const DataTable = <T extends { id: string }>({
   const showActions = !!(onEdit || onDelete);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-gray-100 bg-surface shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
@@ -37,14 +37,14 @@ const DataTable = <T extends { id: string }>({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
+                  className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted"
                   style={{ width: col.width }}
                 >
                   {col.label}
                 </th>
               ))}
               {showActions && (
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted">
                   Actions
                 </th>
               )}
@@ -76,7 +76,7 @@ const DataTable = <T extends { id: string }>({
               <tr>
                 <td colSpan={columns.length + (showActions ? 1 : 0)} className="px-4 py-8">
                   {emptyState || (
-                    <div className="text-center text-sm text-gray-500">No data available</div>
+                    <div className="text-center text-sm text-muted">No data available</div>
                   )}
                 </td>
               </tr>
@@ -87,7 +87,7 @@ const DataTable = <T extends { id: string }>({
                   className="border-b border-gray-50 transition-colors hover:bg-gray-50/50 last:border-0"
                 >
                   {columns.map((col) => (
-                    <td key={`${row.id}-${col.key}`} className="px-4 py-3.5 text-sm text-gray-700">
+                    <td key={`${row.id}-${col.key}`} className="px-4 py-3.5 text-sm text-body">
                       {col.render ? col.render(row) : (row as any)[col.key]}
                     </td>
                   ))}

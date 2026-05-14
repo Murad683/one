@@ -1,5 +1,68 @@
 @import "tailwindcss";
 
+/* ─── Design Tokens (Light / Dark) ──────────── */
+:root {
+  --page-bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --surface-hover: #f1f5f9;
+  --heading: #020617;
+  --body-text: #334155;
+  --muted: #64748b;
+  --faint: #94a3b8;
+  --edge: #e2e8f0;
+  --edge-light: #f1f5f9;
+  --field-bg: #ffffff;
+  --field-border: #cbd5e1;
+  --sidebar-bg: #ffffff;
+  --sidebar-active: #020617;
+  --sidebar-active-text: #ffffff;
+  --sidebar-hover: #f1f5f9;
+}
+
+.dark {
+  color-scheme: dark;
+  --page-bg: #0f172a;
+  --surface: #1e293b;
+  --surface-alt: #1e293b;
+  --surface-hover: #334155;
+  --heading: #f1f5f9;
+  --body-text: #cbd5e1;
+  --muted: #94a3b8;
+  --faint: #64748b;
+  --edge: #334155;
+  --edge-light: #1e293b;
+  --field-bg: #0f172a;
+  --field-border: #475569;
+  --sidebar-bg: #1e293b;
+  --sidebar-active: #3b82f6;
+  --sidebar-active-text: #ffffff;
+  --sidebar-hover: #334155;
+}
+
+/* Register as Tailwind theme colors */
+@theme {
+  --font-heading: "Manrope", "Plus Jakarta Sans", sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  --color-page: var(--page-bg);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-surface-hover: var(--surface-hover);
+  --color-heading: var(--heading);
+  --color-body: var(--body-text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-edge: var(--edge);
+  --color-edge-light: var(--edge-light);
+  --color-field: var(--field-bg);
+  --color-field-border: var(--field-border);
+  --color-sidebar: var(--sidebar-bg);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-text: var(--sidebar-active-text);
+  --color-sidebar-hover: var(--sidebar-hover);
+}
+
 /* ─── Local Fonts ───────────────────────────── */
 
 /* Inter Variable */
@@ -44,17 +107,16 @@
   font-style: normal;
 }
 
-@theme {
-  --font-heading: "Manrope", "Plus Jakarta Sans", sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
-}
-
 @layer base {
   body {
     font-family: 'Inter', sans-serif;
+    background-color: var(--page-bg);
+    color: var(--body-text);
+    transition: background-color 0.2s, color 0.2s;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Manrope', sans-serif;
+    color: var(--heading);
   }
 }
 

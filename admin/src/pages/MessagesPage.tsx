@@ -95,14 +95,14 @@ export const MessagesPage = () => {
       key: 'status',
       header: '',
       render: (msg) => (
-        msg.isRead ? <MailOpen className="h-4 w-4 text-slate-400" /> : <Mail className="h-4 w-4 text-sky-500" />
+        msg.isRead ? <MailOpen className="h-4 w-4 text-faint" /> : <Mail className="h-4 w-4 text-sky-500" />
       ),
     },
     {
       key: 'createdAt',
       header: 'Tarix',
       render: (msg) => (
-        <span className={msg.isRead ? 'text-slate-500' : 'font-semibold text-slate-900'}>
+        <span className={msg.isRead ? 'text-muted' : 'font-semibold text-slate-900'}>
           {new Date(msg.createdAt).toLocaleDateString()}
         </span>
       ),
@@ -111,7 +111,7 @@ export const MessagesPage = () => {
       key: 'name',
       header: 'Ad',
       render: (msg) => (
-        <span className={msg.isRead ? 'text-slate-700' : 'font-bold text-slate-950'}>
+        <span className={msg.isRead ? 'text-body' : 'font-bold text-heading'}>
           {msg.name}
         </span>
       ),
@@ -141,8 +141,8 @@ export const MessagesPage = () => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Gələnlər Qutusu</h1>
-          <p className="mt-1 text-sm text-slate-500">Müştəri müraciətlərini idarə edin.</p>
+          <h1 className="text-2xl font-semibold text-heading">Gələnlər Qutusu</h1>
+          <p className="mt-1 text-sm text-muted">Müştəri müraciətlərini idarə edin.</p>
         </div>
         <Badge variant="info" className="px-3 py-1 text-sm self-start sm:self-center">
           Cəmi {total} Mesaj
@@ -158,7 +158,7 @@ export const MessagesPage = () => {
           <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
             Əvvəlki
           </Button>
-          <span className="text-xs font-medium text-slate-600">{page} / {totalPages} Səhifə</span>
+          <span className="text-xs font-medium text-body">{page} / {totalPages} Səhifə</span>
           <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
             Növbəti
           </Button>
@@ -171,27 +171,27 @@ export const MessagesPage = () => {
           <div className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Göndərən</span>
-                <p className="text-sm font-semibold text-slate-950">{viewing.name}</p>
-                <p className="text-sm text-slate-600">{viewing.email}</p>
+                <span className="text-[10px] font-bold text-faint uppercase tracking-widest">Göndərən</span>
+                <p className="text-sm font-semibold text-heading">{viewing.name}</p>
+                <p className="text-sm text-body">{viewing.email}</p>
               </div>
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Şirkət</span>
-                <p className="text-sm text-slate-950">{viewing.companyName || 'Qeyd edilməyib'}</p>
+                <span className="text-[10px] font-bold text-faint uppercase tracking-widest">Şirkət</span>
+                <p className="text-sm text-heading">{viewing.companyName || 'Qeyd edilməyib'}</p>
               </div>
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Seçilən Xidmət</span>
-                <p className="text-sm text-slate-950 font-medium">{viewing.serviceName || 'Ümumi Müraciət'}</p>
+                <span className="text-[10px] font-bold text-faint uppercase tracking-widest">Seçilən Xidmət</span>
+                <p className="text-sm text-heading font-medium">{viewing.serviceName || 'Ümumi Müraciət'}</p>
               </div>
               <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tarix</span>
-                <p className="text-sm text-slate-950">{new Date(viewing.createdAt).toLocaleString()}</p>
+                <span className="text-[10px] font-bold text-faint uppercase tracking-widest">Tarix</span>
+                <p className="text-sm text-heading">{new Date(viewing.createdAt).toLocaleString()}</p>
               </div>
             </div>
 
-            <div className="space-y-2 border-t border-slate-100 pt-4">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mesajın Mətni</span>
-              <div className="rounded-xl bg-slate-50 p-5 text-sm leading-6 text-slate-700 whitespace-pre-wrap min-h-40">
+            <div className="space-y-2 border-t border-edge-light pt-4">
+              <span className="text-[10px] font-bold text-faint uppercase tracking-widest">Mesajın Mətni</span>
+              <div className="rounded-xl bg-surface-alt p-5 text-sm leading-6 text-body whitespace-pre-wrap min-h-40">
                 {viewing.message}
               </div>
             </div>

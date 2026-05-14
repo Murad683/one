@@ -74,7 +74,7 @@ export const TicketsPage = () => {
       render: (t) => (
         <div>
           <p className="text-sm font-medium text-slate-900">{t.user.name}</p>
-          <p className="text-xs text-slate-500">{t.user.email}</p>
+          <p className="text-xs text-muted">{t.user.email}</p>
         </div>
       ),
     },
@@ -91,7 +91,7 @@ export const TicketsPage = () => {
     {
       key: 'createdAt',
       header: 'Tarix',
-      render: (t) => <span className="text-sm text-slate-600">{formatDate(t.createdAt)}</span>,
+      render: (t) => <span className="text-sm text-body">{formatDate(t.createdAt)}</span>,
     },
     {
       key: 'actions',
@@ -101,7 +101,7 @@ export const TicketsPage = () => {
           value={t.status}
           onChange={(e) => handleStatusChange(t.id, e.target.value)}
           disabled={updatingId === t.id}
-          className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700 disabled:opacity-50"
+          className="rounded-lg border border-field-border bg-surface px-2 py-1.5 text-xs text-body disabled:opacity-50"
         >
           <option value="OPEN">Açıq</option>
           <option value="IN_PROGRESS">İcrada</option>
@@ -114,8 +114,8 @@ export const TicketsPage = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-950">Dəstək Sorğuları</h1>
-        <p className="mt-1 text-sm text-slate-500">Müştəri dəstək biletlərini idarə edin.</p>
+        <h1 className="text-2xl font-semibold text-heading">Dəstək Sorğuları</h1>
+        <p className="mt-1 text-sm text-muted">Müştəri dəstək biletlərini idarə edin.</p>
       </div>
       {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       <Table columns={columns} data={tickets} isLoading={isLoading} emptyMessage="Heç bir dəstək sorğusu tapılmadı." />

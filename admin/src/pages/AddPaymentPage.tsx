@@ -131,13 +131,13 @@ export const AddPaymentPage = () => {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Ödəniş Əlavə Et</h1>
-          <p className="mt-1 text-sm text-slate-500">Müştəri üçün yeni ödəniş qeyd edin.</p>
+          <h1 className="text-2xl font-semibold text-heading">Ödəniş Əlavə Et</h1>
+          <p className="mt-1 text-sm text-muted">Müştəri üçün yeni ödəniş qeyd edin.</p>
         </div>
       </div>
 
       <div className="max-w-xl">
-        <form onSubmit={handleSubmit} className="space-y-5 rounded-xl border border-slate-200 bg-white p-6">
+        <form onSubmit={handleSubmit} className="space-y-5 rounded-xl border border-edge bg-surface p-6">
           {/* Client Select */}
           <Combobox
             label="Müştəri"
@@ -179,22 +179,22 @@ export const AddPaymentPage = () => {
 
           {/* Invoice Upload */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-700">Qaimə (PDF)</label>
+            <label className="block text-sm font-medium text-body">Qaimə (PDF)</label>
             {uploadedFileName ? (
               <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm">
                 <CheckCircle className="h-4 w-4 text-emerald-600" />
-                <FileText className="h-4 w-4 text-slate-500" />
-                <span className="text-slate-700 truncate flex-1">{uploadedFileName}</span>
+                <FileText className="h-4 w-4 text-muted" />
+                <span className="text-body truncate flex-1">{uploadedFileName}</span>
                 <button
                   type="button"
                   onClick={() => { setInvoicePdfUrl(''); setUploadedFileName(''); }}
-                  className="text-xs text-slate-500 hover:text-red-600"
+                  className="text-xs text-muted hover:text-red-600"
                 >
                   Sil
                 </button>
               </div>
             ) : (
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 py-3 text-sm text-slate-500 transition hover:border-slate-400 hover:bg-slate-50">
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-field-border px-3 py-3 text-sm text-muted transition hover:border-slate-400 hover:bg-surface-alt">
                 <Upload className="h-4 w-4" />
                 {isUploading ? 'Yüklənir...' : 'PDF fayl seçin'}
                 <input
@@ -219,7 +219,7 @@ export const AddPaymentPage = () => {
 
           {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-          <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
+          <div className="flex justify-end gap-3 border-t border-edge pt-4">
             <Button variant="secondary" onClick={() => navigate('/users')} disabled={isSubmitting}>
               Ləğv Et
             </Button>

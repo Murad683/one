@@ -41,17 +41,17 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center overflow-hidden bg-slate-950/50 sm:p-4" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center overflow-hidden bg-black/50 sm:p-4" onMouseDown={onClose}>
       <div
-        className={`flex w-full ${sizes[size]} max-h-[90vh] sm:max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-t-2xl sm:rounded-xl bg-white shadow-xl sm:m-auto`}
+        className={`flex w-full ${sizes[size]} max-h-[90vh] sm:max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-t-2xl sm:rounded-xl bg-surface shadow-xl sm:m-auto border border-edge`}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 md:px-5 py-3 md:py-4">
-          <h2 className="text-base font-semibold text-slate-950">{title}</h2>
+        <div className="flex shrink-0 items-center justify-between border-b border-edge px-4 md:px-5 py-3 md:py-4">
+          <h2 className="text-base font-semibold text-heading">{title}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-950"
+            className="rounded-lg p-1.5 text-faint transition hover:bg-surface-hover hover:text-heading"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />

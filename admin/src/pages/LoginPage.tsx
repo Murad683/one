@@ -50,16 +50,16 @@ export const LoginPage = () => {
   if (token) return <Navigate to="/" replace />;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
-      <section className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <main className="flex min-h-screen items-center justify-center bg-surface-hover px-4">
+      <section className="w-full max-w-sm rounded-xl border border-edge bg-surface p-6 shadow-sm">
         <div className="mb-6">
           <div className="mb-4 flex items-center gap-3">
             <img src="/logo.jpg" alt="Logo" className="h-10 w-auto rounded-sm object-contain" />
-            <h1 className="text-xl font-bold tracking-tighter text-slate-950">
+            <h1 className="text-xl font-bold tracking-tighter text-heading">
               ONE<span className="text-blue-600">.</span>
             </h1>
           </div>
-          <p className="mt-1 text-sm text-slate-500">Məzmun və müştəriləri idarə etmək üçün daxil olun.</p>
+          <p className="mt-1 text-sm text-muted">Məzmun və müştəriləri idarə etmək üçün daxil olun.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

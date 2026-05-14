@@ -32,7 +32,7 @@ const Sidebar: React.FC = () => {
       )}
 
       <aside
-        className={`fixed left-0 top-0 h-full border-r border-gray-100 bg-white transition-all duration-300 flex flex-col z-50 ${
+        className={`fixed left-0 top-0 h-full border-r border-gray-100 bg-surface transition-all duration-300 flex flex-col z-50 ${
           isCollapsed ? 'md:w-14' : 'md:w-60'
         } ${
           isMobileOpen ? 'w-64 translate-x-0' : 'w-60 -translate-x-full md:translate-x-0'

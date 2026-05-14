@@ -140,7 +140,7 @@ export const TeamPage = () => {
         member.avatarUrl ? (
           <img src={assetUrl(member.avatarUrl)} alt="" className="h-10 w-10 rounded-full object-cover" />
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-hover text-faint">
             <User className="h-5 w-5" />
           </div>
         ),
@@ -173,8 +173,8 @@ export const TeamPage = () => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Komandamız</h1>
-          <p className="mt-1 text-sm text-slate-500">Komanda üzvlərini idarə edin.</p>
+          <h1 className="text-2xl font-semibold text-heading">Komandamız</h1>
+          <p className="mt-1 text-sm text-muted">Komanda üzvlərini idarə edin.</p>
         </div>
         <Button onClick={() => openModal()} className="w-full sm:w-auto">
           <Plus className="h-4 w-4" />
@@ -194,7 +194,7 @@ export const TeamPage = () => {
           <Input label="Vəzifə" error={errors.role?.message} {...register('role', { required: 'Vəzifə mütləqdir' })} />
           <Input label="Sıra" type="number" {...register('sortOrder', { valueAsNumber: true })} />
           <Toggle checked={watchedActive} onChange={(checked) => setValue('isActive', checked)} label="Aktiv" />
-          <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
+          <div className="flex justify-end gap-3 border-t border-edge pt-4">
             <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Ləğv Et</Button>
             <Button type="submit" isLoading={isSaving}>Yadda Saxla</Button>
           </div>

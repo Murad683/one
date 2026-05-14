@@ -22,7 +22,7 @@ const Pagination: React.FC<PaginationProps> = ({ page, totalPages, onPageChange 
         <ChevronLeft className="mr-1 h-4 w-4" />
         Previous
       </Button>
-      <span className="text-sm text-gray-500">
+      <span className="text-sm text-muted">
         Page {page} of {totalPages}
       </span>
       <Button

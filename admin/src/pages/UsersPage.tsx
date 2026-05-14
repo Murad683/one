@@ -207,7 +207,7 @@ export const UsersPage = () => {
               <select
                 value={selectedPackageId}
                 onChange={(e) => setSelectedPackageId(e.target.value)}
-                className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs"
+                className="rounded-lg border border-field-border bg-surface px-2 py-1.5 text-xs"
               >
                 <option value="">Paketi sil</option>
                 {packages.map((p) => (
@@ -224,7 +224,7 @@ export const UsersPage = () => {
           );
         }
         return (
-          <span className={user.package ? 'text-slate-700' : 'text-slate-400 italic'}>
+          <span className={user.package ? 'text-body' : 'text-faint italic'}>
             {user.package?.name ?? 'Təyin edilməyib'}
           </span>
         );
@@ -285,8 +285,8 @@ export const UsersPage = () => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Müştərilər</h1>
-          <p className="mt-1 text-sm text-slate-500">Müştəri portalı istifadəçilərini idarə edin.</p>
+          <h1 className="text-2xl font-semibold text-heading">Müştərilər</h1>
+          <p className="mt-1 text-sm text-muted">Müştəri portalı istifadəçilərini idarə edin.</p>
         </div>
         <Button onClick={() => openModal()} className="w-full sm:w-auto">
           <Plus className="h-4 w-4" />
@@ -318,10 +318,10 @@ export const UsersPage = () => {
             })}
           />
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-slate-700">Paket Seçin</label>
+            <label className="block text-sm font-medium text-body">Paket Seçin</label>
             <select
               {...register('packageId')}
-              className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-100"
+              className="block w-full rounded-lg border border-field-border bg-surface px-3 py-2 text-sm text-heading outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-100"
             >
               <option value="">Təyin edilməyib / Fərdi</option>
               {packages.map((p) => (
@@ -329,7 +329,7 @@ export const UsersPage = () => {
               ))}
             </select>
           </div>
-          <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
+          <div className="flex justify-end gap-3 border-t border-edge pt-4">
             <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Ləğv Et</Button>
             <Button type="submit" isLoading={isSaving}>Yadda Saxla</Button>
           </div>
@@ -398,7 +398,7 @@ export const UsersPage = () => {
             isLoading={isPaymentsLoading}
             emptyMessage="Hələlik ödəniş yoxdur"
           />
-          <div className="flex justify-end border-t border-slate-100 pt-4">
+          <div className="flex justify-end border-t border-edge-light pt-4">
             <Button variant="secondary" onClick={() => setViewingPaymentsUser(null)}>
               Bağla
             </Button>

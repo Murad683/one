@@ -223,7 +223,7 @@ export const PortfolioPage = () => {
         project.thumbnailUrl ? (
           <img src={assetUrl(project.thumbnailUrl)} alt="" className="h-12 w-16 rounded object-cover" />
         ) : (
-          <div className="flex h-12 w-16 items-center justify-center rounded bg-slate-100 text-slate-400">
+          <div className="flex h-12 w-16 items-center justify-center rounded bg-surface-hover text-faint">
             <ImageIcon className="h-5 w-5" />
           </div>
         ),
@@ -279,11 +279,11 @@ export const PortfolioPage = () => {
 
       <section className="space-y-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Kateqoriyalar</h1>
+          <h1 className="text-2xl font-semibold text-heading">Kateqoriyalar</h1>
         </div>
         <div className="flex flex-wrap gap-2">
           {categories.map((category) => (
-            <div key={category.id} className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-slate-200">
+            <div key={category.id} className="inline-flex items-center gap-2 rounded-full bg-surface px-3 py-2 text-sm shadow-sm ring-1 ring-slate-200">
               {renamingId === category.id ? (
                 <>
                   <input
@@ -293,7 +293,7 @@ export const PortfolioPage = () => {
                       if (event.key === 'Enter') saveRename(category);
                       if (event.key === 'Escape') setRenamingId('');
                     }}
-                    className="w-32 rounded border border-slate-300 px-2 py-1 text-sm outline-none"
+                    className="w-32 rounded border border-field-border px-2 py-1 text-sm outline-none"
                     autoFocus
                   />
                   <Button size="sm" onClick={() => saveRename(category)}>
@@ -304,10 +304,10 @@ export const PortfolioPage = () => {
                 <>
                   <span>{category.name}</span>
                   <button type="button" onClick={() => { setRenamingId(category.id); setRenameValue(category.name); }}>
-                    <Edit2 className="h-3.5 w-3.5 text-slate-500" />
+                    <Edit2 className="h-3.5 w-3.5 text-muted" />
                   </button>
                   <button type="button" onClick={() => setDeleteCategory(category)}>
-                    <X className="h-3.5 w-3.5 text-slate-500" />
+                    <X className="h-3.5 w-3.5 text-muted" />
                   </button>
                 </>
               )}
@@ -334,7 +334,7 @@ export const PortfolioPage = () => {
 
       <section className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h2 className="text-2xl font-semibold text-slate-950">Layihələr</h2>
+          <h2 className="text-2xl font-semibold text-heading">Layihələr</h2>
           <Button onClick={() => openProjectModal()} className="w-full sm:w-auto">
             <Plus className="h-4 w-4" />
             Yeni Layihə
@@ -368,7 +368,7 @@ export const PortfolioPage = () => {
 
           <Toggle checked={watchedPublished} onChange={(checked) => setValue('isPublished', checked)} label="Dərc edilsin" />
           <Toggle checked={watchedFeatured} onChange={(checked) => setValue('isFeatured', checked)} label="Ana səhifədə göstərilsin" />
-          <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
+          <div className="flex justify-end gap-3 border-t border-edge pt-4">
             <Button variant="secondary" onClick={() => setIsProjectModalOpen(false)} disabled={isSaving}>
               Ləğv Et
             </Button>

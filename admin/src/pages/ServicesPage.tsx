@@ -146,7 +146,7 @@ export const ServicesPage = () => {
       header: 'İkon',
       render: (service) => {
         const Icon = iconFor(service.iconName);
-        return <Icon className="h-5 w-5 text-slate-600" />;
+        return <Icon className="h-5 w-5 text-body" />;
       },
     },
     { key: 'title', header: 'Başlıq' },
@@ -181,8 +181,8 @@ export const ServicesPage = () => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Xidmətlər</h1>
-          <p className="mt-1 text-sm text-slate-500">Xidmət kartlarını və ardıcıllığı idarə edin.</p>
+          <h1 className="text-2xl font-semibold text-heading">Xidmətlər</h1>
+          <p className="mt-1 text-sm text-muted">Xidmət kartlarını və ardıcıllığı idarə edin.</p>
         </div>
         <Button onClick={() => openModal()} className="w-full sm:w-auto">
           <Plus className="h-4 w-4" />
@@ -195,7 +195,7 @@ export const ServicesPage = () => {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editing ? 'Xidməti Redaktə Et' : 'Yeni Xidmət Əlavə Et'}>
         <form onSubmit={handleSubmit(saveService)} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">İkon Seçin</label>
+            <label className="text-sm font-medium text-body">İkon Seçin</label>
             <div className="grid grid-cols-5 gap-2">
               {Object.entries(iconMap).map(([name, Icon]) => (
                 <button
@@ -203,7 +203,7 @@ export const ServicesPage = () => {
                   type="button"
                   onClick={() => setValue('iconName', name)}
                   className={`flex items-center justify-center rounded-lg border p-3 transition-colors ${
-                    watchedIcon === name ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    watchedIcon === name ? 'border-slate-950 bg-sidebar-active text-white' : 'border-edge bg-surface text-body hover:border-field-border'
                   }`}
                   title={name}
                 >
@@ -217,7 +217,7 @@ export const ServicesPage = () => {
           <Textarea label="Təsvir" error={errors.description?.message} {...register('description', { required: 'Təsvir mütləqdir' })} />
           <Input label="Sıra" type="number" {...register('sortOrder', { valueAsNumber: true })} />
           <Toggle checked={watchedActive} onChange={(checked) => setValue('isActive', checked)} label="Aktiv" />
-          <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
+          <div className="flex justify-end gap-3 border-t border-edge pt-4">
             <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Ləğv Et</Button>
             <Button type="submit" isLoading={isSaving}>Yadda Saxla</Button>
           </div>

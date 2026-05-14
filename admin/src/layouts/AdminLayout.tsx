@@ -8,8 +8,10 @@ import {
   LogOut,
   Menu,
   MessageSquare,
+  Moon,
   Package,
   Settings,
+  Sun,
   UserCircle,
   Users,
   Wrench,
@@ -18,6 +20,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useMessageStore } from '../store/messageStore';
+import { useThemeStore } from '../store/themeStore';
 
 interface NavItem {
   icon: LucideIcon;
@@ -37,6 +40,7 @@ export const AdminLayout = () => {
   const user = useAuthStore((state) => state.user);
   const unreadCount = useMessageStore((state) => state.unreadCount);
   const fetchUnreadCount = useMessageStore((state) => state.fetchUnreadCount);
+  const { theme, toggle: toggleTheme } = useThemeStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -61,30 +65,49 @@ export const AdminLayout = () => {
     navigate('/login', { replace: true });
   };
 
+  const ThemeToggle = ({ className = '' }: { className?: string }) => (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      className={`rounded-lg p-2 transition ${className}`}
+      aria-label={theme === 'dark' ? 'Açıq rejimə keç' : 'Tünd rejimə keç'}
+      title={theme === 'dark' ? 'Açıq rejim' : 'Tünd rejim'}
+    >
+      {theme === 'dark' ? (
+        <Sun className="h-5 w-5 text-amber-400" />
+      ) : (
+        <Moon className="h-5 w-5 text-muted" />
+      )}
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950">
+    <div className="min-h-screen bg-page">
       {/* ── Mobile Top Bar ── */}
-      <header className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 md:hidden">
+      <header className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center justify-between border-b border-edge bg-surface px-4 md:hidden">
         <div className="flex items-center gap-3">
           <img src="/logo.jpg" alt="Logo" className="h-7 w-auto rounded-sm object-contain" />
-          <h2 className="text-sm font-bold tracking-tighter">
+          <h2 className="text-sm font-bold tracking-tighter text-heading">
             ONE<span className="text-blue-600">.</span>
           </h2>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="rounded-lg p-2 text-slate-600 transition hover:bg-slate-100"
-          aria-label="Toggle menu"
-        >
-          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="rounded-lg p-2 text-muted transition hover:bg-surface-hover"
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </header>
 
       {/* ── Mobile Overlay ── */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-950/40 md:hidden"
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -92,20 +115,25 @@ export const AdminLayout = () => {
       {/* ── Sidebar ── */}
       <aside
         className={[
-          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-200 ease-in-out',
-          'md:translate-x-0 md:w-60',
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
+          'fixed inset-y-0 z-50 flex w-64 flex-col bg-sidebar transition-transform duration-200 ease-in-out',
+          'md:left-0 md:border-r md:border-edge md:translate-x-0 md:w-60',
+          'right-0 border-l border-edge md:border-l-0',
+          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0',
         ].join(' ')}
       >
-        <div className="flex h-14 md:h-16 items-center gap-3 border-b border-slate-200 px-5">
+        <div className="flex h-14 md:h-16 items-center gap-3 border-b border-edge px-5">
           <img src="/logo.jpg" alt="Logo" className="h-8 w-auto rounded-sm object-contain" />
-          <div className="min-w-0">
-            <h2 className="truncate text-sm font-bold tracking-tighter">
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-sm font-bold tracking-tighter text-heading">
               ONE<span className="text-blue-600">.</span>
             </h2>
-            <p className="truncate text-[10px] uppercase tracking-wider text-slate-500">
+            <p className="truncate text-[10px] uppercase tracking-wider text-muted">
               {user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'}
             </p>
+          </div>
+          {/* Desktop theme toggle */}
+          <div className="hidden md:block">
+            <ThemeToggle className="hover:bg-surface-hover" />
           </div>
         </div>
 
@@ -134,8 +162,8 @@ export const AdminLayout = () => {
             />
           </div>
 
-          <div className="my-5 border-t border-slate-200 pt-4">
-            <p className="mb-2 px-3 text-xs font-semibold uppercase text-slate-400">
+          <div className="my-5 border-t border-edge pt-4">
+            <p className="mb-2 px-3 text-xs font-semibold uppercase text-faint">
               Ayarlar
             </p>
             <div className="space-y-1">
@@ -146,11 +174,11 @@ export const AdminLayout = () => {
           </div>
         </nav>
 
-        <div className="border-t border-slate-200 p-2">
+        <div className="border-t border-edge p-2">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted transition hover:bg-surface-hover hover:text-heading"
           >
             <LogOut className="h-5 w-5 shrink-0" />
             <span>Çıxış</span>
@@ -178,7 +206,9 @@ const SidebarLink = ({ item }: { item: NavItem }) => {
       className={({ isActive }) =>
         [
           'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition',
-          isActive ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950',
+          isActive
+            ? 'bg-sidebar-active text-sidebar-active-text'
+            : 'text-muted hover:bg-sidebar-hover hover:text-heading',
         ].join(' ')
       }
       title={item.label}

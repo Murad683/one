@@ -166,8 +166,8 @@ export const PackagesPage = () => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Paketlər</h1>
-          <p className="mt-1 text-sm text-slate-500">Qiymət paketlərini idarə edin.</p>
+          <h1 className="text-2xl font-semibold text-heading">Paketlər</h1>
+          <p className="mt-1 text-sm text-muted">Qiymət paketlərini idarə edin.</p>
         </div>
         <Button onClick={() => openModal()} className="w-full sm:w-auto">
           <Plus className="h-4 w-4" />
@@ -184,7 +184,7 @@ export const PackagesPage = () => {
           <Input label="Qiymət (məs: 200 AZN-dən)" error={errors.priceLabel?.message} {...register('priceLabel', { required: 'Qiymət mütləqdir' })} />
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-700">Üstünlüklər</label>
+              <label className="text-sm font-medium text-body">Üstünlüklər</label>
               <Button size="sm" variant="secondary" onClick={() => append({ value: '' })}>
                 <Plus className="h-4 w-4" />
                 Əlavə Et
@@ -209,7 +209,7 @@ export const PackagesPage = () => {
             )}
           </div>
           <Toggle checked={watchedActive} onChange={(checked) => setValue('isActive', checked)} label="Aktiv" />
-          <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
+          <div className="flex justify-end gap-3 border-t border-edge pt-4">
             <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Ləğv Et</Button>
             <Button type="submit" isLoading={isSaving}>Yadda Saxla</Button>
           </div>

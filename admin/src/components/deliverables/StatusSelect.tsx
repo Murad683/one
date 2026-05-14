@@ -39,7 +39,7 @@ const StatusSelect: React.FC<StatusSelectProps> = ({ deliverable, onStatusChange
     success: 'bg-green-50 text-green-700 border-green-200 focus:ring-green-500',
     warning: 'bg-yellow-50 text-yellow-700 border-yellow-200 focus:ring-yellow-500',
     error: 'bg-red-50 text-red-600 border-red-200 focus:ring-red-500',
-    neutral: 'bg-gray-100 text-gray-700 border-transparent focus:ring-gray-500',
+    neutral: 'bg-gray-100 text-body border-transparent focus:ring-gray-500',
   };
 
   return (

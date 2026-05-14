@@ -21,13 +21,13 @@ const parseJSON = (raw?: string | null, fallback: any = []) => {
 // --- Components ---
 
 const Card = ({ title, icon, children, onSave, isSaving }: { title: string; icon: ReactNode; children: ReactNode; onSave: () => void; isSaving: boolean }) => (
-  <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
-    <div className="border-b border-slate-100 bg-slate-50/50 px-4 md:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div className="rounded-2xl border border-edge bg-surface shadow-sm overflow-hidden flex flex-col">
+    <div className="border-b border-edge-light bg-surface-alt/50 px-4 md:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm ring-1 ring-slate-200">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface text-body shadow-sm ring-1 ring-slate-200">
           {icon}
         </div>
-        <h3 className="font-semibold text-slate-950">{title}</h3>
+        <h3 className="font-semibold text-heading">{title}</h3>
       </div>
       <Button onClick={onSave} isLoading={isSaving} size="sm" className="w-full sm:w-auto">
         Yadda Saxla
@@ -43,7 +43,7 @@ const TabButton = ({ active, onClick, icon, children }: { active: boolean; onCli
   <button
     onClick={onClick}
     className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-all ${
-      active ? 'bg-slate-950 text-white shadow-lg shadow-slate-900/20' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950'
+      active ? 'bg-sidebar-active text-white shadow-lg shadow-slate-900/20' : 'text-muted hover:bg-surface-hover hover:text-heading'
     }`}
   >
     {icon}
@@ -65,16 +65,16 @@ export const SettingsPage = () => {
     }
   }, [success]);
 
-  if (isLoading) return <div className="p-6 text-slate-500 text-sm">Yüklənir...</div>;
+  if (isLoading) return <div className="p-6 text-muted text-sm">Yüklənir...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold text-slate-950">Veb-sayt Ayarları</h1>
-        <p className="text-sm text-slate-500">Veb-saytın məzmununu modul şəklində idarə edin.</p>
+        <h1 className="text-2xl font-semibold text-heading">Veb-sayt Ayarları</h1>
+        <p className="text-sm text-muted">Veb-saytın məzmununu modul şəklində idarə edin.</p>
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded-2xl bg-white p-1.5 border border-slate-200 shadow-sm sticky top-4 z-40">
+      <div className="flex flex-wrap gap-2 rounded-2xl bg-surface p-1.5 border border-edge shadow-sm sticky top-4 z-40">
         <TabButton active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon={<Home className="h-4 w-4" />}>Ana Səhifə</TabButton>
         <TabButton active={activeTab === 'about'} onClick={() => setActiveTab('about')} icon={<Info className="h-4 w-4" />}>Haqqımızda</TabButton>
         <TabButton active={activeTab === 'contact'} onClick={() => setActiveTab('contact')} icon={<PhoneCall className="h-4 w-4" />}>Əlaqə</TabButton>
@@ -189,17 +189,17 @@ const HeroCard = ({ settings, onSave, onUpload, setSuccess }: any) => {
         <Input label="CTA Düymə Linki" {...register('heroCtaUrl')} placeholder="Məsələn: /paketler" />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">Hero Media (Video/Şəkil)</label>
+        <label className="text-sm font-medium text-body">Hero Media (Video/Şəkil)</label>
         <div className="flex items-center gap-4">
-          <div className="relative flex h-24 w-full items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 transition hover:bg-slate-100">
+          <div className="relative flex h-24 w-full items-center justify-center rounded-xl border-2 border-dashed border-edge bg-surface-alt transition hover:bg-surface-hover">
             <input type="file" accept="video/*,image/*" onChange={handleUpload} className="absolute inset-0 cursor-pointer opacity-0" disabled={isUploading} />
-            <div className="flex flex-col items-center gap-1 text-slate-400">
+            <div className="flex flex-col items-center gap-1 text-faint">
               <Upload className={`h-5 w-5 ${isUploading ? 'animate-bounce' : ''}`} />
               <span className="text-[10px] font-medium uppercase tracking-wider">Yüklə</span>
             </div>
           </div>
           {settings?.heroVideoUrl && (
-            <div className="h-24 w-40 overflow-hidden rounded-xl border border-slate-200 shadow-inner bg-slate-100 flex items-center justify-center">
+            <div className="h-24 w-40 overflow-hidden rounded-xl border border-edge shadow-inner bg-surface-hover flex items-center justify-center">
                {settings.heroVideoUrl.match(/\.(mp4|webm|ogg)$|video/i) ? (
                  <video src={assetUrl(settings.heroVideoUrl)} className="h-full w-full object-cover" autoPlay muted loop playsInline />
                ) : (
@@ -209,7 +209,7 @@ const HeroCard = ({ settings, onSave, onUpload, setSuccess }: any) => {
           )}
         </div>
       </div>
-      <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider italic">Qeyd: Düymə mətni və linki avtomatik təyin edilir.</p>
+      <p className="text-[10px] text-faint font-medium uppercase tracking-wider italic">Qeyd: Düymə mətni və linki avtomatik təyin edilir.</p>
     </Card>
   );
 };
@@ -251,7 +251,7 @@ const AboutIntroCard = ({ settings, onSave, setSuccess }: any) => {
       <Input label="Bölmə Etiketi" {...register('aboutTopLabel')} />
       <Input label="Başlıq" {...register('aboutMainHeading')} />
       <Textarea label="Mətn" rows={10} {...register('aboutDescription')} />
-      <div className="grid gap-4 sm:grid-cols-2 pt-4 border-t border-slate-100">
+      <div className="grid gap-4 sm:grid-cols-2 pt-4 border-t border-edge-light">
         <Input label="Komanda Etiketi" {...register('aboutTeamBadge')} />
         <Input label="Komanda Başlığı" {...register('aboutTeamTitle')} />
       </div>
@@ -304,7 +304,7 @@ const StatisticsCard = ({ settings, onSave, setSuccess }: any) => {
     <Card title="Statistikalar" icon={<Hash className="h-4 w-4" />} onSave={handleSubmit(onSubmit)} isSaving={isSaving}>
       <div className="grid gap-3 sm:grid-cols-2">
         {[0, 1, 2, 3].map(i => (
-          <div key={i} className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 space-y-2">
+          <div key={i} className="rounded-xl border border-edge-light bg-surface-alt/50 p-3 space-y-2">
             <Input label="Rəqəm" {...register(`stat${i}_val` as any)} placeholder="Məs: 300+" />
             <Input label="Açıqlama" {...register(`stat${i}_lab` as any)} placeholder="Məs: Layihə" />
           </div>
@@ -401,7 +401,7 @@ const ContactCard = ({ settings, onSave, setSuccess }: any) => {
         <Input label="Bölmə Etiketi" {...register('contactTopLabel')} />
         <Input label="Bölmə Başlığı" {...register('contactMainHeading')} />
       </div>
-      <div className="grid gap-4 sm:grid-cols-1 pt-4 border-t border-slate-100">
+      <div className="grid gap-4 sm:grid-cols-1 pt-4 border-t border-edge-light">
         <Input label="Məlumat Sütunu Başlığı" {...register('contactInfoTitle')} />
       </div>
       <div className="grid gap-4 sm:grid-cols-4">
@@ -410,7 +410,7 @@ const ContactCard = ({ settings, onSave, setSuccess }: any) => {
         <Input label="E-poçt Etiketi" {...register('contactEmailLabel')} />
         <Input label="İş Saatları Etiketi" {...register('contactHoursLabel')} />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 pt-4 border-t border-slate-100">
+      <div className="grid gap-4 sm:grid-cols-2 pt-4 border-t border-edge-light">
         <Input label="E-poçt" {...register('companyEmail')} placeholder="Məs: info@example.com" />
         <Input label="Telefon" {...register('companyPhone')} placeholder="Məs: +994 50 000 00 00" />
         <Input label="İş Saatları" {...register('companyWorkingHours')} placeholder="Məs: B.E - Cəma, 09:00 - 18:00" />
@@ -418,7 +418,7 @@ const ContactCard = ({ settings, onSave, setSuccess }: any) => {
       </div>
       <Textarea label="Google Maps İframe Linki" rows={2} {...register('googleMapsEmbed')} placeholder="https://www.google.com/maps/embed?..." />
       {mapUrl && (
-        <div className="aspect-video w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+        <div className="aspect-video w-full overflow-hidden rounded-xl border border-edge bg-surface-hover">
            <iframe src={mapUrl} className="h-full w-full grayscale" loading="lazy" />
         </div>
       )}
@@ -476,13 +476,13 @@ const FooterCard = ({ settings, onSave, setSuccess }: any) => {
         <Input label="Səhifələr Sütunu Başlığı" {...register('footerPagesTitle')} />
         <Input label="Sosial Media Sütunu Başlığı" {...register('footerSocialTitle')} />
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 pt-4 border-t border-slate-100">
+      <div className="grid gap-3 sm:grid-cols-2 pt-4 border-t border-edge-light">
         <Input label="Instagram" {...register('instagram')} placeholder="Link" />
         <Input label="LinkedIn" {...register('linkedin')} placeholder="Link" />
         <Input label="YouTube" {...register('youtube')} placeholder="Link" />
         <Input label="Telegram" {...register('telegram')} placeholder="Link" />
       </div>
-      <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider italic">Qeyd: Müəllif hüquqları (Copyright) mətni sabitdir.</p>
+      <p className="text-[10px] text-faint font-medium uppercase tracking-wider italic">Qeyd: Müəllif hüquqları (Copyright) mətni sabitdir.</p>
     </Card>
   );
 };
@@ -521,14 +521,14 @@ const MarqueeCard = ({ settings, onSave, setSuccess }: any) => {
 
   return (
     <Card title="Marquee (Axan Mətn)" icon={<X className="h-4 w-4" />} onSave={handleSave} isSaving={isSaving}>
-      <div className="flex flex-wrap gap-2 min-h-[60px] p-4 rounded-xl bg-slate-50 border border-slate-100">
+      <div className="flex flex-wrap gap-2 min-h-[60px] p-4 rounded-xl bg-surface-alt border border-edge-light">
         {words.map((word, i) => (
-          <span key={i} className="inline-flex items-center gap-1.5 rounded-full bg-white border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300">
+          <span key={i} className="inline-flex items-center gap-1.5 rounded-full bg-surface border border-edge px-3 py-1 text-xs font-medium text-body shadow-sm transition hover:border-field-border">
             {word}
             <button onClick={() => removeWord(i)} className="hover:text-red-500"><X className="h-3 w-3" /></button>
           </span>
         ))}
-        {words.length === 0 && <span className="text-xs text-slate-400">Heç bir söz əlavə edilməyib.</span>}
+        {words.length === 0 && <span className="text-xs text-faint">Heç bir söz əlavə edilməyib.</span>}
       </div>
       <div className="flex gap-2">
         <Input placeholder="Yeni söz..." value={newWord} onChange={e => setNewWord(e.target.value)} onKeyDown={e => e.key === 'Enter' && addWord()} />

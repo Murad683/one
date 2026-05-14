@@ -4,7 +4,6 @@ export interface TableColumn<T> {
   key: keyof T | string;
   header: string;
   render?: (row: T) => ReactNode;
-  /** Hide this column on mobile screens */
   hideOnMobile?: boolean;
 }
 
@@ -21,16 +20,16 @@ export const Table = <T extends object>({
   isLoading = false,
   emptyMessage = 'No records found.',
 }: TableProps<T>) => (
-  <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+  <div className="overflow-hidden rounded-xl border border-edge bg-surface">
     <div className="overflow-x-auto scrollbar-minimal">
-      <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-        <thead className="bg-slate-50">
+      <table className="min-w-full divide-y divide-edge text-left text-sm">
+        <thead className="bg-surface-alt">
           <tr>
             {columns.map((column) => (
               <th
                 key={String(column.key)}
                 className={[
-                  'px-3 sm:px-4 py-3 font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm',
+                  'px-3 sm:px-4 py-3 font-semibold text-body whitespace-nowrap text-xs sm:text-sm',
                   column.hideOnMobile ? 'hidden sm:table-cell' : '',
                 ].join(' ')}
               >
@@ -39,7 +38,7 @@ export const Table = <T extends object>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-edge-light">
           {isLoading &&
             Array.from({ length: 5 }).map((_, rowIndex) => (
               <tr key={`loading-${rowIndex}`}>
@@ -51,7 +50,7 @@ export const Table = <T extends object>({
                       column.hideOnMobile ? 'hidden sm:table-cell' : '',
                     ].join(' ')}
                   >
-                    <div className="h-4 w-28 animate-pulse rounded bg-slate-100" />
+                    <div className="h-4 w-28 animate-pulse rounded bg-surface-hover" />
                   </td>
                 ))}
               </tr>
@@ -59,19 +58,19 @@ export const Table = <T extends object>({
 
           {!isLoading && data.length === 0 && (
             <tr>
-              <td colSpan={columns.length} className="px-3 sm:px-4 py-8 text-center text-slate-500">
+              <td colSpan={columns.length} className="px-3 sm:px-4 py-8 text-center text-muted">
                 {emptyMessage}
               </td>
             </tr>
           )}
           {!isLoading &&
             data.map((row, rowIndex) => (
-              <tr key={String((row as any).id ?? rowIndex)} className="hover:bg-slate-50">
+              <tr key={String((row as any).id ?? rowIndex)} className="hover:bg-surface-hover transition-colors">
                 {columns.map((column) => (
                   <td
                     key={String(column.key)}
                     className={[
-                      'px-3 sm:px-4 py-3 text-slate-700',
+                      'px-3 sm:px-4 py-3 text-body',
                       column.hideOnMobile ? 'hidden sm:table-cell' : '',
                     ].join(' ')}
                   >

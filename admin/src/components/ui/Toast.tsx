@@ -11,7 +11,7 @@ const ToastContainer: React.FC = () => {
         const typeStyles = {
           success: { border: 'border-green-200', accent: 'bg-green-500', icon: <CheckCircle className="h-5 w-5 text-green-500" /> },
           error: { border: 'border-red-200', accent: 'bg-red-500', icon: <AlertCircle className="h-5 w-5 text-red-500" /> },
-          info: { border: 'border-gray-200', accent: 'bg-gray-400', icon: <Info className="h-5 w-5 text-gray-500" /> },
+          info: { border: 'border-gray-200', accent: 'bg-gray-400', icon: <Info className="h-5 w-5 text-muted" /> },
         };
 
         const { border, accent, icon } = typeStyles[toast.type];
@@ -19,7 +19,7 @@ const ToastContainer: React.FC = () => {
         return (
           <div
             key={toast.id}
-            className={`pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-xl border bg-white px-4 py-3 shadow-md ${border}`}
+            className={`pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-xl border bg-surface px-4 py-3 shadow-md ${border}`}
           >
             <div className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
             <div className="flex-shrink-0 ml-1">{icon}</div>

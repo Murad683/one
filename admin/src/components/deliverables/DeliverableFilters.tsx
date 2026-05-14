@@ -26,7 +26,7 @@ const DeliverableFilters: React.FC<DeliverableFiltersProps> = ({ filters, onChan
   };
 
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+    <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-gray-100 bg-surface p-3 shadow-sm">
       <input
         type="text"
         placeholder="Filter by client ID..."
@@ -79,7 +79,7 @@ const DeliverableFilters: React.FC<DeliverableFiltersProps> = ({ filters, onChan
       </select>
 
       {hasActiveFilters && (
-        <Button variant="ghost" size="sm" onClick={handleClear} className="ml-auto !text-gray-500">
+        <Button variant="ghost" size="sm" onClick={handleClear} className="ml-auto !text-muted">
           <X className="mr-1 h-4 w-4" />
           Clear Filters
         </Button>

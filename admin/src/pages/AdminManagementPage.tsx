@@ -79,7 +79,7 @@ export const AdminManagementPage = () => {
       header: 'Ad Soyad',
       render: (admin) => (
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-hover text-faint">
             <UserIcon className="h-4 w-4" />
           </div>
           <span className="font-medium text-slate-900">{admin.name}</span>
@@ -90,7 +90,7 @@ export const AdminManagementPage = () => {
       key: 'email', 
       header: 'E-poçt',
       render: (admin) => (
-        <div className="flex items-center gap-2 text-slate-500">
+        <div className="flex items-center gap-2 text-muted">
           <Mail className="h-3.5 w-3.5" />
           {admin.email}
         </div>
@@ -140,8 +140,8 @@ export const AdminManagementPage = () => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Komanda İdarəetməsi</h1>
-          <p className="mt-1 text-sm text-slate-500">Sistem administratorlarını idarə edin.</p>
+          <h1 className="text-2xl font-semibold text-heading">Komanda İdarəetməsi</h1>
+          <p className="mt-1 text-sm text-muted">Sistem administratorlarını idarə edin.</p>
         </div>
         <Button onClick={openModal} className="w-full sm:w-auto">
           <Plus className="h-4 w-4" />
@@ -199,7 +199,7 @@ export const AdminManagementPage = () => {
             })} 
           />
           
-          <div className="flex justify-end gap-3 border-t border-slate-100 pt-5 mt-2">
+          <div className="flex justify-end gap-3 border-t border-edge-light pt-5 mt-2">
             <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
               Ləğv Et
             </Button>

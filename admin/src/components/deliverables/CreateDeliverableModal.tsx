@@ -109,7 +109,7 @@ const CreateDeliverableModal: React.FC<CreateDeliverableModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title="Create Deliverable" size="md">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {clientsLoading ? (
-          <div className="text-sm text-gray-500">Loading clients...</div>
+          <div className="text-sm text-muted">Loading clients...</div>
         ) : (
           <Select
             label="Client"

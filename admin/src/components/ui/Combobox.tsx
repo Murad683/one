@@ -66,49 +66,49 @@ export const Combobox = ({
 
   return (
     <div className={`space-y-1.5 ${className}`} ref={containerRef}>
-      <label className="block text-sm font-medium text-slate-700">{label}</label>
+      <label className="block text-sm font-medium text-body">{label}</label>
       <div className="relative">
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className={`flex min-h-[38px] w-full cursor-pointer items-center justify-between rounded-lg border bg-white px-3 py-2 text-sm transition focus-within:ring-2 ${
+          className={`flex min-h-[38px] w-full cursor-pointer items-center justify-between rounded-lg border bg-surface px-3 py-2 text-sm transition focus-within:ring-2 ${
             error
               ? 'border-red-400 focus-within:ring-red-100'
-              : 'border-slate-300 focus-within:border-slate-950 focus-within:ring-slate-100'
+              : 'border-field-border focus-within:border-slate-950 focus-within:ring-slate-100'
           }`}
         >
           <div className="flex flex-1 items-center gap-2 overflow-hidden">
             {selectedOption ? (
               <div className="flex flex-col overflow-hidden">
-                <span className="truncate text-slate-950">{selectedOption.label}</span>
+                <span className="truncate text-heading">{selectedOption.label}</span>
                 {selectedOption.subLabel && (
-                  <span className="truncate text-[10px] text-slate-400 leading-none">{selectedOption.subLabel}</span>
+                  <span className="truncate text-[10px] text-faint leading-none">{selectedOption.subLabel}</span>
                 )}
               </div>
             ) : (
-              <span className="text-slate-400">{placeholder}</span>
+              <span className="text-faint">{placeholder}</span>
             )}
           </div>
-          <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`h-4 w-4 text-faint transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </div>
 
         {isOpen && (
           <div 
-            className={`absolute z-50 w-full rounded-lg border border-slate-200 bg-white p-1 shadow-xl animate-in fade-in zoom-in-95 duration-100 ${
+            className={`absolute z-50 w-full rounded-lg border border-edge bg-surface p-1 shadow-xl animate-in fade-in zoom-in-95 duration-100 ${
               openUpwards ? 'bottom-full mb-1' : 'mt-1'
             }`}
           >
-            <div className="relative mb-1 flex items-center border-b border-slate-100 px-2 pb-1 pt-0.5">
-              <Search className="h-4 w-4 text-slate-400" />
+            <div className="relative mb-1 flex items-center border-b border-edge-light px-2 pb-1 pt-0.5">
+              <Search className="h-4 w-4 text-faint" />
               <input
                 autoFocus
-                className="w-full bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-slate-400"
+                className="w-full bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-faint"
                 placeholder="Axtarın..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
               {search && (
                 <button onClick={() => setSearch('')}>
-                  <X className="h-4 w-4 text-slate-400 hover:text-slate-600" />
+                  <X className="h-4 w-4 text-faint hover:text-body" />
                 </button>
               )}
             </div>
@@ -122,16 +122,16 @@ export const Combobox = ({
                       setIsOpen(false);
                       setSearch('');
                     }}
-                    className={`flex cursor-pointer flex-col rounded-md px-3 py-2 transition-colors hover:bg-slate-50 ${
-                      value === opt.value ? 'bg-slate-50' : ''
+                    className={`flex cursor-pointer flex-col rounded-md px-3 py-2 transition-colors hover:bg-surface-alt ${
+                      value === opt.value ? 'bg-surface-alt' : ''
                     }`}
                   >
-                    <span className="text-sm font-medium text-slate-950">{opt.label}</span>
-                    {opt.subLabel && <span className="text-xs text-slate-400">{opt.subLabel}</span>}
+                    <span className="text-sm font-medium text-heading">{opt.label}</span>
+                    {opt.subLabel && <span className="text-xs text-faint">{opt.subLabel}</span>}
                   </div>
                 ))
               ) : (
-                <div className="px-3 py-4 text-center text-sm text-slate-500">{emptyMessage}</div>
+                <div className="px-3 py-4 text-center text-sm text-muted">{emptyMessage}</div>
               )}
             </div>
           </div>
