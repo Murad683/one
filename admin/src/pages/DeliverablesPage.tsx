@@ -250,8 +250,14 @@ export const DeliverablesPage = () => {
   };
 
   const fetchCategories = async () => {
-    const response = await api.get<DeliverableCategory[]>('/deliverable-categories');
-    setCategories(response.data);
+    try {
+      const response = await api.get<ApiEnvelope<DeliverableCategory[]>>('/deliverable-categories');
+      // Our API returns { success: true, data: [...] }, so we need response.data.data
+      setCategories(Array.isArray(response.data.data) ? response.data.data : []);
+    } catch (err) {
+      console.error('fetchCategories error:', err);
+      setCategories([]);
+    }
   };
 
   const fetchDeliverables = async () => {
@@ -261,7 +267,7 @@ export const DeliverablesPage = () => {
       const params = new URLSearchParams({ limit: '100' });
       if (searchQuery) params.set('search', searchQuery);
       const response = await api.get<ApiEnvelope<Paginated<Deliverable>>>(`/deliverables?${params.toString()}`);
-      setDeliverables(response.data.data.items);
+      setDeliverables(response.data.data.items || []);
     } catch (err) {
       setError(requestErrorMessage(err, 'Fayllar yüklənə bilmədi.'));
     } finally {
@@ -444,7 +450,7 @@ export const DeliverablesPage = () => {
           <h2 className="text-xl font-semibold text-slate-950">Fayl Kateqoriyaları (Növlər)</h2>
         </div>
         <div className="flex flex-wrap gap-2">
-          {categories.map((category) => (
+          {Array.isArray(categories) && categories.map((category) => (
             <div key={category.id} className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-slate-200">
               {renamingId === category.id ? (
                 <>
@@ -548,7 +554,7 @@ export const DeliverablesPage = () => {
             label="Növ" 
             options={[
               { value: '', label: 'Kateqoriya seçin' },
-              ...categories.map(c => ({ value: c.id, label: c.name }))
+              ...(Array.isArray(categories) ? categories.map(c => ({ value: c.id, label: c.name })) : [])
             ]} 
             error={errors.categoryId?.message}
             {...register('categoryId', { required: 'Növ seçmək mütləqdir' })} 
