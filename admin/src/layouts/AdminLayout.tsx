@@ -24,16 +24,7 @@ interface NavItem {
   badge?: number;
 }
 
-const primaryItems: NavItem[] = [
-  { icon: LayoutDashboard, label: 'İdarəetmə Paneli', path: '/' },
-  { icon: Briefcase, label: 'Portfolio', path: '/portfolio' },
-  { icon: Wrench, label: 'Xidmətlər', path: '/services' },
-  { icon: Package, label: 'Paketlər', path: '/packages' },
-  { icon: Users, label: 'Komandamız', path: '/team' },
-  { icon: UserCircle, label: 'Müştərilər', path: '/users' },
-  { icon: FolderOpen, label: 'Layihə Faylları', path: '/deliverables' },
-  { icon: LifeBuoy, label: 'Sorğular', path: '/tickets' },
-];
+
 
 const settingsItems: NavItem[] = [
   { icon: Settings, label: 'Veb-sayt Ayarları', path: '/settings' },

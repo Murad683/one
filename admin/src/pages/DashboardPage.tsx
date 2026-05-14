@@ -10,10 +10,7 @@ interface ApiEnvelope<T> {
   data: T;
 }
 
-interface Paginated<T> {
-  items: T[];
-  total: number;
-}
+
 
 interface ContactSubmission extends Record<string, unknown> {
   id: string;
@@ -58,6 +55,7 @@ export const DashboardPage = () => {
     services: 0,
     clients: 0,
     unread: 0,
+    recentMessages: [],
   });
   const [messages, setMessages] = useState<ContactSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);

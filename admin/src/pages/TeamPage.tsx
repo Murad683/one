@@ -7,7 +7,7 @@ import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import Table from '../components/ui/Table';
 import type { TableColumn } from '../components/ui/Table';
-import Textarea from '../components/ui/Textarea';
+
 import Toggle from '../components/ui/Toggle';
 import { api } from '../lib/api';
 import { assetUrl, requestErrorMessage, uploadImage } from '../lib/apiHelpers';

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Edit2, Plus, Trash2, ShieldCheck, Mail, Lock, User as UserIcon } from 'lucide-react';
+import { Plus, Trash2, ShieldCheck, Mail, User as UserIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -73,7 +73,7 @@ export const AdminManagementPage = () => {
     }
   };
 
-  const columns: TableColumn<User>[] = [
+  const columns: TableColumn<any>[] = [
     {
       key: 'name',
       header: 'Ad Soyad',

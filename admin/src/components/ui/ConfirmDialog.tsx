@@ -8,6 +8,9 @@ interface ConfirmDialogProps {
   title: string;
   message: string;
   isLoading?: boolean;
+  confirmText?: string;
+  cancelText?: string;
+  variant?: 'primary' | 'danger';
 }
 
 export const ConfirmDialog = ({
@@ -17,16 +20,19 @@ export const ConfirmDialog = ({
   title,
   message,
   isLoading = false,
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  variant = 'danger',
 }: ConfirmDialogProps) => (
   <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
     <div className="space-y-5">
       <p className="text-sm text-slate-600">{message}</p>
       <div className="flex justify-end gap-3">
         <Button variant="secondary" onClick={onClose} disabled={isLoading}>
-          Cancel
+          {cancelText}
         </Button>
-        <Button variant="danger" onClick={onConfirm} isLoading={isLoading}>
-          Confirm
+        <Button variant={variant === 'danger' ? 'danger' : 'primary'} onClick={onConfirm} isLoading={isLoading}>
+          {confirmText}
         </Button>
       </div>
     </div>

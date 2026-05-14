@@ -6,14 +6,14 @@ export interface TableColumn<T> {
   render?: (row: T) => ReactNode;
 }
 
-interface TableProps<T extends Record<string, unknown>> {
+interface TableProps<T extends object> {
   columns: TableColumn<T>[];
   data: T[];
   isLoading?: boolean;
   emptyMessage?: string;
 }
 
-export const Table = <T extends Record<string, unknown>>({
+export const Table = <T extends object>({
   columns,
   data,
   isLoading = false,
@@ -50,13 +50,12 @@ export const Table = <T extends Record<string, unknown>>({
               </td>
             </tr>
           )}
-
           {!isLoading &&
             data.map((row, rowIndex) => (
-              <tr key={String(row.id ?? rowIndex)} className="hover:bg-slate-50">
+              <tr key={String((row as any).id ?? rowIndex)} className="hover:bg-slate-50">
                 {columns.map((column) => (
                   <td key={String(column.key)} className="px-4 py-3 text-slate-700 whitespace-nowrap">
-                    {column.render ? column.render(row) : String(row[column.key] ?? '')}
+                    {column.render ? column.render(row) : String((row as any)[column.key] ?? '')}
                   </td>
                 ))}
               </tr>
