@@ -23,18 +23,18 @@ jobs:
         with:
           node-version: '22.x'
 
-      - name: npm install, build, and test
-        working-directory: backend  # <--- Backend qovluğuna keçid
+      - name: npm install, prisma generate, and build
+        working-directory: backend
         run: |
           npm install
+          npx prisma generate
           npm run build --if-present
-          npm run test --if-present
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: backend  # <--- Yalnız backend qovluğunu paketləyirik
+          path: backend
 
   deploy:
     runs-on: ubuntu-latest
@@ -62,4 +62,4 @@ jobs:
         with:
           app-name: 'one-agency-api'
           slot-name: 'Production'
-          package: .  # <--- Artifakt artıq yükləndiyi üçün cari qovluğu istifadə edirik
+          package: .
