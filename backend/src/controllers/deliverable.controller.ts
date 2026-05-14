@@ -3,7 +3,7 @@ import path from 'path';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { processAndStoreFile, deleteFile, getSecureDownloadUrl } from '../services/upload.service';
-import { uploadVideo, uploadDesign } from '../middleware/upload.middleware';
+import { uploadSiteMedia } from '../middleware/upload.middleware';
 
 // Convert a relative /uploads/... URL to an absolute disk path for file deletion
 const resolveStoragePath = (fileUrl: string): string => {
@@ -15,7 +15,7 @@ const resolveStoragePath = (fileUrl: string): string => {
 };
 
 // ─── Dynamic Multer Selector ──────────────────
-// Determines the correct upload middleware based on the deliverable type
+// Accepts all common media types for deliverables (video + images + docs)
 export const dynamicUploadMiddleware = async (
   req: Request,
   res: Response,
@@ -35,14 +35,10 @@ export const dynamicUploadMiddleware = async (
 
     // Set the subfolder based on category isVideo flag or legacy type
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
+    req.uploadSubfolder = isVideo ? 'videos' : 'designs';
     
-    if (isVideo) {
-      req.uploadSubfolder = 'videos';
-      uploadVideo(req, res, next);
-    } else {
-      req.uploadSubfolder = 'designs';
-      uploadDesign(req, res, next);
-    }
+    // Use the universal media filter that accepts both video and image formats
+    uploadSiteMedia(req, res, next);
   } catch (err) {
     console.error('Dynamic upload middleware error:', err);
     sendError(res, 'Failed to determine upload type', 500);
