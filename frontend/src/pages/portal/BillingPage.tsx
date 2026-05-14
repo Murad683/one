@@ -122,7 +122,7 @@ const BillingPage = () => {
                   <div className="col-span-2 text-right">
                     {p.invoicePdfUrl ? (
                       <a
-                        href={`http://localhost:5000${p.invoicePdfUrl}`}
+                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${p.invoicePdfUrl}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"

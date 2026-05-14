@@ -80,7 +80,7 @@ const statusVariant = (status: DeliverableStatus) => {
 };
 
 // ─── Media helpers ────────────────────────────
-const BACKEND = 'http://localhost:5000';
+const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const getExt = (fileName: string | null | undefined): string =>
   fileName?.split('.').pop()?.toLowerCase() ?? '';

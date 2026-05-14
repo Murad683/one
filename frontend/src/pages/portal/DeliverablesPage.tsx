@@ -33,7 +33,7 @@ const typeLabels: Record<string, string> = {
   OTHER: 'Digər',
 };
 
-const BACKEND = 'http://localhost:5000';
+const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 /* ─── Media Type Helpers ─────────────────────── */
 const getExt = (fileName: string | null): string =>
