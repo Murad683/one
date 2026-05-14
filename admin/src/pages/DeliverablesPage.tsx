@@ -14,7 +14,6 @@ import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
 
-type DeliverableType = 'VIDEO' | 'SMM_DESIGN' | 'BRANDING' | 'REPORT' | 'OTHER';
 type DeliverableStatus = 'PENDING' | 'PROCESSING' | 'READY' | 'ARCHIVED';
 
 interface ClientUser extends Record<string, unknown> {
@@ -57,21 +56,7 @@ const defaultValues: DeliverableFormValues = {
   date: new Date().toISOString().split('T')[0],
 };
 
-const typeOptions = [
-  { value: 'VIDEO', label: 'Video Material' },
-  { value: 'SMM_DESIGN', label: 'SMM Dizayn' },
-  { value: 'BRANDING', label: 'Brendinq / Loqo' },
-  { value: 'REPORT', label: 'Hesabat / Sənəd' },
-  { value: 'OTHER', label: 'Digər' },
-];
 
-const typeLabels: Record<string, string> = {
-  VIDEO: 'Video Material',
-  SMM_DESIGN: 'SMM Dizayn',
-  BRANDING: 'Brendinq / Loqo',
-  REPORT: 'Hesabat / Sənəd',
-  OTHER: 'Digər',
-};
 
 const statusLabels: Record<DeliverableStatus, string> = {
   PENDING: 'Gözləmədə',
@@ -191,7 +176,7 @@ const PreviewOverlay = ({
       >
         <div className="flex items-center gap-3">
           <p className="text-sm font-medium text-white drop-shadow-md">
-            {item.fileName || typeLabels[item.type] || item.type}
+            {item.fileName || item.category?.name || item.type || 'Fayl'}
           </p>
           <Badge variant="info">{statusLabels[item.status] || item.status}</Badge>
         </div>

@@ -207,7 +207,7 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    const { clientId, type, status, month, year, fileUrl, fileName, notes } = req.body;
+    const { clientId, type, categoryId, status, month, year, fileUrl, fileName, notes } = req.body;
     const updated = await prisma.deliverable.update({
       where: { id },
       data: {
