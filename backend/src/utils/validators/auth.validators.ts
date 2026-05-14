@@ -10,7 +10,8 @@ export const registerSchema = z.object({
   password: z
     .string({ error: 'Password is required' })
     .min(8, 'Password must be at least 8 characters'),
-  role: z.enum(['ADMIN', 'CLIENT']).optional(),
+  role: z.enum(['SUPER_ADMIN', 'ADMIN', 'CLIENT']).optional(),
+  packageId: z.string().optional(),
 });
 
 export const loginSchema = z.object({

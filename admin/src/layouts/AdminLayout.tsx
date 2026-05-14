@@ -4,6 +4,7 @@ import {
   Briefcase,
   FolderOpen,
   LayoutDashboard,
+  LifeBuoy,
   LogOut,
   MessageSquare,
   Package,
@@ -24,17 +25,18 @@ interface NavItem {
 }
 
 const primaryItems: NavItem[] = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+  { icon: LayoutDashboard, label: 'İdarəetmə Paneli', path: '/' },
   { icon: Briefcase, label: 'Portfolio', path: '/portfolio' },
-  { icon: Wrench, label: 'Services', path: '/services' },
-  { icon: Package, label: 'Packages', path: '/packages' },
-  { icon: Users, label: 'Team', path: '/team' },
-  { icon: UserCircle, label: 'Clients', path: '/users' },
-  { icon: FolderOpen, label: 'Deliverables', path: '/deliverables' },
+  { icon: Wrench, label: 'Xidmətlər', path: '/services' },
+  { icon: Package, label: 'Paketlər', path: '/packages' },
+  { icon: Users, label: 'Komandamız', path: '/team' },
+  { icon: UserCircle, label: 'Müştərilər', path: '/users' },
+  { icon: FolderOpen, label: 'Layihə Faylları', path: '/deliverables' },
+  { icon: LifeBuoy, label: 'Sorğular', path: '/tickets' },
 ];
 
 const settingsItems: NavItem[] = [
-  { icon: Settings, label: 'Global Settings', path: '/settings' },
+  { icon: Settings, label: 'Veb-sayt Ayarları', path: '/settings' },
 ];
 
 export const AdminLayout = () => {
@@ -65,24 +67,36 @@ export const AdminLayout = () => {
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <aside className="fixed inset-y-0 left-0 z-30 flex w-16 flex-col border-r border-slate-200 bg-white md:w-60">
         <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-3 md:px-5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-sm font-semibold text-white">
-            BT
-          </div>
+          <img src="/logo.jpg" alt="Logo" className="h-8 w-auto rounded-sm object-contain" />
           <div className="hidden min-w-0 md:block">
-            <p className="truncate text-sm font-semibold">Baku Tech</p>
-            <p className="truncate text-xs text-slate-500">{user?.name || 'Admin'}</p>
+            <h2 className="truncate text-sm font-bold tracking-tighter">
+              ONE<span className="text-blue-600">.</span>
+            </h2>
+            <p className="truncate text-[10px] uppercase tracking-wider text-slate-500">
+              {user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'}
+            </p>
           </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 py-4">
           <div className="space-y-1">
-            {primaryItems.map((item) => (
-              <SidebarLink key={item.path} item={item} />
-            ))}
+            <SidebarLink item={{ icon: LayoutDashboard, label: 'İdarəetmə Paneli', path: '/' }} />
+            <SidebarLink item={{ icon: Briefcase, label: 'Portfolio', path: '/portfolio' }} />
+            <SidebarLink item={{ icon: Wrench, label: 'Xidmətlər', path: '/services' }} />
+            <SidebarLink item={{ icon: Package, label: 'Paketlər', path: '/packages' }} />
+            <SidebarLink item={{ icon: Users, label: 'Komandamız', path: '/team-members' }} />
+            
+            {user?.role === 'SUPER_ADMIN' && (
+              <SidebarLink item={{ icon: UserCircle, label: 'Komanda', path: '/team' }} />
+            )}
+            
+            <SidebarLink item={{ icon: UserCircle, label: 'Müştərilər', path: '/users' }} />
+            <SidebarLink item={{ icon: FolderOpen, label: 'Layihə Faylları', path: '/deliverables' }} />
+            <SidebarLink item={{ icon: LifeBuoy, label: 'Sorğular', path: '/tickets' }} />
             <SidebarLink
               item={{
                 icon: MessageSquare,
-                label: 'Messages',
+                label: 'Mesajlar',
                 path: '/messages',
                 badge: unreadCount,
               }}
@@ -91,7 +105,7 @@ export const AdminLayout = () => {
 
           <div className="my-5 border-t border-slate-200 pt-4">
             <p className="mb-2 hidden px-3 text-xs font-semibold uppercase text-slate-400 md:block">
-              Settings
+              Ayarlar
             </p>
             <div className="space-y-1">
               {settingsItems.map((item) => (
@@ -108,7 +122,7 @@ export const AdminLayout = () => {
             className="flex w-full items-center justify-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 md:justify-start"
           >
             <LogOut className="h-5 w-5 shrink-0" />
-            <span className="hidden md:inline">Logout</span>
+            <span className="hidden md:inline">Çıxış</span>
           </button>
         </div>
       </aside>

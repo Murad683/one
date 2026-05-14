@@ -9,6 +9,15 @@ export const apiClient = axios.create({
   },
 });
 
+// Request interceptor — attach auth token from localStorage
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Response interceptor for easy data access
 apiClient.interceptors.response.use(
   (response) => response.data,

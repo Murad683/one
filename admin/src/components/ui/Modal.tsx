@@ -43,10 +43,10 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950/50 p-4" onMouseDown={onClose}>
       <div
-        className={`flex max-h-[calc(100vh-2rem)] w-full ${sizes[size]} flex-col overflow-hidden rounded-xl bg-white shadow-xl`}
+        className={`flex max-h-[calc(100vh-2rem)] w-full ${sizes[size]} flex-col overflow-hidden rounded-xl bg-white shadow-xl m-4 md:m-auto`}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-5 py-4">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 md:px-5 py-3 md:py-4">
           <h2 className="text-base font-semibold text-slate-950">{title}</h2>
           <button
             type="button"
@@ -57,7 +57,7 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 md:px-5 py-3 md:py-4">{children}</div>
       </div>
     </div>,
     document.body,

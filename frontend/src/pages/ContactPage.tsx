@@ -1,15 +1,50 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import PageTransition from '../components/utils/PageTransition';
 import { cockpitContainer, cockpitItem } from '../utils/animations';
 import { useTheme } from '../context/ThemeContext';
 import { useSiteSettings } from '../hooks/useSiteData';
+import { apiClient } from '../api/client';
 
 const ContactPage = () => {
   const { isDark } = useTheme();
   const { data: settings, loading } = useSiteSettings();
 
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    companyName: '',
+    serviceName: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
   if (loading || !settings) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+
+    try {
+      await apiClient.post('/contact-submissions', formData);
+      setSubmitStatus('success');
+      setFormData({
+        name: '',
+        email: '',
+        companyName: '',
+        serviceName: '',
+        message: ''
+      });
+    } catch (err) {
+      console.error('Submission error:', err);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const contactItems = [
     { icon: MapPin, label: settings.contactAddressLabel, value: settings.companyAddress },
@@ -18,7 +53,7 @@ const ContactPage = () => {
     { icon: Clock, label: settings.contactHoursLabel, value: settings.companyWorkingHours },
   ];
 
-  const inputBaseStyles = "w-full rounded-xl px-5 py-4 text-sm focus:outline-none transition-colors";
+  const inputBaseStyles = "w-full rounded-xl px-5 py-4 text-sm focus:outline-none transition-colors disabled:opacity-50";
 
   return (
     <PageTransition className="min-h-screen transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
@@ -77,11 +112,24 @@ const ContactPage = () => {
 
           {/* RIGHT COLUMN — Form */}
           <motion.div variants={cockpitItem}>
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              {submitStatus === 'success' && (
+                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-sm mb-4">
+                  Mesajınız uğurla göndərildi! Tezlillə sizinlə əlaqə saxlayacağıq.
+                </div>
+              )}
+              {submitStatus === 'error' && (
+                <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm mb-4">
+                  Xəta baş verdi. Zəhmət olmasa bir az sonra yenidən cəhd edin.
+                </div>
+              )}
               <input
                 placeholder="Ad Soyad"
                 type="text"
                 required
+                disabled={isSubmitting}
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className={inputBaseStyles}
                 style={{
                   backgroundColor: 'var(--input-bg)',
@@ -94,6 +142,9 @@ const ContactPage = () => {
                 placeholder="E-poçt"
                 type="email"
                 required
+                disabled={isSubmitting}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className={inputBaseStyles}
                 style={{
                   backgroundColor: 'var(--input-bg)',
@@ -105,6 +156,9 @@ const ContactPage = () => {
               <input
                 placeholder="Şirkət"
                 type="text"
+                disabled={isSubmitting}
+                value={formData.companyName}
+                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                 className={inputBaseStyles}
                 style={{
                   backgroundColor: 'var(--input-bg)',
@@ -114,6 +168,9 @@ const ContactPage = () => {
                 }}
               />
               <select
+                disabled={isSubmitting}
+                value={formData.serviceName}
+                onChange={(e) => setFormData({ ...formData, serviceName: e.target.value })}
                 className={inputBaseStyles}
                 style={{
                   backgroundColor: 'var(--input-bg)',
@@ -123,15 +180,19 @@ const ContactPage = () => {
                 }}
               >
                 <option value="" style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Xidmət növünü seçin</option>
-                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Video Çəkiliş</option>
-                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Brendinq</option>
-                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>SMM</option>
-                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Veb Dizayn</option>
-                <option style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Digər</option>
+                <option value="Video Çəkiliş" style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Video Çəkiliş</option>
+                <option value="Brendinq" style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Brendinq</option>
+                <option value="SMM" style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>SMM</option>
+                <option value="Veb Dizayn" style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Veb Dizayn</option>
+                <option value="Digər" style={{ backgroundColor: isDark ? '#0A0A0A' : '#F8F8F8' }}>Digər</option>
               </select>
               <textarea
                 placeholder="Mesajınız"
                 rows={5}
+                required
+                disabled={isSubmitting}
+                value={formData.message}
+                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 className={inputBaseStyles}
                 style={{
                   backgroundColor: 'var(--input-bg)',
@@ -142,10 +203,11 @@ const ContactPage = () => {
               />
               <button
                 type="submit"
-                className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200 mt-2"
+                disabled={isSubmitting}
+                className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200 mt-2 disabled:opacity-50 flex items-center justify-center gap-2"
                 style={{ color: 'var(--accent-on-accent)' }}
               >
-                Göndər
+                {isSubmitting ? "Göndərilir..." : "Göndər"}
               </button>
             </form>
           </motion.div>

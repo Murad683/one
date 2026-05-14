@@ -166,10 +166,10 @@ export const ServicesPage = () => {
       header: 'Əməliyyatlar',
       render: (service) => (
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => openModal(service)} aria-label="Edit service">
+          <Button variant="ghost" size="sm" onClick={() => openModal(service)} aria-label="Xidməti redaktə et">
             <Edit2 className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setDeleting(service)} aria-label="Delete service">
+          <Button variant="ghost" size="sm" onClick={() => setDeleting(service)} aria-label="Xidməti sil">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -179,12 +179,12 @@ export const ServicesPage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">Xidmətlər</h1>
           <p className="mt-1 text-sm text-slate-500">Xidmət kartlarını və ardıcıllığı idarə edin.</p>
         </div>
-        <Button onClick={() => openModal()}>
+        <Button onClick={() => openModal()} className="w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           Xidmət Əlavə Et
         </Button>

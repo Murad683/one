@@ -258,10 +258,10 @@ export const PortfolioPage = () => {
       header: 'Əməliyyatlar',
       render: (project) => (
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => openProjectModal(project)} aria-label="Edit project">
+          <Button variant="ghost" size="sm" onClick={() => openProjectModal(project)} aria-label="Layihəni redaktə et">
             <Edit2 className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setDeleteProject(project)} aria-label="Delete project">
+          <Button variant="ghost" size="sm" onClick={() => setDeleteProject(project)} aria-label="Layihəni sil">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -310,7 +310,7 @@ export const PortfolioPage = () => {
             </div>
           ))}
         </div>
-        <div className="flex max-w-md gap-2">
+        <div className="flex max-w-md gap-2 w-full">
           <Input
             aria-label="Yeni kateqoriya"
             placeholder="Kateqoriya adı..."
@@ -319,8 +319,9 @@ export const PortfolioPage = () => {
             onKeyDown={(event) => {
               if (event.key === 'Enter') addCategory();
             }}
+            className="flex-1"
           />
-          <Button onClick={addCategory}>
+          <Button onClick={addCategory} className="shrink-0">
             <Plus className="h-4 w-4" />
             Əlavə Et
           </Button>
@@ -328,9 +329,9 @@ export const PortfolioPage = () => {
       </section>
 
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h2 className="text-2xl font-semibold text-slate-950">Layihələr</h2>
-          <Button onClick={() => openProjectModal()}>
+          <Button onClick={() => openProjectModal()} className="w-full sm:w-auto">
             <Plus className="h-4 w-4" />
             Yeni Layihə
           </Button>

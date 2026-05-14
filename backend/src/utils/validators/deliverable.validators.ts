@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 export const createDeliverableSchema = z.object({
   clientId: z.string({ error: 'Client ID is required' }).cuid(),
-  type: z.enum(['VIDEO_1', 'VIDEO_2', 'DESIGNS', 'OTHER'], {
-    error: 'Type must be one of VIDEO_1, VIDEO_2, DESIGNS, OTHER',
+  type: z.enum(['VIDEO', 'SMM_DESIGN', 'BRANDING', 'REPORT', 'OTHER'], {
+    error: 'Növ VIDEO, SMM_DESIGN, BRANDING, REPORT və ya OTHER olmalıdır',
   }),
   month: z
     .number({ error: 'Month is required' })

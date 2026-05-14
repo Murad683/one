@@ -110,7 +110,7 @@ router.get('/', verifyTokenMiddleware, isAdmin, ctrl.getAllDeliverables);
  *                 type: string
  *               type:
  *                 type: string
- *                 enum: [VIDEO_1, VIDEO_2, DESIGNS, OTHER]
+ *                 enum: [VIDEO, SMM_DESIGN, BRANDING, REPORT, OTHER]
  *               month:
  *                 type: integer
  *                 minimum: 1

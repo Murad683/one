@@ -36,7 +36,7 @@ const useAuthStore = create<AuthState>((set) => ({
       
       if (token && userStr) {
         const user = JSON.parse(userStr) as User;
-        if (user.role === 'ADMIN') {
+        if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
           set({ user, token, isAuthenticated: true, isLoading: false });
           return;
         }

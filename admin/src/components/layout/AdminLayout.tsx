@@ -33,10 +33,10 @@ const AdminLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
-      <div className={`transition-all duration-300 ${isCollapsed ? 'ml-14' : 'ml-60'}`}>
+      <div className={`transition-all duration-300 ${isCollapsed ? 'md:ml-14' : 'md:ml-60'} flex flex-col min-h-screen`}>
         <Topbar title={title} />
-        <main className="min-h-screen pt-14">
-          <div className="p-8">
+        <main className="flex-1 p-4 md:p-8">
+          <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>
         </main>

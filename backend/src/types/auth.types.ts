@@ -11,6 +11,7 @@ export interface RegisterBody {
   email: string;
   password: string;
   role?: Role;
+  packageId?: string;
 }
 
 export interface LoginBody {

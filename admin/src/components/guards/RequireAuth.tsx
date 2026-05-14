@@ -24,6 +24,6 @@ export const RequireAdmin = () => {
 
   if (isLoading) return <div className="p-6 text-sm text-slate-500">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role !== 'ADMIN') return <Navigate to="/unauthorized" replace />;
+  if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') return <Navigate to="/unauthorized" replace />;
   return <Outlet />;
 };

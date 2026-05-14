@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Camera, Globe, Video, Send } from 'lucide-react';
 import { useSiteSettings } from '../../hooks/useSiteData';
 
 export default function Footer() {
@@ -13,11 +12,21 @@ export default function Footer() {
   } catch (e) {
     socialData = {};
   }
+  const getSocialIcon = (label: string) => {
+    switch (label.toLowerCase()) {
+      case 'instagram': return '/instagram-logo-facebook-2-svgrepo-com.svg';
+      case 'linkedin': return '/linkedin-logo-thin-svgrepo-com.svg';
+      case 'youtube': return '/youtube-logo-thin-svgrepo-com.svg';
+      case 'telegram': return '/telegram-logo-thin-svgrepo-com.svg';
+      default: return '';
+    }
+  };
+
   const socialLinks = [
-    { icon: Camera, href: socialData.instagram || '#', label: 'Instagram' },
-    { icon: Globe,  href: socialData.linkedin || '#',  label: 'LinkedIn'  },
-    { icon: Video,   href: socialData.youtube || '#',   label: 'YouTube'   },
-    { icon: Send,      href: socialData.twitter || '#',   label: 'Telegram'  },
+    { href: socialData.instagram || '#', label: 'Instagram' },
+    { href: socialData.linkedin || '#',  label: 'LinkedIn'  },
+    { href: socialData.youtube || '#',   label: 'YouTube'   },
+    { href: socialData.telegram || socialData.twitter || '#',  label: 'Telegram'  },
   ];
 
   const navLinks = [
@@ -76,14 +85,14 @@ export default function Footer() {
               {settings.footerSocialTitle || "SOSİAL MEDİA"}
             </p>
             <div className="flex gap-3">
-              {socialLinks.map(({ icon: Icon, href, label }) => (
+              {socialLinks.map(({ href, label }) => (
                 <a
                   key={label}
                   href={href}
                   aria-label={label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl flex items-center justify-center hover:text-accent hover:border-accent/30 transition-all duration-200"
+                  className="group w-10 h-10 rounded-xl flex items-center justify-center hover:text-accent hover:border-accent/30 transition-all duration-200"
                   style={{
                     backgroundColor: 'var(--card-bg)',
                     borderWidth: '1px',
@@ -91,7 +100,7 @@ export default function Footer() {
                     color: 'var(--text-faint)',
                   }}
                 >
-                  <Icon size={16} />
+                  <img src={getSocialIcon(label)} alt={label} className="w-4 h-4 object-contain brightness-0 invert opacity-60 group-hover:opacity-100 transition-opacity" />
                 </a>
               ))}
             </div>

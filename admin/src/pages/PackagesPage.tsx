@@ -151,10 +151,10 @@ export const PackagesPage = () => {
       header: 'Əməliyyatlar',
       render: (pkg) => (
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => openModal(pkg)} aria-label="Edit package">
+          <Button variant="ghost" size="sm" onClick={() => openModal(pkg)} aria-label="Paketi redaktə et">
             <Edit2 className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setDeleting(pkg)} aria-label="Delete package">
+          <Button variant="ghost" size="sm" onClick={() => setDeleting(pkg)} aria-label="Paketi sil">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -164,12 +164,12 @@ export const PackagesPage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">Paketlər</h1>
           <p className="mt-1 text-sm text-slate-500">Qiymət paketlərini idarə edin.</p>
         </div>
-        <Button onClick={() => openModal()}>
+        <Button onClick={() => openModal()} className="w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           Paket Əlavə Et
         </Button>
@@ -193,7 +193,7 @@ export const PackagesPage = () => {
             {fields.map((field, index) => (
               <div key={field.id} className="flex gap-2">
                 <Input className="flex-1" {...register(`features.${index}.value` as any)} placeholder="Üstünlük mətni..." />
-                <Button variant="ghost" size="sm" onClick={() => remove(index)} aria-label="Remove feature">
+                <Button variant="ghost" size="sm" onClick={() => remove(index)} aria-label="Üstünlüyü sil">
                   <X className="h-4 w-4" />
                 </Button>
               </div>

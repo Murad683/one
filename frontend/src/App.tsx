@@ -3,15 +3,24 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { AnimatePresence } from 'framer-motion';
 import Layout from './components/layout/Layout';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
 import ScrollToTop from './components/utils/ScrollToTop';
+import { ProtectedRoute } from './components/utils/ProtectedRoute';
 
-// Lazy Loaded Pages
+// Lazy Loaded Pages — Main Website
 const HomePage = lazy(() => import('./pages/HomePage'));
 const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
 const PackagesPage = lazy(() => import('./pages/PackagesPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const PortalLoginPage = lazy(() => import('./pages/PortalLoginPage'));
+
+// Lazy Loaded Pages — Client Dashboard
+const PortalLayout = lazy(() => import('./components/layout/PortalLayout'));
+const DashboardOverviewPage = lazy(() => import('./pages/portal/DashboardOverviewPage'));
+const DeliverablesPage = lazy(() => import('./pages/portal/DeliverablesPage'));
+const BillingPage = lazy(() => import('./pages/portal/BillingPage'));
+const SupportPage = lazy(() => import('./pages/portal/SupportPage'));
 
 // Premium Loading Component
 const PageLoader = () => (
@@ -43,6 +52,16 @@ function AnimatedRoutes() {
             <Route path="elaqe" element={<ContactPage />} />
             <Route path="portal" element={<PortalLoginPage />} />
           </Route>
+
+          {/* Client Dashboard Routes */}
+          <Route path="/portal/panel" element={<ProtectedRoute />}>
+            <Route element={<PortalLayout />}>
+              <Route index element={<DashboardOverviewPage />} />
+              <Route path="deliverables" element={<DeliverablesPage />} />
+              <Route path="billing" element={<BillingPage />} />
+              <Route path="support" element={<SupportPage />} />
+            </Route>
+          </Route>
         </Routes>
       </Suspense>
     </AnimatePresence>
@@ -53,8 +72,10 @@ function App() {
   return (
     <ThemeProvider>
         <Router>
-          <ScrollToTop />
-          <AnimatedRoutes />
+          <AuthProvider>
+            <ScrollToTop />
+            <AnimatedRoutes />
+          </AuthProvider>
         </Router>
     </ThemeProvider>
   );

@@ -127,3 +127,22 @@ export const uploadSiteMedia = wrapMulter(
     limits: { fileSize: MAX_FILE_SIZE_BYTES },
   })
 );
+
+const pdfFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+  if (file.mimetype === 'application/pdf') {
+    cb(null, true);
+  } else {
+    cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'Yalnız PDF faylları qəbul edilir.'));
+  }
+};
+
+export const uploadInvoicePdf = (req: Request, res: Response, next: NextFunction) => {
+  req.uploadSubfolder = 'invoices';
+  wrapMulter(
+    multer({
+      storage,
+      fileFilter: pdfFilter,
+      limits: { fileSize: 20 * 1024 * 1024 }, // 20MB max for invoices
+    })
+  )(req, res, next);
+};

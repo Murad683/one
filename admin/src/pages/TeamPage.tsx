@@ -158,10 +158,10 @@ export const TeamPage = () => {
       header: 'Əməliyyatlar',
       render: (member) => (
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => openModal(member)} aria-label="Edit team member">
+          <Button variant="ghost" size="sm" onClick={() => openModal(member)} aria-label="Üzvü redaktə et">
             <Edit2 className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setDeleting(member)} aria-label="Delete team member">
+          <Button variant="ghost" size="sm" onClick={() => setDeleting(member)} aria-label="Üzvü sil">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -171,12 +171,12 @@ export const TeamPage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">Komandamız</h1>
           <p className="mt-1 text-sm text-slate-500">Komanda üzvlərini idarə edin.</p>
         </div>
-        <Button onClick={() => openModal()}>
+        <Button onClick={() => openModal()} className="w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           Üzv Əlavə Et
         </Button>

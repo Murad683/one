@@ -46,7 +46,7 @@ export const MessagesPage = () => {
     setIsLoading(true);
     setError('');
     try {
-      const response = await api.get<SubmissionListResponse>(`/contact-submissions?page=${page}&limit=${limit}`);
+      const response = await api.get<SubmissionListResponse>(`/admin/messages?page=${page}&limit=${limit}`);
       setMessages(response.data.submissions);
       setTotal(response.data.total);
     } catch (err) {
@@ -124,10 +124,10 @@ export const MessagesPage = () => {
       header: 'Əməliyyatlar',
       render: (msg) => (
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => openMessage(msg)} aria-label="View message">
+          <Button variant="ghost" size="sm" onClick={() => openMessage(msg)} aria-label="Mesajı oxu">
             <Eye className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setDeleting(msg)} className="text-red-600 hover:bg-red-50" aria-label="Delete message">
+          <Button variant="ghost" size="sm" onClick={() => setDeleting(msg)} className="text-red-600 hover:bg-red-50" aria-label="Mesajı sil">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -139,12 +139,12 @@ export const MessagesPage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">Gələnlər Qutusu</h1>
           <p className="mt-1 text-sm text-slate-500">Müştəri müraciətlərini idarə edin.</p>
         </div>
-        <Badge variant="info" className="px-3 py-1 text-sm">
+        <Badge variant="info" className="px-3 py-1 text-sm self-start sm:self-center">
           Cəmi {total} Mesaj
         </Badge>
       </div>

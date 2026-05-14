@@ -8,6 +8,9 @@ const router = Router();
 
 router.get('/', getSettings);
 router.patch('/', verifyTokenMiddleware, isAdmin, updateSettings);
-router.patch('/upload', verifyTokenMiddleware, isAdmin, uploadSiteMedia, uploadSettingsMedia);
+router.patch('/upload', verifyTokenMiddleware, isAdmin, (req, res, next) => {
+  req.uploadSubfolder = 'site';
+  next();
+}, uploadSiteMedia, uploadSettingsMedia);
 
 export default router;

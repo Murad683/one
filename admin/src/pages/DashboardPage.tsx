@@ -50,6 +50,7 @@ interface DashboardStats {
   services: number;
   clients: number;
   unread: number;
+  recentMessages: ContactSubmission[];
 }
 
 const columns: TableColumn<ContactSubmission>[] = [
@@ -91,25 +92,15 @@ export const DashboardPage = () => {
       setError('');
 
       try {
-        const [projectsRes, servicesRes, usersRes, unreadRes, messagesRes] = await Promise.all([
-          api.get<ApiEnvelope<Paginated<Project>>>('/projects'),
-          api.get<ApiEnvelope<Paginated<Service>>>('/services?limit=100'),
-          api.get<ApiEnvelope<Paginated<User>>>('/users?role=CLIENT&limit=100'),
-          api.get<UnreadResponse>('/contact-submissions/unread-count'),
-          api.get<SubmissionList>('/contact-submissions?limit=5'),
-        ]);
-
+        const response = await api.get<ApiEnvelope<DashboardStats>>('/admin/stats');
+        
         if (!isMounted) return;
 
-        const serviceItems = servicesRes.data.data.items;
-        setStats({
-          projects: projectsRes.data.data.total,
-          services: serviceItems.filter((service) => service.isActive).length,
-          clients: usersRes.data.data.total,
-          unread: unreadRes.data.count,
-        });
-        setMessages(messagesRes.data.submissions);
-      } catch {
+        const data = response.data.data;
+        setStats(data);
+        setMessages(data.recentMessages);
+      } catch (err) {
+        console.error('Dashboard fetch error:', err);
         if (isMounted) setError('Məlumatlar yüklənə bilmədi.');
       } finally {
         if (isMounted) setIsLoading(false);

@@ -32,9 +32,9 @@ export const LoginPage = () => {
       setError('');
       await login(values.email, values.password);
       const user = useAuthStore.getState().user;
-      if (user?.role !== 'ADMIN') {
+      if (user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN') {
         useAuthStore.getState().logout();
-        setError('Only admin users can access this panel.');
+        setError('Yalnız admin istifadəçilər bu panelə daxil ola bilər.');
         return;
       }
       navigate('/', { replace: true });
@@ -43,7 +43,7 @@ export const LoginPage = () => {
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
           : undefined;
-      setError(message || 'Login failed. Check your credentials and try again.');
+      setError(message || 'Daxil olmaq mümkün olmadı. Məlumatlarınızı yoxlayın və yenidən cəhd edin.');
     }
   };
 
@@ -53,37 +53,39 @@ export const LoginPage = () => {
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
       <section className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-6">
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-slate-950 text-sm font-semibold text-white">
-            BT
+          <div className="mb-4 flex items-center gap-3">
+            <img src="/logo.jpg" alt="Logo" className="h-10 w-auto rounded-sm object-contain" />
+            <h1 className="text-xl font-bold tracking-tighter text-slate-950">
+              ONE<span className="text-blue-600">.</span>
+            </h1>
           </div>
-          <h1 className="text-xl font-semibold text-slate-950">Baku Tech Admin</h1>
-          <p className="mt-1 text-sm text-slate-500">Sign in to manage content and clients.</p>
+          <p className="mt-1 text-sm text-slate-500">Məzmun və müştəriləri idarə etmək üçün daxil olun.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
-            label="Email"
+            label="E-poçt"
             type="text"
             inputMode="email"
             autoComplete="email"
             error={errors.email?.message}
             {...register('email', {
-              required: 'Email is required',
-              pattern: { value: /^\S+@\S+$/i, message: 'Enter a valid email address' },
+              required: 'E-poçt mütləqdir',
+              pattern: { value: /^\S+@\S+$/i, message: 'Düzgün e-poçt ünvanı daxil edin' },
             })}
           />
           <Input
-            label="Password"
+            label="Şifrə"
             type="password"
             autoComplete="current-password"
             error={errors.password?.message}
-            {...register('password', { required: 'Password is required' })}
+            {...register('password', { required: 'Şifrə mütləqdir' })}
           />
 
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
           <Button type="submit" isLoading={isSubmitting} className="w-full">
-            Sign in
+            Daxil ol
           </Button>
         </form>
       </section>

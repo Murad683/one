@@ -8,7 +8,7 @@ import { RegisterBody, LoginBody } from '../types/auth.types';
 // ─── Register ──────────────────────────────────
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password, role } = req.body as RegisterBody;
+    const { name, email, password, role, packageId } = req.body as RegisterBody;
 
     // Check for existing user
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -25,6 +25,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         email,
         password: hashedPassword,
         ...(role && { role }),
+        ...(packageId && { packageId }),
       },
     });
 
@@ -94,6 +95,9 @@ export const me = async (req: Request, res: Response): Promise<void> => {
         isActive: true,
         createdAt: true,
         updatedAt: true,
+        package: {
+          select: { id: true, name: true, priceLabel: true },
+        },
       },
     });
 
@@ -102,7 +106,25 @@ export const me = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    sendSuccess(res, { user });
+    // Fetch latest 5 payments and open ticket count for client dashboard
+    const [latestPayments, ticketCount] = await Promise.all([
+      prisma.payment.findMany({
+        where: { userId },
+        orderBy: { paidAt: 'desc' },
+        take: 5,
+      }),
+      prisma.ticket.count({
+        where: { userId, status: 'OPEN' },
+      }),
+    ]);
+
+    sendSuccess(res, {
+      user: {
+        ...user,
+        latestPayments,
+        openTicketCount: ticketCount,
+      },
+    });
   } catch (err) {
     console.error('Me error:', err);
     sendError(res, 'Internal Server Error', 500);

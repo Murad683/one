@@ -22,14 +22,14 @@ const parseJSON = (raw?: string | null, fallback: any = []) => {
 
 const Card = ({ title, icon, children, onSave, isSaving }: { title: string; icon: ReactNode; children: ReactNode; onSave: () => void; isSaving: boolean }) => (
   <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
-    <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex items-center justify-between">
+    <div className="border-b border-slate-100 bg-slate-50/50 px-4 md:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div className="flex items-center gap-3">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm ring-1 ring-slate-200">
           {icon}
         </div>
         <h3 className="font-semibold text-slate-950">{title}</h3>
       </div>
-      <Button onClick={onSave} isLoading={isSaving} size="sm">
+      <Button onClick={onSave} isLoading={isSaving} size="sm" className="w-full sm:w-auto">
         Yadda Saxla
       </Button>
     </div>
@@ -199,8 +199,12 @@ const HeroCard = ({ settings, onSave, onUpload, setSuccess }: any) => {
             </div>
           </div>
           {settings?.heroVideoUrl && (
-            <div className="h-24 w-40 overflow-hidden rounded-xl border border-slate-200 shadow-inner">
-               <img src={assetUrl(settings.heroVideoUrl)} alt="Hero" className="h-full w-full object-cover" />
+            <div className="h-24 w-40 overflow-hidden rounded-xl border border-slate-200 shadow-inner bg-slate-100 flex items-center justify-center">
+               {settings.heroVideoUrl.match(/\.(mp4|webm|ogg)$|video/i) ? (
+                 <video src={assetUrl(settings.heroVideoUrl)} className="h-full w-full object-cover" autoPlay muted loop playsInline />
+               ) : (
+                 <img src={assetUrl(settings.heroVideoUrl)} alt="Hero" className="h-full w-full object-cover" />
+               )}
             </div>
           )}
         </div>

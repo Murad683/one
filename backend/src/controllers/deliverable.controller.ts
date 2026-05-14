@@ -1,8 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
+import path from 'path';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { processAndStoreFile, deleteFile, getSecureDownloadUrl } from '../services/upload.service';
 import { uploadVideo, uploadDesign } from '../middleware/upload.middleware';
+
+// Convert a relative /uploads/... URL to an absolute disk path for file deletion
+const resolveStoragePath = (fileUrl: string): string => {
+  // If already an absolute path (legacy data), return as-is
+  if (path.isAbsolute(fileUrl)) return fileUrl;
+  // Strip leading /uploads/ and join with cwd/uploads
+  const relative = fileUrl.replace(/^\/uploads\//, '');
+  return path.join(process.cwd(), 'uploads', relative);
+};
 
 // ─── Dynamic Multer Selector ──────────────────
 // Determines the correct upload middleware based on the deliverable type
@@ -21,14 +31,11 @@ export const dynamicUploadMiddleware = async (
     }
 
     // Set the subfolder based on type
-    if (deliverable.type === 'VIDEO_1' || deliverable.type === 'VIDEO_2') {
+    if (deliverable.type === 'VIDEO') {
       req.uploadSubfolder = 'videos';
       uploadVideo(req, res, next);
-    } else if (deliverable.type === 'DESIGNS') {
-      req.uploadSubfolder = 'designs';
-      uploadDesign(req, res, next);
     } else {
-      // OTHER type — use design filter as a fallback (supports zip, pdf, images)
+      // SMM_DESIGN, BRANDING, REPORT, OTHER — use design filter
       req.uploadSubfolder = 'designs';
       uploadDesign(req, res, next);
     }
@@ -239,29 +246,27 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
     // Delete old file if one exists
     if (deliverable.fileUrl) {
       try {
-        await deleteFile(deliverable.fileUrl);
+        await deleteFile(resolveStoragePath(deliverable.fileUrl));
       } catch (err) {
         console.warn('Failed to delete old file:', err);
       }
     }
 
     // Determine the folder based on deliverable type
-    const folder =
-      deliverable.type === 'VIDEO_1' || deliverable.type === 'VIDEO_2'
-        ? 'videos'
-        : 'designs';
+    const folder = deliverable.type === 'VIDEO' ? 'videos' : 'designs';
 
     const result = await processAndStoreFile(req.file, folder);
 
     const updated = await prisma.deliverable.update({
       where: { id },
       data: {
-        fileUrl: result.storageKey,
+        fileUrl: result.fileUrl,
         fileName: result.fileName,
         fileSize: BigInt(result.fileSize),
         mimeType: result.mimeType,
         uploadedAt: new Date(),
         status: 'READY',
+        clientFeedback: null, // Reset feedback so client can review new version
       },
     });
 
@@ -309,7 +314,7 @@ export const deleteDeliverable = async (req: Request, res: Response): Promise<vo
     // Delete file from storage if exists
     if (existing.fileUrl) {
       try {
-        await deleteFile(existing.fileUrl);
+        await deleteFile(resolveStoragePath(existing.fileUrl));
       } catch (err) {
         console.warn('Failed to delete file during deliverable deletion:', err);
       }

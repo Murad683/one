@@ -28,14 +28,18 @@ async function main() {
   // await prisma.user.deleteMany(); // Keep admin user
 
   // ─── Admin User ─────────────────────────────────
+  const adminEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@bakutech.az';
+  const adminPassword = process.env.SUPER_ADMIN_PASSWORD || 'Admin123!';
+  const hashedAdminPassword = await hashPassword(adminPassword);
+
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@bakutech.az' },
-    update: { password: await hashPassword('Admin123!') },
+    where: { email: adminEmail },
+    update: { password: hashedAdminPassword },
     create: {
-      email: 'admin@bakutech.az',
-      password: await hashPassword('Admin123!'),
+      email: adminEmail,
+      password: hashedAdminPassword,
       name: 'Admin User',
-      role: 'ADMIN',
+      role: 'SUPER_ADMIN',
     },
   });
   console.log(`✅ Admin: ${admin.email}`);

@@ -13,9 +13,13 @@ model User {
   name         String
   role         Role          @default(CLIENT)
   isActive     Boolean       @default(true)
+  packageId    String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  package      Package?      @relation(fields: [packageId], references: [id], onDelete: SetNull)
   deliverables Deliverable[]
+  payments     Payment[]
+  tickets      Ticket[]
 }
 
 model Project {
@@ -59,6 +63,7 @@ model Package {
   description String
   features    String[]
   name        String
+  users       User[]
 }
 
 model Service {
@@ -86,21 +91,22 @@ model TeamMember {
 }
 
 model Deliverable {
-  id         String            @id @default(cuid())
-  clientId   String
-  type       DeliverableType
-  status     DeliverableStatus @default(PENDING)
-  month      Int
-  year       Int
-  fileUrl    String?
-  fileSize   BigInt?
-  fileName   String?
-  mimeType   String?
-  notes      String?
-  uploadedAt DateTime?
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
-  client     User              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id             String            @id @default(cuid())
+  clientId       String
+  type           DeliverableType
+  status         DeliverableStatus @default(PENDING)
+  month          Int
+  year           Int
+  fileUrl        String?
+  fileSize       BigInt?
+  fileName       String?
+  mimeType       String?
+  notes          String?
+  clientFeedback String?           @db.Text
+  uploadedAt     DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  client         User              @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId, year, month])
 }
@@ -168,7 +174,33 @@ model SiteContent {
   updatedAt DateTime @updatedAt
 }
 
+model Payment {
+  id              Int      @id @default(autoincrement())
+  amount          Decimal
+  currency        String   @default("AZN")
+  paidAt          DateTime
+  nextPaymentDate DateTime
+  invoicePdfUrl   String?
+  note            String?
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Ticket {
+  id        Int          @id @default(autoincrement())
+  subject   String
+  body      String       @db.Text
+  status    TicketStatus @default(OPEN)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
 enum Role {
+  SUPER_ADMIN
   ADMIN
   CLIENT
 }
@@ -181,8 +213,15 @@ enum DeliverableStatus {
 }
 
 enum DeliverableType {
-  VIDEO_1
-  VIDEO_2
-  DESIGNS
+  VIDEO
+  SMM_DESIGN
+  BRANDING
+  REPORT
   OTHER
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
 }

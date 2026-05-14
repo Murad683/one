@@ -33,18 +33,39 @@ const HeroSection = () => {
         style={{ y, filter, opacity }}
         className="absolute inset-0 w-full h-full z-0 pointer-events-none scale-110 will-change-transform"
       >
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          key={settings.heroVideoUrl}
-          className="w-full h-full object-cover brightness-90 contrast-[1.1]"
-          style={{ backgroundColor: 'var(--bg-primary)' }}
-        >
-          <source src={assetUrl(settings.heroVideoUrl) || "/videos/hero-bg.mp4"} type="video/mp4" />
-        </video>
+        {settings.heroVideoUrl && settings.heroVideoUrl.match(/\.(mp4|webm|ogg)$|video/i) ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            loop
+            playsInline
+            key={settings.heroVideoUrl}
+            className="w-full h-full object-cover brightness-90 contrast-[1.1]"
+            style={{ backgroundColor: 'var(--bg-primary)' }}
+          >
+            <source src={assetUrl(settings.heroVideoUrl)} type="video/mp4" />
+          </video>
+        ) : settings.heroVideoUrl ? (
+          <motion.img 
+            src={assetUrl(settings.heroVideoUrl)} 
+            alt="Hero Background"
+            className="w-full h-full object-cover brightness-90 contrast-[1.1]"
+            style={{ backgroundColor: 'var(--bg-primary)' }}
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover brightness-90 contrast-[1.1]"
+            style={{ backgroundColor: 'var(--bg-primary)' }}
+          >
+            <source src="/videos/hero-bg.mp4" type="video/mp4" />
+          </video>
+        )}
       </motion.div>
 
       <div

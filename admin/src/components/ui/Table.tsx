@@ -25,7 +25,7 @@ export const Table = <T extends Record<string, unknown>>({
         <thead className="bg-slate-50">
           <tr>
             {columns.map((column) => (
-              <th key={String(column.key)} className="px-4 py-3 font-semibold text-slate-700">
+              <th key={String(column.key)} className="px-4 py-3 font-semibold text-slate-700 whitespace-nowrap">
                 {column.header}
               </th>
             ))}
@@ -55,7 +55,7 @@ export const Table = <T extends Record<string, unknown>>({
             data.map((row, rowIndex) => (
               <tr key={String(row.id ?? rowIndex)} className="hover:bg-slate-50">
                 {columns.map((column) => (
-                  <td key={String(column.key)} className="px-4 py-3 text-slate-700">
+                  <td key={String(column.key)} className="px-4 py-3 text-slate-700 whitespace-nowrap">
                     {column.render ? column.render(row) : String(row[column.key] ?? '')}
                   </td>
                 ))}

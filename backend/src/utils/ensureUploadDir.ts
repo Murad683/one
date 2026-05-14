@@ -8,6 +8,8 @@ export function ensureUploadDirs(): void {
     'uploads/designs/',
     'uploads/avatars/',
     'uploads/thumbnails/',
+    'uploads/invoices/',
+    'uploads/site/',
   ];
 
   dirs.forEach((dir) => {
