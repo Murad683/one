@@ -18,7 +18,7 @@ export const verifyTokenMiddleware = (
 
   try {
     const decoded = verifyToken(token);
-    req.user = decoded;
+    req.user = decoded as any;
     next();
   } catch {
     sendError(res, 'Invalid or expired token', 401);

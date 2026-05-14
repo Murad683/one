@@ -215,7 +215,7 @@ export const updateTicketStatus = async (req: Request, res: Response): Promise<v
 // ─── GET /api/v1/admin/payments/user/:userId ──
 export const getUserPayments = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { userId } = req.params;
+    const userId = String(req.params.userId);
     const payments = await prisma.payment.findMany({
       where: { userId },
       orderBy: { paidAt: 'desc' },
@@ -230,7 +230,7 @@ export const getUserPayments = async (req: Request, res: Response): Promise<void
 // ─── DELETE /api/v1/admin/payments/:id ────────
 export const deletePayment = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     await prisma.payment.delete({
       where: { id: parseInt(id, 10) },
     });
@@ -307,7 +307,7 @@ export const createAdminUser = async (req: Request, res: Response): Promise<void
 // ─── DELETE /api/v1/admin/team/:id ─────────────
 export const deleteAdminUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const adminToDelete = await prisma.user.findUnique({ where: { id } });
 
     if (!adminToDelete) {
@@ -325,7 +325,7 @@ export const deleteAdminUser = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    await prisma.user.delete({ where: { id } });
+    await prisma.user.delete({ where: { id: String(id) } });
     sendSuccess(res, null, 204);
   } catch (err) {
     console.error('deleteAdminUser error:', err);
