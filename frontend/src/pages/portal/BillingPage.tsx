@@ -77,8 +77,7 @@ const BillingPage = () => {
             </p>
           </div>
         ) : (
-          {/* Payments Table */}
-          <div>
+          <>
             {/* ── Desktop Table (hidden on mobile) ── */}
             <div
               className="hidden sm:block rounded-2xl border"
@@ -190,7 +189,7 @@ const BillingPage = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
