@@ -7,6 +7,8 @@ import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope } from '../lib/apiHelpers';
 import useToastStore from '../store/useToastStore';
+import Modal from '../components/ui/Modal';
+import { Eye } from 'lucide-react';
 
 interface Ticket extends Record<string, unknown> {
   id: number;
@@ -35,6 +37,7 @@ export const TicketsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
   const fetchTickets = useCallback(async () => {
     setIsLoading(true);
@@ -95,18 +98,27 @@ export const TicketsPage = () => {
     },
     {
       key: 'actions',
-      header: 'Dəyişdir',
+      header: 'Əməliyyatlar',
       render: (t) => (
-        <select
-          value={t.status}
-          onChange={(e) => handleStatusChange(t.id, e.target.value)}
-          disabled={updatingId === t.id}
-          className="rounded-lg border border-field-border bg-surface px-2 py-1.5 text-xs text-body disabled:opacity-50"
-        >
-          <option value="OPEN">Açıq</option>
-          <option value="IN_PROGRESS">İcrada</option>
-          <option value="CLOSED">Bağlı</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={t.status}
+            onChange={(e) => handleStatusChange(t.id, e.target.value)}
+            disabled={updatingId === t.id}
+            className="rounded-lg border border-field-border bg-surface px-2 py-1.5 text-xs text-body disabled:opacity-50"
+          >
+            <option value="OPEN">Açıq</option>
+            <option value="IN_PROGRESS">İcrada</option>
+            <option value="CLOSED">Bağlı</option>
+          </select>
+          <button
+            onClick={() => setSelectedTicket(t)}
+            className="rounded p-1.5 text-muted transition-colors hover:bg-surface-hover hover:text-heading"
+            title="Mesaja bax"
+          >
+            <Eye size={16} />
+          </button>
+        </div>
       ),
     },
   ];
@@ -119,6 +131,35 @@ export const TicketsPage = () => {
       </div>
       {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       <Table columns={columns} data={tickets} isLoading={isLoading} emptyMessage="Heç bir dəstək sorğusu tapılmadı." />
+
+      <Modal
+        isOpen={!!selectedTicket}
+        onClose={() => setSelectedTicket(null)}
+        title="Sorğu Detalları"
+      >
+        {selectedTicket && (
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Müştəri</p>
+              <p className="text-sm text-heading">{selectedTicket.user.name} ({selectedTicket.user.email})</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Mövzu</p>
+              <p className="text-sm font-medium text-heading">{selectedTicket.subject}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Tarix</p>
+              <p className="text-sm text-body">{formatDate(selectedTicket.createdAt)}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Mesaj</p>
+              <div className="rounded-lg bg-surface-alt p-4 text-sm text-body whitespace-pre-wrap border border-edge leading-relaxed">
+                {selectedTicket.body}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
