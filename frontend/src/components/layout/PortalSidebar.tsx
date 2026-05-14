@@ -12,7 +12,7 @@ const navItems = [
 
 const PortalSidebar = () => {
   const { user, logout } = useAuth();
-  const { toggleTheme, isDark } = useTheme();
+  const { toggleTheme, isDark } = useTheme(); // Corrected: theme is not used
 
   return (
     <aside

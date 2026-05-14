@@ -15,23 +15,6 @@ interface Paginated<T> {
   total: number;
 }
 
-interface Project {
-  id: string;
-}
-
-interface Service {
-  id: string;
-  isActive: boolean;
-}
-
-interface User {
-  id: string;
-}
-
-interface UnreadResponse {
-  count: number;
-}
-
 interface ContactSubmission extends Record<string, unknown> {
   id: string;
   name: string;
@@ -39,10 +22,6 @@ interface ContactSubmission extends Record<string, unknown> {
   message: string;
   isRead: boolean;
   createdAt: string;
-}
-
-interface SubmissionList {
-  submissions: ContactSubmission[];
 }
 
 interface DashboardStats {

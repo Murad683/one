@@ -13,7 +13,7 @@ const mobileNavItems = [
 
 const PortalLayout = () => {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { toggleTheme, isDark } = useTheme(); // Corrected: theme is not used
 
   return (
     <div className="flex min-h-screen transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>

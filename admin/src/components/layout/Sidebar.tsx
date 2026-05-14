@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, FolderOpen, Package, Layers, Users, FileVideo, Settings, MessageSquare, UserCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import useAuthStore from '@/store/useAuthStore';
+import useSidebarStore from '@/store/useSidebarStore';
 
 const Sidebar: React.FC = () => {
   const { isCollapsed, toggleSidebar, isMobileOpen, setMobileOpen } = useSidebarStore();
