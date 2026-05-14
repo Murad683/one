@@ -158,15 +158,15 @@ export const PortfolioPage = () => {
         thumbnailUrl = upload.fileUrl;
       }
 
+      const youtubeId = getYoutubeId(values.youtubeId);
       const payload = {
         title: values.title,
         description: values.description,
         categoryId: values.categoryId || null,
         thumbnailUrl,
-        youtubeId: getYoutubeId(values.youtubeId),
-
+        youtubeId,
         year: values.year ? Number(values.year) : null,
-        externalUrl: values.externalUrl || null,
+        externalUrl: youtubeId ? `https://www.youtube.com/watch?v=${youtubeId}` : null,
         isPublished: values.isPublished,
         isFeatured: values.isFeatured,
       };
@@ -361,7 +361,7 @@ export const PortfolioPage = () => {
           <Textarea label="Təsvir" error={errors.description?.message} {...register('description', { required: 'Təsvir mütləqdir' })} />
 
           <Input label="İl" type="number" {...register('year', { valueAsNumber: true })} />
-          <Input label="Xarici Link" {...register('externalUrl')} />
+
           <Toggle checked={watchedPublished} onChange={(checked) => setValue('isPublished', checked)} label="Dərc edilsin" />
           <Toggle checked={watchedFeatured} onChange={(checked) => setValue('isFeatured', checked)} label="Ana səhifədə göstərilsin" />
           <div className="flex justify-end gap-3 border-t border-slate-200 pt-4">
