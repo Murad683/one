@@ -4,6 +4,8 @@ export interface TableColumn<T> {
   key: keyof T | string;
   header: string;
   render?: (row: T) => ReactNode;
+  /** Hide this column on mobile screens */
+  hideOnMobile?: boolean;
 }
 
 interface TableProps<T extends object> {
@@ -20,12 +22,18 @@ export const Table = <T extends object>({
   emptyMessage = 'No records found.',
 }: TableProps<T>) => (
   <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto scrollbar-minimal">
       <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
         <thead className="bg-slate-50">
           <tr>
             {columns.map((column) => (
-              <th key={String(column.key)} className="px-4 py-3 font-semibold text-slate-700 whitespace-nowrap">
+              <th
+                key={String(column.key)}
+                className={[
+                  'px-3 sm:px-4 py-3 font-semibold text-slate-700 whitespace-nowrap text-xs sm:text-sm',
+                  column.hideOnMobile ? 'hidden sm:table-cell' : '',
+                ].join(' ')}
+              >
                 {column.header}
               </th>
             ))}
@@ -36,7 +44,13 @@ export const Table = <T extends object>({
             Array.from({ length: 5 }).map((_, rowIndex) => (
               <tr key={`loading-${rowIndex}`}>
                 {columns.map((column) => (
-                  <td key={String(column.key)} className="px-4 py-3">
+                  <td
+                    key={String(column.key)}
+                    className={[
+                      'px-3 sm:px-4 py-3',
+                      column.hideOnMobile ? 'hidden sm:table-cell' : '',
+                    ].join(' ')}
+                  >
                     <div className="h-4 w-28 animate-pulse rounded bg-slate-100" />
                   </td>
                 ))}
@@ -45,7 +59,7 @@ export const Table = <T extends object>({
 
           {!isLoading && data.length === 0 && (
             <tr>
-              <td colSpan={columns.length} className="px-4 py-8 text-center text-slate-500">
+              <td colSpan={columns.length} className="px-3 sm:px-4 py-8 text-center text-slate-500">
                 {emptyMessage}
               </td>
             </tr>
@@ -54,7 +68,13 @@ export const Table = <T extends object>({
             data.map((row, rowIndex) => (
               <tr key={String((row as any).id ?? rowIndex)} className="hover:bg-slate-50">
                 {columns.map((column) => (
-                  <td key={String(column.key)} className="px-4 py-3 text-slate-700 whitespace-nowrap">
+                  <td
+                    key={String(column.key)}
+                    className={[
+                      'px-3 sm:px-4 py-3 text-slate-700',
+                      column.hideOnMobile ? 'hidden sm:table-cell' : '',
+                    ].join(' ')}
+                  >
                     {column.render ? column.render(row) : String((row as any)[column.key] ?? '')}
                   </td>
                 ))}

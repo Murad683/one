@@ -218,6 +218,7 @@ export const PortfolioPage = () => {
     {
       key: 'thumbnailUrl',
       header: 'Şəkil',
+      hideOnMobile: true,
       render: (project) =>
         project.thumbnailUrl ? (
           <img src={assetUrl(project.thumbnailUrl)} alt="" className="h-12 w-16 rounded object-cover" />
@@ -231,11 +232,13 @@ export const PortfolioPage = () => {
     {
       key: 'category',
       header: 'Kateqoriya',
+      hideOnMobile: true,
       render: (project) => project.category?.name || project.categoryLegacy || 'Kateqoriya yoxdur',
     },
     {
       key: 'isFeatured',
       header: 'Seçilmiş',
+      hideOnMobile: true,
       render: (project) => (
         <Toggle
           checked={project.isFeatured}
@@ -246,6 +249,7 @@ export const PortfolioPage = () => {
     {
       key: 'isPublished',
       header: 'Dərc edilib',
+      hideOnMobile: true,
       render: (project) => (
         <Toggle
           checked={project.isPublished}

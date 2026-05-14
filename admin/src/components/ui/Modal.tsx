@@ -14,10 +14,10 @@ interface ModalProps {
 }
 
 const sizes: Record<ModalSize, string> = {
-  sm: 'max-w-sm',
-  md: 'max-w-lg',
-  lg: 'max-w-2xl',
-  xl: 'max-w-4xl',
+  sm: 'sm:max-w-sm',
+  md: 'sm:max-w-lg',
+  lg: 'sm:max-w-2xl',
+  xl: 'sm:max-w-4xl',
 };
 
 export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) => {
@@ -41,9 +41,9 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950/50 p-4" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center overflow-hidden bg-slate-950/50 sm:p-4" onMouseDown={onClose}>
       <div
-        className={`flex max-h-[calc(100vh-2rem)] w-full ${sizes[size]} flex-col overflow-hidden rounded-xl bg-white shadow-xl m-4 md:m-auto`}
+        className={`flex w-full ${sizes[size]} max-h-[90vh] sm:max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-t-2xl sm:rounded-xl bg-white shadow-xl sm:m-auto`}
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 md:px-5 py-3 md:py-4">
@@ -51,7 +51,7 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-500 transition hover:bg-slate-100 hover:text-slate-950"
+            className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-950"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />

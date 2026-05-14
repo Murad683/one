@@ -365,6 +365,7 @@ export const DeliverablesPage = () => {
     {
       key: 'fileName',
       header: 'Fayl adı',
+      hideOnMobile: true,
       render: (deliverable) =>
         deliverable.fileUrl ? (
           <button
@@ -400,6 +401,7 @@ export const DeliverablesPage = () => {
     {
       key: 'status',
       header: 'Status',
+      hideOnMobile: true,
       render: (deliverable) => (
         <div className="flex items-center gap-1.5">
           <Badge variant={statusVariant(deliverable.status)}>

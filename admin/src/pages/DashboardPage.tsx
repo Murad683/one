@@ -31,10 +31,11 @@ interface DashboardStats {
 
 const columns: TableColumn<ContactSubmission>[] = [
   { key: 'name', header: 'Ad' },
-  { key: 'email', header: 'E-poçt' },
+  { key: 'email', header: 'E-poçt', hideOnMobile: true },
   {
     key: 'message',
     header: 'Mesaj',
+    hideOnMobile: true,
     render: (row) => <span className="line-clamp-1">{row.message}</span>,
   },
   {
