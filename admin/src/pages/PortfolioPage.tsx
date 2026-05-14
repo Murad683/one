@@ -33,7 +33,7 @@ interface Project extends Record<string, unknown> {
   isPublished: boolean;
   externalUrl?: string | null;
   year?: number | null;
-  serviceTitle?: string | null;
+
   sortOrder: number;
 }
 
@@ -43,7 +43,7 @@ interface ProjectFormValues {
   categoryId: string;
   thumbnailUrl: string;
   youtubeId: string;
-  serviceTitle: string;
+
   year: number | null;
   externalUrl: string;
   isPublished: boolean;
@@ -56,7 +56,7 @@ const defaultProjectValues: ProjectFormValues = {
   categoryId: '',
   thumbnailUrl: '',
   youtubeId: '',
-  serviceTitle: '',
+
   year: null,
   externalUrl: '',
   isPublished: true,
@@ -132,7 +132,7 @@ export const PortfolioPage = () => {
             categoryId: project.categoryId || '',
             thumbnailUrl: project.thumbnailUrl || '',
             youtubeId: project.youtubeId || '',
-            serviceTitle: project.serviceTitle || '',
+
             year: project.year ?? null,
             externalUrl: project.externalUrl || '',
             isPublished: project.isPublished,
@@ -164,7 +164,7 @@ export const PortfolioPage = () => {
         categoryId: values.categoryId || null,
         thumbnailUrl,
         youtubeId: getYoutubeId(values.youtubeId),
-        serviceTitle: values.serviceTitle || null,
+
         year: values.year ? Number(values.year) : null,
         externalUrl: values.externalUrl || null,
         isPublished: values.isPublished,
@@ -359,7 +359,7 @@ export const PortfolioPage = () => {
           </div>
           <Input label="YouTube ID və ya Link" {...register('youtubeId')} />
           <Textarea label="Təsvir" error={errors.description?.message} {...register('description', { required: 'Təsvir mütləqdir' })} />
-          <Input label="Xidmət növü" {...register('serviceTitle')} placeholder="Məs: Video Çəkiliş" />
+
           <Input label="İl" type="number" {...register('year', { valueAsNumber: true })} />
           <Input label="Xarici Link" {...register('externalUrl')} />
           <Toggle checked={watchedPublished} onChange={(checked) => setValue('isPublished', checked)} label="Dərc edilsin" />

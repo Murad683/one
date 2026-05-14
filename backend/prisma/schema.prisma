@@ -35,7 +35,7 @@ model Project {
   categoryId     String?
   externalUrl    String?
   year           Int?
-  serviceTitle   String?
+
   description    String
   title          String
   category       Category? @relation(fields: [categoryId], references: [id])
