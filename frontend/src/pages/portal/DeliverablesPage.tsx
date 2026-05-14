@@ -4,7 +4,9 @@ import { FolderOpen, Download, Play, X, Send, FileX } from 'lucide-react';
 
 interface Deliverable {
   id: string;
-  type: string;
+  type: string | null;
+  categoryId?: string | null;
+  category?: { id: string; name: string; isVideo: boolean } | null;
   status: string;
   month: number;
   year: number;
@@ -195,10 +197,10 @@ const PreviewModal = ({
         >
           <div>
             <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              {item.fileName || typeLabels[item.type] || item.type}
+              {item.fileName || item.category?.name || typeLabels[item.type || ''] || item.type || 'Fayl'}
             </p>
             <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
-              {typeLabels[item.type]} — {statusConfig[item.status]?.label}
+              {item.category?.name || typeLabels[item.type || ''] || item.type} — {statusConfig[item.status]?.label}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -428,7 +430,7 @@ const DeliverablesPage = () => {
                       className="col-span-3 text-sm font-medium"
                       style={{ color: 'var(--text-primary)' }}
                     >
-                      {typeLabels[d.type] ?? d.type}
+                      {d.category?.name || typeLabels[d.type || ''] || d.type || 'Növ yoxdur'}
                     </span>
                     <span className="col-span-2 text-xs" style={{ color: 'var(--text-muted)' }}>
                       {monthNames[d.month - 1]} {d.year}

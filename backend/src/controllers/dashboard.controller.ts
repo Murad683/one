@@ -57,6 +57,7 @@ export const getDeliverables = async (req: Request, res: Response): Promise<void
 
     const deliverables = await prisma.deliverable.findMany({
       where: { clientId: userId },
+      include: { category: true },
       orderBy: { createdAt: 'desc' },
     });
 
