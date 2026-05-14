@@ -28,8 +28,12 @@ async function main() {
   // await prisma.user.deleteMany(); // Keep admin user
 
   // ─── Admin User ─────────────────────────────────
-  const adminEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@bakutech.az';
-  const adminPassword = process.env.SUPER_ADMIN_PASSWORD || 'Admin123!';
+  const adminEmail = process.env.SUPER_ADMIN_EMAIL;
+  const adminPassword = process.env.SUPER_ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    throw new Error('❌ SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD must be set in environment variables!');
+  }
   const hashedAdminPassword = await hashPassword(adminPassword);
 
   const admin = await prisma.user.upsert({
