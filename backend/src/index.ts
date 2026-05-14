@@ -16,6 +16,7 @@ import userRoutes from './routes/user.routes';
 import siteSettingsRoutes from './routes/siteSettings.routes';
 import categoryRoutes from './routes/category.routes';
 import contactSubmissionRoutes from './routes/contactSubmission.routes';
+import deliverableCategoryRoutes from './routes/deliverableCategory.routes';
 import uploadRoutes from './routes/upload.routes';
 import swaggerRoutes from './routes/swagger.routes';
 import dashboardRoutes from './routes/dashboard.routes';
@@ -68,6 +69,7 @@ apiRouter.use('/team', teamMemberRoutes);
 apiRouter.use('/deliverables', deliverableRoutes);
 apiRouter.use('/site-settings', siteSettingsRoutes);
 apiRouter.use('/categories', categoryRoutes);
+apiRouter.use('/deliverable-categories', deliverableCategoryRoutes);
 apiRouter.use('/contact-submissions', contactSubmissionRoutes);
 apiRouter.use('/contact', contactSubmissionRoutes); // Alias for convenience
 apiRouter.use('/uploads', uploadRoutes);

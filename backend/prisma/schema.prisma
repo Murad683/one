@@ -93,7 +93,7 @@ model TeamMember {
 model Deliverable {
   id             String            @id @default(cuid())
   clientId       String
-  type           DeliverableType
+  type           String?
   status         DeliverableStatus @default(PENDING)
   month          Int
   year           Int
@@ -106,9 +106,19 @@ model Deliverable {
   uploadedAt     DateTime?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
-  client         User              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client         User                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  category       DeliverableCategory? @relation(fields: [categoryId], references: [id])
+  categoryId     String?
 
   @@index([clientId, year, month])
+}
+
+model DeliverableCategory {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  isVideo      Boolean       @default(false)
+  deliverables Deliverable[]
+  createdAt    DateTime      @default(now())
 }
 
 model SiteSettings {
@@ -212,13 +222,7 @@ enum DeliverableStatus {
   ARCHIVED
 }
 
-enum DeliverableType {
-  VIDEO
-  SMM_DESIGN
-  BRANDING
-  REPORT
-  OTHER
-}
+
 
 enum TicketStatus {
   OPEN

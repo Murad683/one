@@ -23,11 +23,19 @@ interface ClientUser extends Record<string, unknown> {
   email: string;
 }
 
+interface DeliverableCategory extends Record<string, unknown> {
+  id: string;
+  name: string;
+  isVideo: boolean;
+}
+
 interface Deliverable extends Record<string, unknown> {
   id: string;
   clientId: string;
   client?: ClientUser;
-  type: DeliverableType;
+  type?: string | null;
+  categoryId?: string | null;
+  category?: DeliverableCategory | null;
   status: DeliverableStatus;
   month: number;
   year: number;
@@ -39,13 +47,13 @@ interface Deliverable extends Record<string, unknown> {
 
 interface DeliverableFormValues {
   clientId: string;
-  type: DeliverableType;
+  categoryId: string;
   date: string; // YYYY-MM-DD
 }
 
 const defaultValues: DeliverableFormValues = {
   clientId: '',
-  type: 'VIDEO',
+  categoryId: '',
   date: new Date().toISOString().split('T')[0],
 };
 
@@ -220,10 +228,16 @@ const PreviewOverlay = ({
 
 export const DeliverablesPage = () => {
   const [clients, setClients] = useState<ClientUser[]>([]);
+  const [categories, setCategories] = useState<DeliverableCategory[]>([]);
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [newCategory, setNewCategory] = useState('');
+  const [isNewCategoryVideo, setIsNewCategoryVideo] = useState(false);
+  const [renamingId, setRenamingId] = useState('');
+  const [renameValue, setRenameValue] = useState('');
+  const [deleteCategory, setDeleteCategory] = useState<DeliverableCategory | null>(null);
   const [editing, setEditing] = useState<Deliverable | null>(null);
   const [deleting, setDeleting] = useState<Deliverable | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -250,6 +264,11 @@ export const DeliverablesPage = () => {
     setClients(response.data.data.items);
   };
 
+  const fetchCategories = async () => {
+    const response = await api.get<DeliverableCategory[]>('/deliverable-categories');
+    setCategories(response.data);
+  };
+
   const fetchDeliverables = async () => {
     setIsLoading(true);
     setError('');
@@ -267,6 +286,7 @@ export const DeliverablesPage = () => {
 
   useEffect(() => {
     fetchClients().catch((err) => setError(requestErrorMessage(err, 'Müştərilər yüklənə bilmədi.')));
+    fetchCategories().catch((err) => setError(requestErrorMessage(err, 'Kateqoriyalar yüklənə bilmədi.')));
   }, []);
 
   useEffect(() => {
@@ -280,7 +300,7 @@ export const DeliverablesPage = () => {
       deliverable
         ? {
             clientId: deliverable.clientId,
-            type: deliverable.type,
+            categoryId: deliverable.categoryId || '',
             date: `${deliverable.year}-${String(deliverable.month).padStart(2, '0')}-01`,
           }
         : defaultValues,
@@ -302,7 +322,7 @@ export const DeliverablesPage = () => {
       const date = new Date(values.date);
       const payload = {
         clientId: values.clientId,
-        type: values.type,
+        categoryId: values.categoryId || null,
         month: date.getMonth() + 1,
         year: date.getFullYear(),
       };
@@ -324,6 +344,25 @@ export const DeliverablesPage = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const addCategory = async () => {
+    if (!newCategory.trim()) return;
+    await api.post('/deliverable-categories', { 
+      name: newCategory.trim(),
+      isVideo: isNewCategoryVideo
+    });
+    setNewCategory('');
+    setIsNewCategoryVideo(false);
+    await fetchCategories();
+  };
+
+  const saveRename = async (category: DeliverableCategory) => {
+    if (!renameValue.trim()) return;
+    await api.patch(`/deliverable-categories/${category.id}`, { name: renameValue.trim() });
+    setRenamingId('');
+    setRenameValue('');
+    await fetchCategories();
   };
 
   const columns: TableColumn<Deliverable>[] = [
@@ -359,10 +398,12 @@ export const DeliverablesPage = () => {
         ),
     },
     {
-      key: 'type',
+      key: 'categoryId',
       header: 'Növ',
       render: (deliverable) => (
-        <Badge variant="info">{typeLabels[deliverable.type] ?? deliverable.type}</Badge>
+        <Badge variant="info">
+          {deliverable.category?.name || deliverable.type || 'Növ yoxdur'}
+        </Badge>
       ),
     },
     {
@@ -413,7 +454,66 @@ export const DeliverablesPage = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-950">Fayl Kateqoriyaları (Növlər)</h2>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {categories.map((category) => (
+            <div key={category.id} className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-slate-200">
+              {renamingId === category.id ? (
+                <>
+                  <input
+                    value={renameValue}
+                    onChange={(event) => setRenameValue(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') saveRename(category);
+                      if (event.key === 'Escape') setRenamingId('');
+                    }}
+                    className="w-32 rounded border border-slate-300 px-2 py-1 text-sm outline-none"
+                    autoFocus
+                  />
+                  <Button size="sm" onClick={() => saveRename(category)}>Yadda Saxla</Button>
+                </>
+              ) : (
+                <>
+                  <span>{category.name} {category.isVideo && <span className="text-[10px] text-blue-500 font-bold">(VIDEO)</span>}</span>
+                  <button type="button" onClick={() => { setRenamingId(category.id); setRenameValue(category.name); }}>
+                    <Edit2 className="h-3.5 w-3.5 text-slate-500" />
+                  </button>
+                  <button type="button" onClick={() => setDeleteCategory(category)}>
+                    <X className="h-3.5 w-3.5 text-slate-500" />
+                  </button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col sm:flex-row max-w-2xl gap-3 w-full bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <Input
+            placeholder="Yeni növ adı (məs: Drone Çəkiliş)..."
+            value={newCategory}
+            onChange={(event) => setNewCategory(event.target.value)}
+            className="flex-1"
+          />
+          <div className="flex items-center gap-2 px-2">
+            <input 
+              type="checkbox" 
+              id="isVideo" 
+              checked={isNewCategoryVideo} 
+              onChange={(e) => setIsNewCategoryVideo(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
+            />
+            <label htmlFor="isVideo" className="text-sm font-medium text-slate-700">Video kateqoriyasıdır?</label>
+          </div>
+          <Button onClick={addCategory} className="shrink-0">
+            <Plus className="h-4 w-4" />
+            Əlavə Et
+          </Button>
+        </div>
+      </section>
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">Layihə Faylları</h1>
           <p className="mt-1 text-sm text-slate-500">Müştərilərə göndərilən faylları idarə edin.</p>
@@ -459,7 +559,15 @@ export const DeliverablesPage = () => {
               />
             )}
           />
-          <Select label="Növ" options={typeOptions} {...register('type')} />
+          <Select 
+            label="Növ" 
+            options={[
+              { value: '', label: 'Kateqoriya seçin' },
+              ...categories.map(c => ({ value: c.id, label: c.name }))
+            ]} 
+            error={errors.categoryId?.message}
+            {...register('categoryId', { required: 'Növ seçmək mütləqdir' })} 
+          />
           <Input
             label="Fayl"
             type="file"
@@ -484,6 +592,20 @@ export const DeliverablesPage = () => {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={Boolean(deleteCategory)}
+        onClose={() => setDeleteCategory(null)}
+        onConfirm={async () => {
+          if (!deleteCategory) return;
+          await api.delete(`/deliverable-categories/${deleteCategory.id}`);
+          setDeleteCategory(null);
+          await fetchCategories();
+          await fetchDeliverables();
+        }}
+        title="Kateqoriyanı sil"
+        message="Bu kateqoriyaya aid bütün fayllar kateqoriyasız qalacaq."
+      />
 
       {/* ── Delete Confirm ── */}
       <ConfirmDialog

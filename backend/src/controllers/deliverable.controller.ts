@@ -23,19 +23,23 @@ export const dynamicUploadMiddleware = async (
 ): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const deliverable = await prisma.deliverable.findUnique({ where: { id } });
+    const deliverable = await prisma.deliverable.findUnique({ 
+      where: { id },
+      include: { category: true }
+    });
 
     if (!deliverable) {
       sendError(res, 'Deliverable not found', 404);
       return;
     }
 
-    // Set the subfolder based on type
-    if (deliverable.type === 'VIDEO') {
+    // Set the subfolder based on category isVideo flag or legacy type
+    const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
+    
+    if (isVideo) {
       req.uploadSubfolder = 'videos';
       uploadVideo(req, res, next);
     } else {
-      // SMM_DESIGN, BRANDING, REPORT, OTHER — use design filter
       req.uploadSubfolder = 'designs';
       uploadDesign(req, res, next);
     }
@@ -58,6 +62,7 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
 
     const deliverables = await prisma.deliverable.findMany({
       where,
+      include: { category: true },
       orderBy: [{ year: 'desc' }, { month: 'desc' }],
     });
 
@@ -127,6 +132,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
           client: {
             select: { id: true, name: true, email: true },
           },
+          category: true,
         },
       }),
       prisma.deliverable.count({ where }),
@@ -154,7 +160,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
 // POST /api/v1/deliverables (Admin only)
 export const createDeliverable = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { clientId, type, month, year, notes, status } = req.body;
+    const { clientId, type, categoryId, month, year, notes, status } = req.body;
 
     // Verify that the client user exists and has role CLIENT
     const clientUser = await prisma.user.findUnique({
@@ -175,6 +181,7 @@ export const createDeliverable = async (req: Request, res: Response): Promise<vo
       data: {
         clientId,
         type,
+        categoryId,
         month,
         year,
         notes,
@@ -206,6 +213,7 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
       data: {
         ...(clientId !== undefined && { clientId }),
         ...(type !== undefined && { type }),
+        ...(categoryId !== undefined && { categoryId }),
         ...(status !== undefined && { status }),
         ...(month !== undefined && { month }),
         ...(year !== undefined && { year }),
@@ -217,6 +225,7 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
         client: {
           select: { id: true, name: true, email: true },
         },
+        category: true,
       },
     });
 
@@ -231,7 +240,10 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
 export const uploadDeliverableFile = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const deliverable = await prisma.deliverable.findUnique({ where: { id } });
+    const deliverable = await prisma.deliverable.findUnique({ 
+      where: { id },
+      include: { category: true }
+    });
 
     if (!deliverable) {
       sendError(res, 'Deliverable not found', 404);
@@ -252,8 +264,9 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
       }
     }
 
-    // Determine the folder based on deliverable type
-    const folder = deliverable.type === 'VIDEO' ? 'videos' : 'designs';
+    // Determine the folder based on deliverable category or legacy type
+    const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
+    const folder = isVideo ? 'videos' : 'designs';
 
     const result = await processAndStoreFile(req.file, folder);
 
