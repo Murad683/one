@@ -68,7 +68,7 @@ const SupportPage = () => {
   return (
     <div className="pb-28 lg:pb-12">
       {/* Page Header */}
-      <div className="pt-12 pb-8 px-6 md:px-10">
+      <div className="pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6 md:px-10">
         <p className="text-xs uppercase tracking-widest font-medium mb-3" style={{ color: 'var(--accent-text)' }}>
           Şəxsi Kabinet
         </p>
@@ -80,13 +80,13 @@ const SupportPage = () => {
         </p>
       </div>
 
-      <div className="px-6 md:px-10">
+      <div className="px-4 sm:px-6 md:px-10">
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
           {/* Ticket Form — left / top */}
           <div className="xl:col-span-2">
             <form
               onSubmit={handleSubmit}
-              className="rounded-2xl border p-6"
+              className="rounded-2xl border p-4 sm:p-6"
               style={{
                 backgroundColor: 'var(--card-bg)',
                 borderColor: 'var(--card-border)',

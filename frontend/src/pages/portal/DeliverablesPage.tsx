@@ -177,22 +177,22 @@ const PreviewModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
       style={{ backgroundColor: 'var(--modal-backdrop)' }}
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-2xl rounded-2xl border overflow-hidden flex flex-col"
+        className="relative w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl border overflow-hidden flex flex-col"
         style={{
           backgroundColor: 'var(--bg-secondary)',
           borderColor: 'var(--card-border)',
-          maxHeight: '90vh',
+          maxHeight: '92vh',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Header ── */}
         <div
-          className="flex items-center justify-between px-6 py-4 border-b shrink-0"
+          className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0"
           style={{ borderColor: 'var(--border-subtle)' }}
         >
           <div>
@@ -230,7 +230,7 @@ const PreviewModal = ({
           <MediaPreview url={url} mimeType={item.mimeType} fileName={item.fileName} />
 
           {/* Feedback Section */}
-          <div className="px-6 py-5" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+          <div className="px-4 sm:px-6 py-4 sm:py-5" style={{ borderTop: '1px solid var(--border-subtle)' }}>
             <p
               className="text-[11px] uppercase tracking-widest font-medium mb-3"
               style={{ color: 'var(--text-ghost)' }}
@@ -348,7 +348,7 @@ const DeliverablesPage = () => {
   return (
     <div className="pb-28 lg:pb-12">
       {/* Page Header */}
-      <div className="pt-12 pb-8 px-6 md:px-10">
+      <div className="pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6 md:px-10">
         <p
           className="text-xs uppercase tracking-widest font-medium mb-3"
           style={{ color: 'var(--accent-text)' }}
@@ -366,7 +366,7 @@ const DeliverablesPage = () => {
         </p>
       </div>
 
-      <div className="px-6 md:px-10">
+      <div className="px-4 sm:px-6 md:px-10">
         {loading ? (
           <div
             className="rounded-2xl border divide-y"
@@ -390,9 +390,10 @@ const DeliverablesPage = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto no-scrollbar">
+          <div>
+            {/* ── Desktop Table (hidden on mobile) ── */}
             <div
-              className="rounded-2xl border min-w-[640px]"
+              className="hidden sm:block rounded-2xl border"
               style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
             >
               {/* Table Header */}
@@ -469,6 +470,64 @@ const DeliverablesPage = () => {
                         <span className="text-xs" style={{ color: 'var(--text-ghost)' }}>
                           —
                         </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── Mobile Card View (shown only on mobile) ── */}
+            <div className="sm:hidden flex flex-col gap-3">
+              {items.map((d) => {
+                const status = statusConfig[d.status] ?? statusConfig.PENDING;
+                const hasFile = !!d.fileUrl;
+                const isMedia =
+                  hasFile &&
+                  (isVideoFile(d.mimeType, d.fileName) || isImageFile(d.mimeType, d.fileName));
+
+                return (
+                  <div
+                    key={d.id}
+                    className="rounded-xl border p-4"
+                    style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', cursor: hasFile ? 'pointer' : 'default' }}
+                    onClick={() => hasFile && setSelectedItem(d)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                          {d.category?.name || typeLabels[d.type || ''] || d.type || 'Növ yoxdur'}
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                          {monthNames[d.month - 1]} {d.year}
+                        </p>
+                      </div>
+                      <span
+                        className="text-[10px] uppercase tracking-wider font-semibold px-2.5 py-1 rounded-full shrink-0"
+                        style={{ color: status.color, backgroundColor: status.bg }}
+                      >
+                        {status.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {isMedia && <Play size={11} style={{ color: 'var(--accent-text)' }} />}
+                        <span className="text-xs truncate" style={{ color: hasFile ? 'var(--text-secondary)' : 'var(--text-faint)' }}>
+                          {d.fileName ?? 'Fayl yoxdur'}
+                        </span>
+                      </div>
+                      {hasFile && (
+                        <button
+                          onClick={(e) => handleDownload(d, e)}
+                          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80 shrink-0 ml-2"
+                          style={{
+                            color: 'var(--accent-text)',
+                            backgroundColor: 'var(--glow-accent-subtle)',
+                          }}
+                        >
+                          <Download size={12} />
+                          Yüklə
+                        </button>
                       )}
                     </div>
                   </div>

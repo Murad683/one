@@ -43,7 +43,7 @@ const BillingPage = () => {
   return (
     <div className="pb-28 lg:pb-12">
       {/* Page Header */}
-      <div className="pt-12 pb-8 px-6 md:px-10">
+      <div className="pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6 md:px-10">
         <p className="text-xs uppercase tracking-widest font-medium mb-3" style={{ color: 'var(--accent-text)' }}>
           Şəxsi Kabinet
         </p>
@@ -55,7 +55,7 @@ const BillingPage = () => {
         </p>
       </div>
 
-      <div className="px-6 md:px-10">
+      <div className="px-4 sm:px-6 md:px-10">
         {loading ? (
           <div
             className="rounded-2xl border divide-y"
@@ -77,10 +77,11 @@ const BillingPage = () => {
             </p>
           </div>
         ) : (
-          /* Payments Table */
-          <div className="overflow-x-auto no-scrollbar">
+          {/* Payments Table */}
+          <div>
+            {/* ── Desktop Table (hidden on mobile) ── */}
             <div
-              className="rounded-2xl border min-w-[640px]"
+              className="hidden sm:block rounded-2xl border"
               style={{
                 backgroundColor: 'var(--card-bg)',
                 borderColor: 'var(--card-border)',
@@ -136,6 +137,54 @@ const BillingPage = () => {
                       </a>
                     ) : (
                       <span className="text-xs" style={{ color: 'var(--text-ghost)' }}>—</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Mobile Card View (shown only on mobile) ── */}
+            <div className="sm:hidden flex flex-col gap-3">
+              {payments.map((p) => (
+                <div
+                  key={p.id}
+                  className="rounded-xl border p-4"
+                  style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                        {formatAmount(p.amount, p.currency)}
+                      </p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                        {formatDate(p.paidAt)}
+                      </p>
+                    </div>
+                    {p.invoicePdfUrl ? (
+                      <a
+                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${p.invoicePdfUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80 shrink-0"
+                        style={{
+                          color: 'var(--accent-text)',
+                          backgroundColor: 'var(--glow-accent-subtle)',
+                        }}
+                      >
+                        <FileDown size={12} />
+                        PDF
+                      </a>
+                    ) : null}
+                  </div>
+                  <div className="flex items-center justify-between mt-2 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-ghost)' }}>Növbəti ödəniş</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{formatDate(p.nextPaymentDate)}</p>
+                    </div>
+                    {p.note && (
+                      <p className="text-xs truncate max-w-[120px]" style={{ color: 'var(--text-faint)' }}>
+                        {p.note}
+                      </p>
                     )}
                   </div>
                 </div>

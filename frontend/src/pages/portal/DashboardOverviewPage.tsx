@@ -47,7 +47,7 @@ const DashboardOverviewPage = () => {
   return (
     <div className="pb-28 lg:pb-12">
       {/* Greeting */}
-      <div className="pt-12 pb-8 px-6 md:px-10">
+      <div className="pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6 md:px-10">
         <h1 className="font-heading text-2xl md:text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
           Xoş gəldiniz, {user?.name} 👋
         </h1>
@@ -57,7 +57,7 @@ const DashboardOverviewPage = () => {
       </div>
 
       {/* Stat Cards */}
-      <div className="px-6 md:px-10">
+      <div className="px-4 sm:px-6 md:px-10">
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <SkeletonCard />
