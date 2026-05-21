@@ -69,7 +69,7 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
             }
           })
         );
-        return { ...d, files: filesWithSignedUrls, fileUrl: undefined, fileSize: undefined, fileName: undefined, mimeType: undefined };
+        return { ...d, files: filesWithSignedUrls };
       })
     );
 
@@ -286,7 +286,7 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
     for (const file of uploadedFiles) {
       const result = await processAndStoreFile(file, folder);
       newFileObjects.push({
-        url: result.fileUrl,
+        url: result.url,
         name: result.fileName,
         size: result.fileSize,
         type: result.mimeType,

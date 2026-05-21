@@ -221,7 +221,7 @@ const PreviewOverlay = ({
         {renderMedia()}
         {/* Thumbnails strip if multiple files */}
         {item.files && item.files.length > 1 && (
-          <div className="flex gap-2 mt-6 overflow-x-auto pb-2 max-w-3xl w-full justify-center">
+          <div className="flex gap-2 mt-6 overflow-x-auto pb-2 max-w-3xl w-full justify-center [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {item.files.map((f, idx) => (
               <button
                 key={f.url}

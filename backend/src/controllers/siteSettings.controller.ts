@@ -102,14 +102,14 @@ export const uploadSettingsMedia = async (req: Request, res: Response): Promise<
     const folder = 'site'; // Store site-related assets in a 'site' folder
     const result = await processAndStoreFile(req.file, folder);
 
-    // Store the RELATIVE path (fileUrl) in the database, not the absolute storageKey
-    const settings = await prisma.siteSettings.upsert({
+    // Store the RELATIVE path (url) in the database, not the absolute storageKey
+    const updated = await prisma.siteSettings.upsert({
       where: { id: 'global' },
-      update: { [field]: result.fileUrl },
-      create: { id: 'global', [field]: result.fileUrl },
+      update: { [field]: result.url },
+      create: { id: 'global', [field]: result.url },
     });
 
-    const signedSettings = await signSettingsUrls(settings);
+    const signedSettings = await signSettingsUrls(updated);
     sendSuccess(res, signedSettings);
   } catch (err) {
     console.error('uploadSettingsMedia error:', err);

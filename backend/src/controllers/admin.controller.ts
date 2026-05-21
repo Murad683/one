@@ -163,7 +163,7 @@ export const uploadInvoice = async (req: Request, res: Response): Promise<void> 
     }
 
     const result = await processAndStoreFile(req.file, 'invoices');
-    sendSuccess(res, { url: result.fileUrl }, 201);
+    sendSuccess(res, { url: result.url }, 201);
   } catch (err) {
     console.error('uploadInvoice error:', err);
     sendError(res, 'Fakturanı yükləmək mümkün olmadı', 500);

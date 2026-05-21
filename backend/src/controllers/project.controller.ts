@@ -210,7 +210,7 @@ export const uploadThumbnail = async (req: Request, res: Response): Promise<void
 
     const updated = await prisma.project.update({
       where: { id },
-      data: { thumbnailUrl: result.fileUrl },
+      data: { thumbnailUrl: result.url },
     });
 
     const signedUpdated = await signProjectUrls(updated);

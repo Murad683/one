@@ -6,10 +6,10 @@ export class LocalStorageProvider implements IStorageProvider {
   async upload(file: Express.Multer.File, folder: string): Promise<UploadResult> {
     // Multer already saved the file to disk in the destination folder.
     // We just return the relative URL and metadata.
-    const fileUrl = `/uploads/${folder}/${file.filename}`;
+    const url = `/uploads/${folder}/${file.filename}`;
     
     return {
-      fileUrl,
+      url,
       fileName: file.originalname,
       fileSize: file.size,
       mimeType: file.mimetype,

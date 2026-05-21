@@ -54,7 +54,7 @@ export class AzureStorageProvider implements IStorageProvider {
     const storageKey = `${containerName}/${uniqueName}`;
 
     return {
-      fileUrl: storageKey, // We store the storageKey as fileUrl so Prisma saves it
+      url: storageKey, // We store the storageKey as url
       fileName: file.originalname,
       fileSize: file.size,
       mimeType: file.mimetype,
