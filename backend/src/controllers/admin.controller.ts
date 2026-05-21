@@ -2,7 +2,18 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { hashPassword } from '../utils/password.util';
-import { processAndStoreFile } from '../services/upload.service';
+import { processAndStoreFile, getSecureDownloadUrl, extractStorageKey } from '../services/upload.service';
+
+const signPaymentUrls = async (payment: any) => {
+  if (payment.invoicePdfUrl) {
+    try {
+      payment.invoicePdfUrl = await getSecureDownloadUrl(payment.invoicePdfUrl);
+    } catch (e) {
+      console.warn('Failed to sign invoicePdfUrl', e);
+    }
+  }
+  return payment;
+};
 
 // ─── GET /api/v1/admin/stats ───────────────────
 export const getDashboardStats = async (_req: Request, res: Response): Promise<void> => {
@@ -55,7 +66,7 @@ export const createPayment = async (req: Request, res: Response): Promise<void> 
         amount,
         paidAt: new Date(paidAt),
         nextPaymentDate: new Date(nextPaymentDate),
-        ...(invoicePdfUrl && { invoicePdfUrl }),
+        ...(invoicePdfUrl && { invoicePdfUrl: extractStorageKey(invoicePdfUrl) }),
         ...(note && { note }),
       },
     });
@@ -221,7 +232,9 @@ export const getUserPayments = async (req: Request, res: Response): Promise<void
       where: { userId },
       orderBy: { paidAt: 'desc' },
     });
-    sendSuccess(res, payments);
+    
+    const signedPayments = await Promise.all(payments.map(signPaymentUrls));
+    sendSuccess(res, signedPayments);
   } catch (err) {
     console.error('getUserPayments error:', err);
     sendError(res, 'Ödənişləri yükləmək mümkün olmadı', 500);

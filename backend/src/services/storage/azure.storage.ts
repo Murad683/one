@@ -3,6 +3,19 @@ import { IStorageProvider, UploadResult } from './storage.interface';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+function extractStorageKey(keyOrUrl: string): string {
+  if (!keyOrUrl) return keyOrUrl;
+  if (keyOrUrl.startsWith('http')) {
+    try {
+      const url = new URL(keyOrUrl);
+      return url.pathname.substring(1); // removes leading slash, e.g., 'container/blob'
+    } catch {
+      return keyOrUrl;
+    }
+  }
+  return keyOrUrl;
+}
+
 export class AzureStorageProvider implements IStorageProvider {
   private blobServiceClient: BlobServiceClient;
 
@@ -45,7 +58,8 @@ export class AzureStorageProvider implements IStorageProvider {
     };
   }
 
-  async delete(storageKey: string): Promise<void> {
+  async delete(rawKey: string): Promise<void> {
+    const storageKey = extractStorageKey(rawKey);
     const [containerName, ...blobParts] = storageKey.split('/');
     if (!containerName || blobParts.length === 0) {
       console.warn(`Invalid storageKey format for deletion: ${storageKey}`);
@@ -58,7 +72,8 @@ export class AzureStorageProvider implements IStorageProvider {
     await blockBlobClient.deleteIfExists();
   }
 
-  async getSignedUrl(storageKey: string, expiresInSeconds: number): Promise<string> {
+  async getSignedUrl(rawKey: string, expiresInSeconds: number): Promise<string> {
+    const storageKey = extractStorageKey(rawKey);
     const [containerName, ...blobParts] = storageKey.split('/');
     if (!containerName || blobParts.length === 0) {
       throw new Error(`Invalid storageKey format: ${storageKey}`);

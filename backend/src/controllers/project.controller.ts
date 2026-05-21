@@ -2,7 +2,20 @@ import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { processAndStoreFile } from '../services/upload.service';
+import { processAndStoreFile, getSecureDownloadUrl } from '../services/upload.service';
+
+function extractStorageKey(keyOrUrl: string): string {
+  if (!keyOrUrl) return keyOrUrl;
+  if (keyOrUrl.startsWith('http')) {
+    try {
+      const url = new URL(keyOrUrl);
+      return url.pathname.substring(1);
+    } catch {
+      return keyOrUrl;
+    }
+  }
+  return keyOrUrl;
+}
 
 const normalizeProjectData = (body: Record<string, unknown>): Record<string, unknown> => {
   const { category, ...data } = body;
@@ -11,7 +24,23 @@ const normalizeProjectData = (body: Record<string, unknown>): Record<string, unk
     data.categoryLegacy = category;
   }
 
+  if (typeof data.thumbnailUrl === 'string') {
+    data.thumbnailUrl = extractStorageKey(data.thumbnailUrl);
+  }
+
   return data;
+};
+
+// Helper to sign project urls
+const signProjectUrls = async (project: any) => {
+  if (project.thumbnailUrl) {
+    try {
+      project.thumbnailUrl = await getSecureDownloadUrl(project.thumbnailUrl);
+    } catch (e) {
+      console.warn('Failed to sign thumbnailUrl', e);
+    }
+  }
+  return project;
 };
 
 // GET /api/v1/projects
@@ -43,8 +72,10 @@ export const getAll = async (req: Request, res: Response): Promise<void> => {
       prisma.project.count({ where }),
     ]);
 
+    const signedItems = await Promise.all(items.map(signProjectUrls));
+
     sendSuccess(res, {
-      items,
+      items: signedItems,
       total,
       page,
       limit,
@@ -70,7 +101,8 @@ export const getById = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    sendSuccess(res, project);
+    const signedProject = await signProjectUrls(project);
+    sendSuccess(res, signedProject);
   } catch (err) {
     console.error('Project getById error:', err);
     sendError(res, 'Failed to fetch project', 500);
@@ -86,7 +118,8 @@ export const getFeatured = async (_req: Request, res: Response): Promise<void> =
       orderBy: { sortOrder: 'asc' },
     });
 
-    sendSuccess(res, projects);
+    const signedProjects = await Promise.all(projects.map(signProjectUrls));
+    sendSuccess(res, signedProjects);
   } catch (err) {
     console.error('Project getFeatured error:', err);
     sendError(res, 'Failed to fetch featured projects', 500);

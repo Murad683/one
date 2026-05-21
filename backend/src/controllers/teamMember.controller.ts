@@ -1,6 +1,18 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
+import { getSecureDownloadUrl, extractStorageKey } from '../services/upload.service';
+
+const signTeamMemberUrls = async (member: any) => {
+  if (member.avatarUrl) {
+    try {
+      member.avatarUrl = await getSecureDownloadUrl(member.avatarUrl);
+    } catch (e) {
+      console.warn('Failed to sign avatarUrl', e);
+    }
+  }
+  return member;
+};
 
 // GET /api/v1/team
 export const getAll = async (req: Request, res: Response): Promise<void> => {
@@ -22,8 +34,10 @@ export const getAll = async (req: Request, res: Response): Promise<void> => {
       prisma.teamMember.count({ where }),
     ]);
 
+    const signedItems = await Promise.all(items.map(signTeamMemberUrls));
+
     sendSuccess(res, {
-      items,
+      items: signedItems,
       total,
       page,
       limit,
@@ -46,7 +60,8 @@ export const getById = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    sendSuccess(res, member);
+    const signedMember = await signTeamMemberUrls(member);
+    sendSuccess(res, signedMember);
   } catch (err) {
     console.error('TeamMember getById error:', err);
     sendError(res, 'Failed to fetch team member', 500);
@@ -56,7 +71,12 @@ export const getById = async (req: Request, res: Response): Promise<void> => {
 // POST /api/v1/team
 export const create = async (req: Request, res: Response): Promise<void> => {
   try {
-    const member = await prisma.teamMember.create({ data: req.body });
+    const data = { ...req.body };
+    if (typeof data.avatarUrl === 'string') {
+      data.avatarUrl = extractStorageKey(data.avatarUrl);
+    }
+
+    const member = await prisma.teamMember.create({ data });
     sendSuccess(res, member, 201);
   } catch (err) {
     console.error('TeamMember create error:', err);
@@ -75,9 +95,14 @@ export const update = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    const data = { ...req.body };
+    if (typeof data.avatarUrl === 'string') {
+      data.avatarUrl = extractStorageKey(data.avatarUrl);
+    }
+
     const updated = await prisma.teamMember.update({
       where: { id },
-      data: req.body,
+      data,
     });
 
     sendSuccess(res, updated);
