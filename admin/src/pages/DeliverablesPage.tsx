@@ -130,7 +130,7 @@ const PreviewOverlay = ({
     };
   }, [onClose]);
 
-  const url = resolveFileUrl(activeFile?.url);
+  const url = activeFile?.downloadUrl || resolveFileUrl(activeFile?.url);
   if (!url || !activeFile) return null;
 
   const handleDownload = async () => {
@@ -231,7 +231,7 @@ const PreviewOverlay = ({
                 }`}
               >
                 {isImageFile(f.type, f.name) ? (
-                  <img src={resolveFileUrl(f.url)} className="w-full h-full object-cover" alt={f.name} />
+                  <img src={f.downloadUrl || resolveFileUrl(f.url)} className="w-full h-full object-cover" alt={f.name} />
                 ) : isVideoFile(f.type, f.name) ? (
                   <div className="w-full h-full bg-black flex items-center justify-center"><Play className="h-6 w-6 text-white" /></div>
                 ) : (
