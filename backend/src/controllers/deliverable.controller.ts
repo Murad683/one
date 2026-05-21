@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { processAndStoreFile, deleteFile, getSecureDownloadUrl } from '../services/upload.service';
-import { uploadSiteMedia } from '../middleware/upload.middleware';
+import { processAndStoreFile, deleteFile, getSecureDownloadUrl, cleanupOrphanFiles } from '../services/upload.service';
+import { uploadSiteMediaArray } from '../middleware/upload.middleware';
 
 // No longer needed: resolveStoragePath
 
@@ -30,8 +30,8 @@ export const dynamicUploadMiddleware = async (
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     req.uploadSubfolder = isVideo ? 'videos' : 'designs';
     
-    // Use the universal media filter that accepts both video and image formats
-    uploadSiteMedia(req, res, next);
+    // Use the universal media filter that accepts both video and image formats, for arrays
+    uploadSiteMediaArray(req, res, next);
   } catch (err) {
     console.error('Dynamic upload middleware error:', err);
     sendError(res, 'Failed to determine upload type', 500);
@@ -55,18 +55,21 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
       orderBy: [{ year: 'desc' }, { month: 'desc' }],
     });
 
-    // Generate secure download URLs for each deliverable that has a file
+    // Generate secure download URLs for each deliverable file
     const itemsWithUrls = await Promise.all(
       deliverables.map(async (d) => {
-        if (d.fileUrl) {
-          try {
-            const downloadUrl = await getSecureDownloadUrl(d.fileUrl);
-            return { ...d, downloadUrl, fileSize: d.fileSize?.toString() };
-          } catch {
-            return { ...d, downloadUrl: null, fileSize: d.fileSize?.toString() };
-          }
-        }
-        return { ...d, downloadUrl: null, fileSize: d.fileSize?.toString() };
+        const files = (d.files as any[]) || [];
+        const filesWithSignedUrls = await Promise.all(
+          files.map(async (f) => {
+            try {
+              const downloadUrl = await getSecureDownloadUrl(f.url);
+              return { ...f, downloadUrl };
+            } catch {
+              return { ...f, downloadUrl: null };
+            }
+          })
+        );
+        return { ...d, files: filesWithSignedUrls, fileUrl: undefined, fileSize: undefined, fileName: undefined, mimeType: undefined };
       })
     );
 
@@ -127,21 +130,23 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
       prisma.deliverable.count({ where }),
     ]);
 
-    // Serialize BigInt fileSize to string for JSON and sign fileUrl
+    // Sign URLs in files array
     const serialized = await Promise.all(
       items.map(async (d) => {
-        let downloadUrl = null;
-        if (d.fileUrl) {
-          try {
-            downloadUrl = await getSecureDownloadUrl(d.fileUrl);
-          } catch {
-            // Ignore signing errors
-          }
-        }
+        const files = (d.files as any[]) || [];
+        const filesWithSignedUrls = await Promise.all(
+          files.map(async (f) => {
+            try {
+              const downloadUrl = await getSecureDownloadUrl(f.url);
+              return { ...f, downloadUrl };
+            } catch {
+              return { ...f, downloadUrl: null };
+            }
+          })
+        );
         return {
           ...d,
-          fileUrl: downloadUrl || d.fileUrl, // Return signed URL in fileUrl field for admin dashboard
-          fileSize: d.fileSize?.toString() ?? null,
+          files: filesWithSignedUrls,
         };
       })
     );
@@ -162,7 +167,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
 // POST /api/v1/deliverables (Admin only)
 export const createDeliverable = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { clientId, type, categoryId, month, year, notes, status } = req.body;
+    const { clientId, title, type, categoryId, month, year, notes, status } = req.body;
 
     // Verify that the client user exists and has role CLIENT
     const clientUser = await prisma.user.findUnique({
@@ -182,16 +187,18 @@ export const createDeliverable = async (req: Request, res: Response): Promise<vo
     const deliverable = await prisma.deliverable.create({
       data: {
         clientId,
+        title,
         type,
         categoryId,
         month,
         year,
         notes,
         status: status ?? 'PENDING',
+        files: [],
       },
     });
 
-    sendSuccess(res, { ...deliverable, fileSize: deliverable.fileSize?.toString() ?? null }, 201);
+    sendSuccess(res, deliverable, 201);
   } catch (err) {
     console.error('createDeliverable error:', err);
     sendError(res, 'Failed to create deliverable', 500);
@@ -209,18 +216,26 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    const { clientId, type, categoryId, status, month, year, fileUrl, fileName, notes } = req.body;
+    const { clientId, title, type, categoryId, status, month, year, files, notes } = req.body;
+
+    if (files && Array.isArray(files)) {
+      const oldFiles = (existing.files as any[]) || [];
+      const oldUrls = oldFiles.map((f: any) => f.url);
+      const newUrls = files.map((f: any) => f.url);
+      await cleanupOrphanFiles(oldUrls, newUrls);
+    }
+
     const updated = await prisma.deliverable.update({
       where: { id },
       data: {
         ...(clientId !== undefined && { clientId }),
+        ...(title !== undefined && { title }),
         ...(type !== undefined && { type }),
         ...(categoryId !== undefined && { categoryId }),
         ...(status !== undefined && { status }),
         ...(month !== undefined && { month }),
         ...(year !== undefined && { year }),
-        ...(fileUrl !== undefined && { fileUrl }),
-        ...(fileName !== undefined && { fileName }),
+        ...(files !== undefined && { files }),
         ...(notes !== undefined && { notes }),
       },
       include: {
@@ -231,7 +246,7 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
       },
     });
 
-    sendSuccess(res, { ...updated, fileSize: updated.fileSize?.toString() ?? null });
+    sendSuccess(res, updated);
   } catch (err) {
     console.error('updateDeliverable error:', err);
     sendError(res, 'Failed to update deliverable', 500);
@@ -252,40 +267,43 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
       return;
     }
 
-    if (!req.file) {
-      sendError(res, 'No file uploaded', 400);
+    const uploadedFiles = req.files as Express.Multer.File[];
+    if (!uploadedFiles || uploadedFiles.length === 0) {
+      sendError(res, 'No files uploaded', 400);
       return;
     }
 
-    // Delete old file if one exists
-    if (deliverable.fileUrl) {
-      try {
-        await deleteFile(deliverable.fileUrl);
-      } catch (err) {
-        console.warn('Failed to delete old file:', err);
-      }
-    }
+    // Delete old files since this is a new upload batch replacing the old
+    const oldFiles = (deliverable.files as any[]) || [];
+    const oldUrls = oldFiles.map((f: any) => f.url);
+    await cleanupOrphanFiles(oldUrls, []);
 
     // Determine the folder based on deliverable category or legacy type
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     const folder = isVideo ? 'videos' : 'designs';
 
-    const result = await processAndStoreFile(req.file, folder);
+    const newFileObjects = [];
+    for (const file of uploadedFiles) {
+      const result = await processAndStoreFile(file, folder);
+      newFileObjects.push({
+        url: result.fileUrl,
+        name: result.fileName,
+        size: result.fileSize,
+        type: result.mimeType,
+      });
+    }
 
     const updated = await prisma.deliverable.update({
       where: { id },
       data: {
-        fileUrl: result.fileUrl,
-        fileName: result.fileName,
-        fileSize: BigInt(result.fileSize),
-        mimeType: result.mimeType,
+        files: newFileObjects,
         uploadedAt: new Date(),
         status: 'READY',
         clientFeedback: null, // Reset feedback so client can review new version
       },
     });
 
-    sendSuccess(res, { ...updated, fileSize: updated.fileSize?.toString() ?? null });
+    sendSuccess(res, updated);
   } catch (err) {
     console.error('uploadDeliverableFile error:', err);
     sendError(res, 'Failed to upload file', 500);
@@ -308,7 +326,7 @@ export const updateStatus = async (req: Request, res: Response): Promise<void> =
       data: { status: req.body.status },
     });
 
-    sendSuccess(res, { ...updated, fileSize: updated.fileSize?.toString() ?? null });
+    sendSuccess(res, updated);
   } catch (err) {
     console.error('updateStatus error:', err);
     sendError(res, 'Failed to update status', 500);
@@ -326,14 +344,10 @@ export const deleteDeliverable = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Delete file from storage if exists
-    if (existing.fileUrl) {
-      try {
-        await deleteFile(existing.fileUrl);
-      } catch (err) {
-        console.warn('Failed to delete file during deliverable deletion:', err);
-      }
-    }
+    // Delete files from storage if exist
+    const oldFiles = (existing.files as any[]) || [];
+    const oldUrls = oldFiles.map((f: any) => f.url);
+    await cleanupOrphanFiles(oldUrls, []);
 
     // Hard delete the record
     await prisma.deliverable.delete({ where: { id } });

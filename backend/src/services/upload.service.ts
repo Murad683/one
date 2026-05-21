@@ -30,3 +30,19 @@ export function extractStorageKey(keyOrUrl: string | null | undefined): string {
   }
   return keyStr;
 }
+
+export async function cleanupOrphanFiles(oldUrls: string[], newUrls: string[]): Promise<void> {
+  const oldSet = new Set(oldUrls);
+  const newSet = new Set(newUrls);
+  
+  for (const url of oldUrls) {
+    if (!newSet.has(url)) {
+      try {
+        await deleteFile(url);
+        console.log(`Cleaned up orphan file: ${url}`);
+      } catch (err) {
+        console.warn(`Failed to clean up orphan file ${url}:`, err);
+      }
+    }
+  }
+}

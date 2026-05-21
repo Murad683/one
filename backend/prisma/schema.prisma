@@ -95,12 +95,10 @@ model Deliverable {
   clientId       String
   type           String?
   status         DeliverableStatus @default(PENDING)
+  title          String            @default("Başlıksız")
   month          Int
   year           Int
-  fileUrl        String?
-  fileSize       BigInt?
-  fileName       String?
-  mimeType       String?
+  files          Json              @default("[]")
   notes          String?
   clientFeedback String?           @db.Text
   uploadedAt     DateTime?

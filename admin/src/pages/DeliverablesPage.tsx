@@ -38,19 +38,20 @@ interface Deliverable extends Record<string, unknown> {
   status: DeliverableStatus;
   month: number;
   year: number;
-  fileUrl?: string | null;
-  mimeType?: string | null;
-  fileName?: string | null;
+  title: string;
+  files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null }[];
   clientFeedback?: string | null;
 }
 
 interface DeliverableFormValues {
+  title: string;
   clientId: string;
   categoryId: string;
   date: string; // YYYY-MM-DD
 }
 
 const defaultValues: DeliverableFormValues = {
+  title: '',
   clientId: '',
   categoryId: '',
   date: new Date().toISOString().split('T')[0],
@@ -114,6 +115,8 @@ const PreviewOverlay = ({
   item: Deliverable;
   onClose: () => void;
 }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeFile = item.files?.[activeIndex];
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -127,39 +130,40 @@ const PreviewOverlay = ({
     };
   }, [onClose]);
 
-  const url = resolveFileUrl(item.fileUrl);
-  if (!url) return null;
+  const url = resolveFileUrl(activeFile?.url);
+  if (!url || !activeFile) return null;
 
   const handleDownload = async () => {
     try {
-      const res = await fetch(url);
+      const res = await fetch(activeFile.downloadUrl || url);
       const blob = await res.blob();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = item.fileName || 'file';
+      a.download = activeFile.name || 'file';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(a.href);
     } catch {
-      window.open(url, '_blank');
+      window.open(activeFile.downloadUrl || url, '_blank');
     }
   };
 
   const renderMedia = () => {
-    if (isVideoFile(item.mimeType, item.fileName)) {
+    if (isVideoFile(activeFile.type, activeFile.name)) {
       return (
-        <video controls autoPlay={false} className="max-h-[85vh] max-w-full shadow-2xl outline-none" src={url}>
+        <video controls autoPlay={false} className="max-h-[75vh] max-w-full shadow-2xl outline-none" src={url} key={url}>
           Brauzeriniz video formatını dəstəkləmir.
         </video>
       );
     }
-    if (isImageFile(item.mimeType, item.fileName)) {
+    if (isImageFile(activeFile.type, activeFile.name)) {
       return (
         <img
           src={url}
           alt="Önizləmə"
-          className="object-contain max-h-[85vh] max-w-full shadow-2xl"
+          className="object-contain max-h-[75vh] max-w-full shadow-2xl"
+          key={url}
         />
       );
     }
@@ -185,7 +189,7 @@ const PreviewOverlay = ({
       >
         <div className="flex items-center gap-3">
           <p className="text-sm font-medium text-white drop-shadow-md">
-            {item.fileName || item.category?.name || item.type || 'Fayl'}
+            {item.title || item.category?.name || item.type || 'Fayl'}
           </p>
           <Badge variant="info">{statusLabels[item.status] || item.status}</Badge>
         </div>
@@ -211,10 +215,32 @@ const PreviewOverlay = ({
 
       {/* Centered Media Container */}
       <div
-        className="flex-1 flex items-center justify-center p-4 md:p-12 overflow-hidden"
+        className="flex-1 flex flex-col items-center justify-center p-4 md:p-12 overflow-hidden w-full pt-16"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {renderMedia()}
+        {/* Thumbnails strip if multiple files */}
+        {item.files && item.files.length > 1 && (
+          <div className="flex gap-2 mt-6 overflow-x-auto pb-2 max-w-3xl w-full justify-center">
+            {item.files.map((f, idx) => (
+              <button
+                key={f.url}
+                onClick={() => setActiveIndex(idx)}
+                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                  idx === activeIndex ? 'border-accent shadow-[0_0_15px_rgba(var(--accent-rgb),0.5)]' : 'border-transparent opacity-50 hover:opacity-100'
+                }`}
+              >
+                {isImageFile(f.type, f.name) ? (
+                  <img src={resolveFileUrl(f.url)} className="w-full h-full object-cover" alt={f.name} />
+                ) : isVideoFile(f.type, f.name) ? (
+                  <div className="w-full h-full bg-black flex items-center justify-center"><Play className="h-6 w-6 text-white" /></div>
+                ) : (
+                  <div className="w-full h-full bg-slate-800 flex items-center justify-center"><FileX className="h-6 w-6 text-white" /></div>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -235,7 +261,7 @@ export const DeliverablesPage = () => {
   const [editing, setEditing] = useState<Deliverable | null>(null);
   const [deleting, setDeleting] = useState<Deliverable | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<Deliverable | null>(null);
@@ -295,10 +321,11 @@ export const DeliverablesPage = () => {
 
   const openModal = (deliverable?: Deliverable) => {
     setEditing(deliverable || null);
-    setSelectedFile(null);
+    setSelectedFiles([]);
     reset(
       deliverable
         ? {
+            title: deliverable.title,
             clientId: deliverable.clientId,
             categoryId: deliverable.categoryId || '',
             date: `${deliverable.year}-${String(deliverable.month).padStart(2, '0')}-01`,
@@ -308,9 +335,9 @@ export const DeliverablesPage = () => {
     setIsModalOpen(true);
   };
 
-  const uploadDeliverableFile = async (id: string, file: File) => {
+  const uploadDeliverableFile = async (id: string, files: File[]) => {
     const formData = new FormData();
-    formData.append('file', file);
+    files.forEach(f => formData.append('files', f));
     await api.patch(`/deliverables/${id}/upload`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
@@ -321,6 +348,7 @@ export const DeliverablesPage = () => {
     try {
       const date = new Date(values.date);
       const payload = {
+        title: values.title,
         clientId: values.clientId,
         categoryId: values.categoryId || null,
         month: date.getMonth() + 1,
@@ -333,8 +361,8 @@ export const DeliverablesPage = () => {
 
       const deliverableId = editing?.id || response.data.data.id;
 
-      if (selectedFile) {
-        await uploadDeliverableFile(deliverableId, selectedFile);
+      if (selectedFiles.length > 0) {
+        await uploadDeliverableFile(deliverableId, selectedFiles);
       }
 
       setIsModalOpen(false);
@@ -372,11 +400,13 @@ export const DeliverablesPage = () => {
       render: (deliverable) => deliverable.client?.name || 'Naməlum müştəri',
     },
     {
-      key: 'fileName',
-      header: 'Fayl adı',
+      key: 'title',
+      header: 'Başlıq / Fayl',
       hideOnMobile: true,
-      render: (deliverable) =>
-        deliverable.fileUrl ? (
+      render: (deliverable) => {
+        const hasFiles = deliverable.files && deliverable.files.length > 0;
+        const primaryFile = hasFiles ? deliverable.files[0] : null;
+        return hasFiles ? (
           <button
             type="button"
             onClick={(e) => {
@@ -386,17 +416,18 @@ export const DeliverablesPage = () => {
             className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline text-left transition-colors"
             title="Önizləməyə bax"
           >
-            {(isVideoFile(deliverable.mimeType, deliverable.fileName) ||
-              isImageFile(deliverable.mimeType, deliverable.fileName)) && (
+            {(primaryFile && (isVideoFile(primaryFile.type, primaryFile.name) ||
+              isImageFile(primaryFile.type, primaryFile.name))) && (
               <Play className="h-3 w-3 shrink-0" />
             )}
-            <span className="truncate max-w-[160px]">
-              {deliverable.fileName || 'Faylı göstər'}
+            <span className="truncate max-w-[160px] font-medium">
+              {deliverable.title || 'Başlıksız'} {deliverable.files.length > 1 && <span className="text-xs text-muted">({deliverable.files.length})</span>}
             </span>
           </button>
         ) : (
-          <span className="text-faint text-xs italic">Fayl yoxdur</span>
-        ),
+          <span className="text-faint text-xs italic">{deliverable.title || 'Başlıksız'} (Fayl yoxdur)</span>
+        );
+      },
     },
     {
       key: 'categoryId',
@@ -547,6 +578,12 @@ export const DeliverablesPage = () => {
         size="lg"
       >
         <form onSubmit={handleSubmit(saveDeliverable)} className="space-y-4">
+          <Input
+            label="Başlıq"
+            placeholder="Faylın başlığını daxil edin..."
+            error={errors.title?.message}
+            {...register('title', { required: 'Başlıq mütləqdir' })}
+          />
           <Controller
             name="clientId"
             control={control}
@@ -571,11 +608,13 @@ export const DeliverablesPage = () => {
             {...register('categoryId', { required: 'Növ seçmək mütləqdir' })} 
           />
           <Input
-            label="Fayl"
+            label="Fayllar (Birdən çox seçə bilərsiniz)"
             type="file"
+            multiple
             onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) setSelectedFile(file);
+              if (event.target.files) {
+                setSelectedFiles(Array.from(event.target.files));
+              }
             }}
           />
           <Input

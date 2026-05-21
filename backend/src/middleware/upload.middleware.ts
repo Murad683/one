@@ -109,6 +109,30 @@ export const uploadSiteMedia = wrapMulter(
   })
 );
 
+export const wrapMulterArray = (multerInstance: multer.Multer, fieldName: string, maxCount: number) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    multerInstance.array(fieldName, maxCount)(req, res, (err: any) => {
+      if (err) {
+        if (err instanceof multer.MulterError) {
+          return sendError(res, err.message, 400);
+        }
+        return sendError(res, 'An unknown error occurred during upload', 500);
+      }
+      next();
+    });
+  };
+};
+
+export const uploadSiteMediaArray = wrapMulterArray(
+  multer({
+    storage,
+    fileFilter: siteMediaFilter,
+    limits: { fileSize: MAX_FILE_SIZE_BYTES },
+  }),
+  'files',
+  10
+);
+
 const pdfFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
   if (file.mimetype === 'application/pdf') {
     cb(null, true);

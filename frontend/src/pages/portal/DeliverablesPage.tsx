@@ -4,19 +4,16 @@ import { FolderOpen, Download, Play, X, Send, FileX } from 'lucide-react';
 
 interface Deliverable {
   id: string;
+  title: string;
   type: string | null;
   categoryId?: string | null;
   category?: { id: string; name: string; isVideo: boolean } | null;
   status: string;
   month: number;
   year: number;
-  fileName: string | null;
-  fileUrl: string | null;
-  fileSize: string | null;
-  mimeType: string | null;
+  files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null }[];
   notes: string | null;
   clientFeedback: string | null;
-  downloadUrl?: string | null;
   createdAt: string;
 }
 
@@ -51,12 +48,13 @@ const isImageFile = (mimeType: string | null, fileName: string | null): boolean 
   return ['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'].includes(getExt(fileName));
 };
 
-const getFileUrl = (d: { fileUrl: string | null; downloadUrl?: string | null }): string => {
-  if (d.downloadUrl) return d.downloadUrl;
-  if (!d.fileUrl) return '';
-  if (d.fileUrl.startsWith('http')) return d.fileUrl;
+const getFileUrl = (f: { url: string; downloadUrl?: string | null } | null | undefined): string => {
+  if (!f) return '';
+  if (f.downloadUrl) return f.downloadUrl;
+  if (!f.url) return '';
+  if (f.url.startsWith('http')) return f.url;
   
-  const normalized = d.fileUrl.replace(/\\/g, '/');
+  const normalized = f.url.replace(/\\/g, '/');
   if (normalized.includes('/uploads/')) {
     const idx = normalized.indexOf('/uploads/');
     return `${BACKEND}${normalized.substring(idx)}`;
@@ -67,7 +65,7 @@ const getFileUrl = (d: { fileUrl: string | null; downloadUrl?: string | null }):
   }
 
   // If it's an Azure storage key without a SAS token, return as-is
-  return d.fileUrl;
+  return f.url;
 };
 
 /* ─── Skeleton Row ───────────────────────────── */
@@ -146,8 +144,10 @@ const PreviewModal = ({
   const [isSending, setIsSending] = useState(false);
   const [feedbackHistory, setFeedbackHistory] = useState(item.clientFeedback || '');
   const [error, setError] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  const url = getFileUrl(item);
+  const activeFile = item.files?.[activeIndex];
+  const url = getFileUrl(activeFile);
 
   const handleSendFeedback = async () => {
     if (!newMessage.trim()) return;
@@ -169,18 +169,19 @@ const PreviewModal = ({
   };
 
   const handleDownload = async () => {
+    if (!activeFile) return;
     try {
-      const res = await fetch(url);
+      const res = await fetch(activeFile.downloadUrl || url);
       const blob = await res.blob();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = item.fileName || 'file';
+      a.download = activeFile.name || 'file';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(a.href);
     } catch {
-      window.open(url, '_blank');
+      window.open(activeFile.downloadUrl || url, '_blank');
     }
   };
 
@@ -206,7 +207,7 @@ const PreviewModal = ({
         >
           <div>
             <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              {item.fileName || item.category?.name || typeLabels[item.type || ''] || item.type || 'Fayl'}
+              {item.title || item.category?.name || typeLabels[item.type || ''] || item.type || 'Fayl'}
             </p>
             <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
               {item.category?.name || typeLabels[item.type || ''] || item.type} — {statusConfig[item.status]?.label}
@@ -236,7 +237,30 @@ const PreviewModal = ({
         {/* ── Scrollable Body ── */}
         <div className="overflow-y-auto">
           {/* Dynamic Media Preview */}
-          <MediaPreview url={url} mimeType={item.mimeType} fileName={item.fileName} />
+          {activeFile && <MediaPreview url={url} mimeType={activeFile.type} fileName={activeFile.name} />}
+          
+          {/* Thumbnails strip if multiple files */}
+          {item.files && item.files.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto p-4 w-full justify-center" style={{ backgroundColor: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-subtle)' }}>
+              {item.files.map((f, idx) => (
+                <button
+                  key={f.url}
+                  onClick={() => setActiveIndex(idx)}
+                  className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                    idx === activeIndex ? 'border-blue-500 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  {isImageFile(f.type, f.name) ? (
+                    <img src={getFileUrl(f)} className="w-full h-full object-cover" alt={f.name} />
+                  ) : isVideoFile(f.type, f.name) ? (
+                    <div className="w-full h-full bg-black flex items-center justify-center"><Play className="h-6 w-6 text-white" /></div>
+                  ) : (
+                    <div className="w-full h-full bg-slate-800 flex items-center justify-center"><FileX className="h-6 w-6 text-white" /></div>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Feedback Section */}
           <div className="px-4 sm:px-6 py-4 sm:py-5" style={{ borderTop: '1px solid var(--border-subtle)' }}>
@@ -333,19 +357,23 @@ const DeliverablesPage = () => {
 
   const handleDownload = async (d: Deliverable, e: React.MouseEvent) => {
     e.stopPropagation();
-    const url = getFileUrl(d);
+    if (!d.files || d.files.length === 0) return;
+    
+    // Default to downloading the first file if clicked from the table
+    const f = d.files[0];
+    const url = getFileUrl(f);
     try {
-      const res = await fetch(url);
+      const res = await fetch(f.downloadUrl || url);
       const blob = await res.blob();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = d.fileName || 'file';
+      a.download = f.name || 'file';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(a.href);
     } catch {
-      window.open(url, '_blank');
+      window.open(f.downloadUrl || url, '_blank');
     }
   };
 
@@ -420,10 +448,11 @@ const DeliverablesPage = () => {
               {/* Rows */}
               {items.map((d, i) => {
                 const status = statusConfig[d.status] ?? statusConfig.PENDING;
-                const hasFile = !!d.fileUrl;
+                const hasFile = d.files && d.files.length > 0;
+                const primaryFile = hasFile ? d.files[0] : null;
                 const isMedia =
-                  hasFile &&
-                  (isVideoFile(d.mimeType, d.fileName) || isImageFile(d.mimeType, d.fileName));
+                  hasFile && primaryFile &&
+                  (isVideoFile(primaryFile.type, primaryFile.name) || isImageFile(primaryFile.type, primaryFile.name));
 
                 return (
                   <div
@@ -448,10 +477,10 @@ const DeliverablesPage = () => {
                     <div className="col-span-3 flex items-center gap-1.5">
                       {isMedia && <Play size={11} style={{ color: 'var(--accent-text)' }} />}
                       <span
-                        className="text-xs truncate"
+                        className="text-xs truncate font-medium"
                         style={{ color: hasFile ? 'var(--text-secondary)' : 'var(--text-faint)' }}
                       >
-                        {d.fileName ?? '—'}
+                        {d.title ?? 'Başlıksız'} {hasFile && d.files.length > 1 && <span className="text-xs font-normal opacity-70">({d.files.length})</span>}
                       </span>
                     </div>
                     <div className="col-span-2">
@@ -490,10 +519,11 @@ const DeliverablesPage = () => {
             <div className="sm:hidden flex flex-col gap-3">
               {items.map((d) => {
                 const status = statusConfig[d.status] ?? statusConfig.PENDING;
-                const hasFile = !!d.fileUrl;
+                const hasFile = d.files && d.files.length > 0;
+                const primaryFile = hasFile ? d.files[0] : null;
                 const isMedia =
-                  hasFile &&
-                  (isVideoFile(d.mimeType, d.fileName) || isImageFile(d.mimeType, d.fileName));
+                  hasFile && primaryFile &&
+                  (isVideoFile(primaryFile.type, primaryFile.name) || isImageFile(primaryFile.type, primaryFile.name));
 
                 return (
                   <div
@@ -521,8 +551,8 @@ const DeliverablesPage = () => {
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center gap-1.5 min-w-0">
                         {isMedia && <Play size={11} style={{ color: 'var(--accent-text)' }} />}
-                        <span className="text-xs truncate" style={{ color: hasFile ? 'var(--text-secondary)' : 'var(--text-faint)' }}>
-                          {d.fileName ?? 'Fayl yoxdur'}
+                        <span className="text-xs truncate font-medium" style={{ color: hasFile ? 'var(--text-secondary)' : 'var(--text-faint)' }}>
+                          {d.title ?? 'Fayl yoxdur'} {hasFile && d.files.length > 1 && <span className="text-[10px] font-normal opacity-70">({d.files.length})</span>}
                         </span>
                       </div>
                       {hasFile && (

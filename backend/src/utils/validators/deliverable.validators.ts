@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const createDeliverableSchema = z.object({
   clientId: z.string({ error: 'Client ID is required' }).cuid(),
+  title: z.string({ error: 'Title is required' }).min(1, 'Title cannot be empty'),
   type: z.string().optional(),
   categoryId: z.string().optional(),
   month: z
