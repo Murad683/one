@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
+import { getSecureDownloadUrl } from '../services/upload.service';
 
 // ─── GET /api/v1/dashboard/overview ────────────
 export const getOverview = async (req: Request, res: Response): Promise<void> => {
@@ -61,11 +62,24 @@ export const getDeliverables = async (req: Request, res: Response): Promise<void
       orderBy: { createdAt: 'desc' },
     });
 
-    // Serialize BigInt fileSize to string for JSON
-    const serialized = deliverables.map((d) => ({
-      ...d,
-      fileSize: d.fileSize?.toString() ?? null,
-    }));
+    // Serialize BigInt fileSize to string for JSON and sign fileUrl
+    const serialized = await Promise.all(
+      deliverables.map(async (d) => {
+        let downloadUrl = null;
+        if (d.fileUrl) {
+          try {
+            downloadUrl = await getSecureDownloadUrl(d.fileUrl);
+          } catch {
+            // Ignore signing errors
+          }
+        }
+        return {
+          ...d,
+          fileUrl: downloadUrl || d.fileUrl,
+          fileSize: d.fileSize?.toString() ?? null,
+        };
+      })
+    );
 
     sendSuccess(res, serialized);
   } catch (err) {
@@ -166,8 +180,18 @@ export const submitFeedback = async (req: Request, res: Response): Promise<void>
       },
     });
 
+    let downloadUrl = null;
+    if (updated.fileUrl) {
+      try {
+        downloadUrl = await getSecureDownloadUrl(updated.fileUrl);
+      } catch {
+        // Ignore
+      }
+    }
+
     sendSuccess(res, {
       ...updated,
+      fileUrl: downloadUrl || updated.fileUrl,
       fileSize: updated.fileSize?.toString() ?? null,
     });
   } catch (err) {
