@@ -13,6 +13,7 @@ import type { TableColumn } from '../components/ui/Table';
 import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
+import { downloadFile } from '../utils/fileUtils';
 
 type DeliverableStatus = 'PENDING' | 'PROCESSING' | 'READY' | 'ARCHIVED';
 
@@ -134,18 +135,9 @@ const PreviewOverlay = ({
   if (!url || !activeFile) return null;
 
   const handleDownload = async () => {
-    try {
-      const res = await fetch(activeFile.downloadUrl || url);
-      const blob = await res.blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = activeFile.name || 'file';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-    } catch {
-      window.open(activeFile.downloadUrl || url, '_blank');
+    const downloadLink = activeFile.downloadUrl || url;
+    if (downloadLink) {
+      await downloadFile(downloadLink, activeFile.name || 'file');
     }
   };
 
