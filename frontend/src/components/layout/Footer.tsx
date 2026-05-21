@@ -53,7 +53,7 @@ export default function Footer() {
           <div className="max-w-xs">
             <Link to="/">
               <img
-                src="/logo.jpg"
+                src={settings?.footerLogoUrl || '/logo.jpg'}
                 alt="Agency Logo"
                 className="h-8 w-auto object-contain mb-5"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}

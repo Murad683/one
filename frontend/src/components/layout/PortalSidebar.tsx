@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useSiteSettings } from '../../hooks/useSiteData';
 import { LayoutDashboard, FolderOpen, CreditCard, MessageCircle, LogOut, User, Sun, Moon } from 'lucide-react';
 
 const navItems = [
@@ -13,6 +14,7 @@ const navItems = [
 const PortalSidebar = () => {
   const { user, logout } = useAuth();
   const { toggleTheme, isDark } = useTheme(); // Corrected: theme is not used
+  const { data: settings } = useSiteSettings();
 
   return (
     <aside
@@ -26,7 +28,7 @@ const PortalSidebar = () => {
       <div className="px-6 pt-8 pb-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-subtle)' }}>
         <NavLink to="/">
           <img
-            src="/logo.jpg"
+            src={settings?.navbarLogoUrl || '/logo.jpg'}
             alt="Logo"
             className="h-7 w-auto object-contain rounded-sm"
             onError={(e) => {

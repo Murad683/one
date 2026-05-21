@@ -11,6 +11,20 @@ const signSettingsUrls = async (settings: any) => {
       console.warn('Failed to sign heroVideoUrl', e);
     }
   }
+  if (settings.navbarLogoUrl) {
+    try {
+      settings.navbarLogoUrl = await getSecureDownloadUrl(settings.navbarLogoUrl);
+    } catch (e) {
+      console.warn('Failed to sign navbarLogoUrl', e);
+    }
+  }
+  if (settings.footerLogoUrl) {
+    try {
+      settings.footerLogoUrl = await getSecureDownloadUrl(settings.footerLogoUrl);
+    } catch (e) {
+      console.warn('Failed to sign footerLogoUrl', e);
+    }
+  }
   return settings;
 };
 
@@ -79,7 +93,7 @@ export const uploadSettingsMedia = async (req: Request, res: Response): Promise<
 
     const field = req.query.field as string || 'heroVideoUrl';
     // List of fields that accept media uploads
-    const allowedFields = ['heroVideoUrl']; 
+    const allowedFields = ['heroVideoUrl', 'navbarLogoUrl', 'footerLogoUrl']; 
     if (!allowedFields.includes(field)) {
       sendError(res, 'Invalid field for media upload', 400);
       return;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Home, Info, Globe, X, Upload, CheckCircle2, Hash, Quote, PhoneCall, Share2 } from 'lucide-react';
+import { Home, Info, Globe, X, Upload, CheckCircle2, Hash, Quote, PhoneCall, Share2, ImageIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -118,7 +118,8 @@ export const SettingsPage = () => {
 
         {/* TAB 4: ÜMUMİ */}
         {activeTab === 'footer' && (
-          <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="max-w-4xl space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <LogosCard settings={settings} onUpload={uploadMedia} setSuccess={setSuccess} />
             <FooterCard settings={settings} onSave={save} setSuccess={setSuccess} />
           </div>
         )}
@@ -423,6 +424,87 @@ const ContactCard = ({ settings, onSave, setSuccess }: any) => {
         </div>
       )}
     </Card>
+  );
+};
+
+const LogosCard = ({ settings, onUpload, setSuccess }: any) => {
+  const [isUploadingNavbar, setIsUploadingNavbar] = useState(false);
+  const [isUploadingFooter, setIsUploadingFooter] = useState(false);
+
+  const handleNavbarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingNavbar(true);
+    try {
+      await onUpload(file, 'navbarLogoUrl');
+      setSuccess('Navbar logosu uğurla yükləndi.');
+    } finally {
+      setIsUploadingNavbar(false);
+    }
+  };
+
+  const handleFooterUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingFooter(true);
+    try {
+      await onUpload(file, 'footerLogoUrl');
+      setSuccess('Footer logosu uğurla yükləndi.');
+    } finally {
+      setIsUploadingFooter(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-edge bg-surface shadow-sm overflow-hidden flex flex-col">
+      <div className="border-b border-edge-light bg-surface-alt/50 px-4 md:px-6 py-4 flex items-center gap-3">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface text-body shadow-sm ring-1 ring-slate-200">
+          <ImageIcon className="h-4 w-4" />
+        </div>
+        <h3 className="font-semibold text-heading">Logolar</h3>
+      </div>
+      <div className="p-6">
+        <div className="grid gap-6 sm:grid-cols-2">
+          {/* Navbar Logo */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-body">Navbar Logosu</label>
+            <div className="flex items-center gap-4">
+              <div className="relative flex h-24 w-full items-center justify-center rounded-xl border-2 border-dashed border-edge bg-surface-alt transition hover:bg-surface-hover">
+                <input type="file" accept="image/*" onChange={handleNavbarUpload} className="absolute inset-0 cursor-pointer opacity-0" disabled={isUploadingNavbar} />
+                <div className="flex flex-col items-center gap-1 text-faint">
+                  <Upload className={`h-5 w-5 ${isUploadingNavbar ? 'animate-bounce' : ''}`} />
+                  <span className="text-[10px] font-medium uppercase tracking-wider">Yüklə</span>
+                </div>
+              </div>
+              {settings?.navbarLogoUrl && (
+                <div className="h-24 w-28 shrink-0 overflow-hidden rounded-xl border border-edge shadow-inner bg-surface-hover flex items-center justify-center p-2">
+                  <img src={assetUrl(settings.navbarLogoUrl)} alt="Navbar Logo" className="max-h-full max-w-full object-contain" />
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Footer Logo */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-body">Footer Logosu</label>
+            <div className="flex items-center gap-4">
+              <div className="relative flex h-24 w-full items-center justify-center rounded-xl border-2 border-dashed border-edge bg-surface-alt transition hover:bg-surface-hover">
+                <input type="file" accept="image/*" onChange={handleFooterUpload} className="absolute inset-0 cursor-pointer opacity-0" disabled={isUploadingFooter} />
+                <div className="flex flex-col items-center gap-1 text-faint">
+                  <Upload className={`h-5 w-5 ${isUploadingFooter ? 'animate-bounce' : ''}`} />
+                  <span className="text-[10px] font-medium uppercase tracking-wider">Yüklə</span>
+                </div>
+              </div>
+              {settings?.footerLogoUrl && (
+                <div className="h-24 w-28 shrink-0 overflow-hidden rounded-xl border border-edge shadow-inner bg-surface-hover flex items-center justify-center p-2">
+                  <img src={assetUrl(settings.footerLogoUrl)} alt="Footer Logo" className="max-h-full max-w-full object-contain" />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <p className="mt-4 text-[10px] text-faint font-medium uppercase tracking-wider italic">Qeyd: Logoları yüklədikdən sonra saytda avtomatik yenilənəcək.</p>
+      </div>
+    </div>
   );
 };
 

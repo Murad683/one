@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { Sun, Moon, Menu } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { useSiteSettings } from '../../hooks/useSiteData';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import MobileMenu from './MobileMenu';
 
 const Navbar = () => {
   const { toggleTheme, isDark } = useTheme();
+  const { data: settings } = useSiteSettings();
   const { scrollY } = useScroll();
   const location = useLocation();
   const [hidden, setHidden] = useState(false);
@@ -55,7 +57,7 @@ const Navbar = () => {
           <Link to="/" className="block">
             {/* Desktop Logo Image */}
             <img
-              src="/logo.jpg"
+              src={settings?.navbarLogoUrl || '/logo.jpg'}
               alt="Logo"
               className="hidden md:block h-7 w-auto object-contain rounded-sm"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
@@ -135,6 +137,7 @@ const Navbar = () => {
       <MobileMenu
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
+        logoUrl={settings?.navbarLogoUrl}
       />
     </>
   );

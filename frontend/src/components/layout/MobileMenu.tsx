@@ -8,9 +8,10 @@ import { cinematicEasing } from '../../utils/animations';
 interface MobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
+  logoUrl?: string;
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
+const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, logoUrl }) => {
   const { toggleTheme, isDark } = useTheme();
 
   React.useEffect(() => {
@@ -92,7 +93,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
             {/* Header */}
             <div className="flex items-center justify-between mb-16">
               <Link to="/" onClick={onClose} className="font-heading text-2xl font-bold tracking-tighter">
-                ONE<span style={{ color: 'var(--accent-text)' }}>.</span>
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo" className="h-7 w-auto object-contain rounded-sm" />
+                ) : (
+                  <>ONE<span style={{ color: 'var(--accent-text)' }}>.</span></>
+                )}
               </Link>
               <button
                 onClick={onClose}

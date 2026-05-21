@@ -161,6 +161,8 @@ model SiteSettings {
   packagesTopLabel     String   @default("QİYMƏT PAKETLƏRİ")
   portfolioMainHeading String   @default("")
   portfolioTopLabel    String   @default("PORTFOLİO")
+  navbarLogoUrl        String?
+  footerLogoUrl        String?
 }
 
 model ContactSubmission {
