@@ -18,5 +18,6 @@ export const downloadFile = async (url: string, fileName: string) => {
     URL.revokeObjectURL(objectUrl);
   } catch (error) {
     console.error('Error downloading file:', error);
+    throw error;
   }
 };
