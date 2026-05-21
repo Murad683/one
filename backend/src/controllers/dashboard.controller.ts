@@ -62,21 +62,23 @@ export const getDeliverables = async (req: Request, res: Response): Promise<void
       orderBy: { createdAt: 'desc' },
     });
 
-    // Serialize BigInt fileSize to string for JSON and sign fileUrl
+    // Sign URLs in the new files JSON array
     const serialized = await Promise.all(
       deliverables.map(async (d) => {
-        let downloadUrl = null;
-        if (d.fileUrl) {
-          try {
-            downloadUrl = await getSecureDownloadUrl(d.fileUrl);
-          } catch {
-            // Ignore signing errors
-          }
-        }
+        const files = (d.files as any[]) || [];
+        const filesWithSignedUrls = await Promise.all(
+          files.map(async (f) => {
+            try {
+              const downloadUrl = await getSecureDownloadUrl(f.url);
+              return { ...f, downloadUrl };
+            } catch {
+              return { ...f, downloadUrl: null };
+            }
+          })
+        );
         return {
           ...d,
-          fileUrl: downloadUrl || d.fileUrl,
-          fileSize: d.fileSize?.toString() ?? null,
+          files: filesWithSignedUrls,
         };
       })
     );
@@ -180,19 +182,21 @@ export const submitFeedback = async (req: Request, res: Response): Promise<void>
       },
     });
 
-    let downloadUrl = null;
-    if (updated.fileUrl) {
-      try {
-        downloadUrl = await getSecureDownloadUrl(updated.fileUrl);
-      } catch {
-        // Ignore
-      }
-    }
+    const files = (updated.files as any[]) || [];
+    const filesWithSignedUrls = await Promise.all(
+      files.map(async (f) => {
+        try {
+          const downloadUrl = await getSecureDownloadUrl(f.url);
+          return { ...f, downloadUrl };
+        } catch {
+          return { ...f, downloadUrl: null };
+        }
+      })
+    );
 
     sendSuccess(res, {
       ...updated,
-      fileUrl: downloadUrl || updated.fileUrl,
-      fileSize: updated.fileSize?.toString() ?? null,
+      files: filesWithSignedUrls,
     });
   } catch (err) {
     console.error('submitFeedback error:', err);
