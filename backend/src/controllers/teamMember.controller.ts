@@ -77,7 +77,8 @@ export const create = async (req: Request, res: Response): Promise<void> => {
     }
 
     const member = await prisma.teamMember.create({ data });
-    sendSuccess(res, member, 201);
+    const signedMember = await signTeamMemberUrls(member);
+    sendSuccess(res, signedMember, 201);
   } catch (err) {
     console.error('TeamMember create error:', err);
     sendError(res, 'Failed to create team member', 500);
@@ -105,7 +106,8 @@ export const update = async (req: Request, res: Response): Promise<void> => {
       data,
     });
 
-    sendSuccess(res, updated);
+    const signedUpdated = await signTeamMemberUrls(updated);
+    sendSuccess(res, signedUpdated);
   } catch (err) {
     console.error('TeamMember update error:', err);
     sendError(res, 'Failed to update team member', 500);

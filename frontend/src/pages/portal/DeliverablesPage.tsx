@@ -55,10 +55,19 @@ const getFileUrl = (d: { fileUrl: string | null; downloadUrl?: string | null }):
   if (d.downloadUrl) return d.downloadUrl;
   if (!d.fileUrl) return '';
   if (d.fileUrl.startsWith('http')) return d.fileUrl;
-  if (d.fileUrl.startsWith('/uploads/')) return `${BACKEND}${d.fileUrl}`;
-  const uploadsIdx = d.fileUrl.replace(/\\/g, '/').indexOf('/uploads/');
-  if (uploadsIdx !== -1) return `${BACKEND}${d.fileUrl.replace(/\\/g, '/').substring(uploadsIdx)}`;
-  return `${BACKEND}/uploads/${d.fileUrl}`;
+  
+  const normalized = d.fileUrl.replace(/\\/g, '/');
+  if (normalized.includes('/uploads/')) {
+    const idx = normalized.indexOf('/uploads/');
+    return `${BACKEND}${normalized.substring(idx)}`;
+  }
+  
+  if (normalized.startsWith('uploads/')) {
+    return `${BACKEND}/${normalized}`;
+  }
+
+  // If it's an Azure storage key without a SAS token, return as-is
+  return d.fileUrl;
 };
 
 /* ─── Skeleton Row ───────────────────────────── */

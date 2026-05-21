@@ -1,7 +1,18 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
-import { processAndStoreFile } from '../services/upload.service';
+import { processAndStoreFile, getSecureDownloadUrl } from '../services/upload.service';
 import { sendSuccess, sendError } from '../utils/response.util';
+
+const signSettingsUrls = async (settings: any) => {
+  if (settings.heroVideoUrl) {
+    try {
+      settings.heroVideoUrl = await getSecureDownloadUrl(settings.heroVideoUrl);
+    } catch (e) {
+      console.warn('Failed to sign heroVideoUrl', e);
+    }
+  }
+  return settings;
+};
 
 // GET /api/v1/site-settings
 export const getSettings = async (_req: Request, res: Response): Promise<void> => {
@@ -10,7 +21,8 @@ export const getSettings = async (_req: Request, res: Response): Promise<void> =
     if (!settings) {
       settings = await prisma.siteSettings.create({ data: { id: 'global' } });
     }
-    sendSuccess(res, settings);
+    const signedSettings = await signSettingsUrls(settings);
+    sendSuccess(res, signedSettings);
   } catch (err) {
     console.error('getSettings error:', err);
     sendError(res, 'Failed to fetch settings', 500);
@@ -49,7 +61,8 @@ export const updateSettings = async (req: Request, res: Response): Promise<void>
       create: { id: 'global', ...data }, // Keep original data for creation
     });
     
-    sendSuccess(res, settings);
+    const signedSettings = await signSettingsUrls(settings);
+    sendSuccess(res, signedSettings);
   } catch (err) {
     console.error('updateSettings error:', err);
     sendError(res, 'Failed to update settings', 500);
@@ -82,7 +95,8 @@ export const uploadSettingsMedia = async (req: Request, res: Response): Promise<
       create: { id: 'global', [field]: result.fileUrl },
     });
 
-    sendSuccess(res, settings);
+    const signedSettings = await signSettingsUrls(settings);
+    sendSuccess(res, signedSettings);
   } catch (err) {
     console.error('uploadSettingsMedia error:', err);
     sendError(res, 'Failed to upload site media', 500);

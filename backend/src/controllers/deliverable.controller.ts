@@ -127,11 +127,24 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
       prisma.deliverable.count({ where }),
     ]);
 
-    // Serialize BigInt fileSize to string for JSON
-    const serialized = items.map((d) => ({
-      ...d,
-      fileSize: d.fileSize?.toString() ?? null,
-    }));
+    // Serialize BigInt fileSize to string for JSON and sign fileUrl
+    const serialized = await Promise.all(
+      items.map(async (d) => {
+        let downloadUrl = null;
+        if (d.fileUrl) {
+          try {
+            downloadUrl = await getSecureDownloadUrl(d.fileUrl);
+          } catch {
+            // Ignore signing errors
+          }
+        }
+        return {
+          ...d,
+          fileUrl: downloadUrl || d.fileUrl, // Return signed URL in fileUrl field for admin dashboard
+          fileSize: d.fileSize?.toString() ?? null,
+        };
+      })
+    );
 
     sendSuccess(res, {
       items: serialized,

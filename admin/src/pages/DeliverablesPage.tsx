@@ -91,10 +91,19 @@ const isImageFile = (mimeType: string | null | undefined, fileName: string | nul
 const resolveFileUrl = (fileUrl: string | null | undefined): string => {
   if (!fileUrl) return '';
   if (fileUrl.startsWith('http')) return fileUrl;
-  if (fileUrl.startsWith('/uploads/')) return `${BACKEND}${fileUrl}`;
-  const idx = fileUrl.replace(/\\/g, '/').indexOf('/uploads/');
-  if (idx !== -1) return `${BACKEND}${fileUrl.replace(/\\/g, '/').substring(idx)}`;
-  return `${BACKEND}/uploads/${fileUrl}`;
+  
+  const normalized = fileUrl.replace(/\\/g, '/');
+  if (normalized.includes('/uploads/')) {
+    const idx = normalized.indexOf('/uploads/');
+    return `${BACKEND}${normalized.substring(idx)}`;
+  }
+  
+  if (normalized.startsWith('uploads/')) {
+    return `${BACKEND}/${normalized}`;
+  }
+
+  // If it's an Azure storage key without a SAS token, return as-is
+  return fileUrl;
 };
 
 // ─── Admin Custom Media Preview Overlay ─────────

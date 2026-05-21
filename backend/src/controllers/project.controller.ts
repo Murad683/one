@@ -137,7 +137,8 @@ export const create = async (req: Request, res: Response): Promise<void> => {
       data: normalizeProjectData(req.body) as Prisma.ProjectUncheckedCreateInput,
       include: { category: true },
     });
-    sendSuccess(res, project, 201);
+    const signedProject = await signProjectUrls(project);
+    sendSuccess(res, signedProject, 201);
   } catch (err) {
     console.error('Project create error:', err);
     sendError(res, 'Failed to create project', 500);
@@ -161,7 +162,8 @@ export const update = async (req: Request, res: Response): Promise<void> => {
       include: { category: true },
     });
 
-    sendSuccess(res, updated);
+    const signedUpdated = await signProjectUrls(updated);
+    sendSuccess(res, signedUpdated);
   } catch (err) {
     console.error('Project update error:', err);
     sendError(res, 'Failed to update project', 500);
@@ -211,7 +213,8 @@ export const uploadThumbnail = async (req: Request, res: Response): Promise<void
       data: { thumbnailUrl: result.fileUrl },
     });
 
-    sendSuccess(res, updated);
+    const signedUpdated = await signProjectUrls(updated);
+    sendSuccess(res, signedUpdated);
   } catch (err) {
     console.error('Project uploadThumbnail error:', err);
     sendError(res, 'Failed to upload thumbnail', 500);
