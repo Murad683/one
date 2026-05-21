@@ -1,19 +1,23 @@
-import { BlobServiceClient, generateBlobSASQueryParameters } from '@azure/storage-blob';
+import { BlobServiceClient, generateBlobSASQueryParameters, BlobSASPermissions } from '@azure/storage-blob';
 import { IStorageProvider, UploadResult } from './storage.interface';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-function extractStorageKey(keyOrUrl: string): string {
-  if (!keyOrUrl) return keyOrUrl;
-  if (keyOrUrl.startsWith('http')) {
+function extractStorageKey(keyOrUrl: string | null | undefined): string {
+  if (!keyOrUrl) return '';
+  const keyStr = String(keyOrUrl);
+  if (keyStr.includes('uploads/') || keyStr.includes('undefined') || keyStr.includes('null')) {
+    return keyStr;
+  }
+  if (keyStr.startsWith('http')) {
     try {
-      const url = new URL(keyOrUrl);
+      const url = new URL(keyStr);
       return url.pathname.substring(1); // removes leading slash, e.g., 'container/blob'
     } catch {
-      return keyOrUrl;
+      return keyStr;
     }
   }
-  return keyOrUrl;
+  return keyStr;
 }
 
 export class AzureStorageProvider implements IStorageProvider {
@@ -72,33 +76,53 @@ export class AzureStorageProvider implements IStorageProvider {
     await blockBlobClient.deleteIfExists();
   }
 
-  async getSignedUrl(rawKey: string, expiresInSeconds: number): Promise<string> {
-    const storageKey = extractStorageKey(rawKey);
-    const [containerName, ...blobParts] = storageKey.split('/');
-    if (!containerName || blobParts.length === 0) {
-      throw new Error(`Invalid storageKey format: ${storageKey}`);
+  async getSignedUrl(rawKey: string | null | undefined, expiresInSeconds: number): Promise<string> {
+    if (!rawKey) return '';
+    const keyStr = String(rawKey);
+
+    // If it contains legacy uploads path, undefined or null, return it as-is without signing
+    if (keyStr.includes('uploads/') || keyStr.includes('undefined') || keyStr.includes('null')) {
+      return keyStr;
     }
-    const blobName = blobParts.join('/');
 
-    const containerClient = this.blobServiceClient.getContainerClient(containerName);
-    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    const storageKey = extractStorageKey(rawKey);
+    const parts = storageKey.split('/');
+    if (parts.length < 2) {
+      // Not a valid Azure key format (container/blob), return as-is
+      return storageKey;
+    }
 
-    const startsOn = new Date();
-    const expiresOn = new Date(startsOn.valueOf() + expiresInSeconds * 1000);
+    const containerName = parts[0];
+    const blobName = parts.slice(1).join('/');
 
-    const sasOptions = {
-      containerName,
-      blobName,
-      permissions: { read: true, add: false, create: false, write: false, delete: false, deleteVersion: false, tag: false, filterByTags: false, execute: false, createSnapshot: false, version: '', list: false, setImmutabilityPolicy: false, move: false },
-      startsOn,
-      expiresOn,
-    };
+    if (!containerName || !blobName) {
+      return storageKey;
+    }
 
-    const sasToken = generateBlobSASQueryParameters(
-      sasOptions as any,
-      this.blobServiceClient.credential as any
-    ).toString();
+    try {
+      const containerClient = this.blobServiceClient.getContainerClient(containerName);
+      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
-    return `${blockBlobClient.url}?${sasToken}`;
+      const startsOn = new Date();
+      const expiresOn = new Date(startsOn.valueOf() + expiresInSeconds * 1000);
+
+      const sasOptions = {
+        containerName,
+        blobName,
+        permissions: BlobSASPermissions.from({ read: true }),
+        startsOn,
+        expiresOn,
+      };
+
+      const sasToken = generateBlobSASQueryParameters(
+        sasOptions,
+        this.blobServiceClient.credential as any
+      ).toString();
+
+      return `${blockBlobClient.url}?${sasToken}`;
+    } catch (error) {
+      console.error(`Error signing URL for key ${rawKey}:`, error);
+      return keyStr;
+    }
   }
 }

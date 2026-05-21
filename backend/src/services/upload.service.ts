@@ -14,15 +14,19 @@ export async function getSecureDownloadUrl(storageKey: string): Promise<string> 
   return storageProvider.getSignedUrl(storageKey, 3600);
 }
 
-export function extractStorageKey(keyOrUrl: string): string {
-  if (!keyOrUrl) return keyOrUrl;
-  if (keyOrUrl.startsWith('http')) {
+export function extractStorageKey(keyOrUrl: string | null | undefined): string {
+  if (!keyOrUrl) return '';
+  const keyStr = String(keyOrUrl);
+  if (keyStr.includes('uploads/') || keyStr.includes('undefined') || keyStr.includes('null')) {
+    return keyStr;
+  }
+  if (keyStr.startsWith('http')) {
     try {
-      const url = new URL(keyOrUrl);
+      const url = new URL(keyStr);
       return url.pathname.substring(1); // removes leading slash
     } catch {
-      return keyOrUrl;
+      return keyStr;
     }
   }
-  return keyOrUrl;
+  return keyStr;
 }

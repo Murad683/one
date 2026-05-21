@@ -4,17 +4,21 @@ import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { processAndStoreFile, getSecureDownloadUrl } from '../services/upload.service';
 
-function extractStorageKey(keyOrUrl: string): string {
-  if (!keyOrUrl) return keyOrUrl;
-  if (keyOrUrl.startsWith('http')) {
+function extractStorageKey(keyOrUrl: string | null | undefined): string {
+  if (!keyOrUrl) return '';
+  const keyStr = String(keyOrUrl);
+  if (keyStr.includes('uploads/') || keyStr.includes('undefined') || keyStr.includes('null')) {
+    return keyStr;
+  }
+  if (keyStr.startsWith('http')) {
     try {
-      const url = new URL(keyOrUrl);
+      const url = new URL(keyStr);
       return url.pathname.substring(1);
     } catch {
-      return keyOrUrl;
+      return keyStr;
     }
   }
-  return keyOrUrl;
+  return keyStr;
 }
 
 const normalizeProjectData = (body: Record<string, unknown>): Record<string, unknown> => {
