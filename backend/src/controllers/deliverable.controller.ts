@@ -5,14 +5,7 @@ import { sendSuccess, sendError } from '../utils/response.util';
 import { processAndStoreFile, deleteFile, getSecureDownloadUrl } from '../services/upload.service';
 import { uploadSiteMedia } from '../middleware/upload.middleware';
 
-// Convert a relative /uploads/... URL to an absolute disk path for file deletion
-const resolveStoragePath = (fileUrl: string): string => {
-  // If already an absolute path (legacy data), return as-is
-  if (path.isAbsolute(fileUrl)) return fileUrl;
-  // Strip leading /uploads/ and join with cwd/uploads
-  const relative = fileUrl.replace(/^\/uploads\//, '');
-  return path.join(process.cwd(), 'uploads', relative);
-};
+// No longer needed: resolveStoragePath
 
 // ─── Dynamic Multer Selector ──────────────────
 // Accepts all common media types for deliverables (video + images + docs)
@@ -254,7 +247,7 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
     // Delete old file if one exists
     if (deliverable.fileUrl) {
       try {
-        await deleteFile(resolveStoragePath(deliverable.fileUrl));
+        await deleteFile(deliverable.fileUrl);
       } catch (err) {
         console.warn('Failed to delete old file:', err);
       }
@@ -323,7 +316,7 @@ export const deleteDeliverable = async (req: Request, res: Response): Promise<vo
     // Delete file from storage if exists
     if (existing.fileUrl) {
       try {
-        await deleteFile(resolveStoragePath(existing.fileUrl));
+        await deleteFile(existing.fileUrl);
       } catch (err) {
         console.warn('Failed to delete file during deliverable deletion:', err);
       }

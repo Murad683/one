@@ -1,8 +1,5 @@
 import multer, { FileFilterCallback } from 'multer';
 import { Request, Response, NextFunction } from 'express';
-import path from 'path';
-import fs from 'fs';
-import { v4 as uuidv4 } from 'uuid';
 import { sendError } from '../utils/response.util';
 
 // Determine the max file size from env or default to 500MB
@@ -19,23 +16,7 @@ declare global {
   }
 }
 
-const storage = multer.diskStorage({
-  destination: (req, _file, cb) => {
-    const subfolder = req.uploadSubfolder || 'temp';
-    const uploadPath = path.join(process.cwd(), 'uploads', subfolder);
-    
-    // Ensure the specific destination directory exists
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    
-    cb(null, uploadPath);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueName = `${uuidv4()}-${Date.now()}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  },
-});
+const storage = multer.memoryStorage();
 
 const videoFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
   const allowedTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo'];

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { hashPassword } from '../utils/password.util';
+import { processAndStoreFile } from '../services/upload.service';
 
 // ─── GET /api/v1/admin/stats ───────────────────
 export const getDashboardStats = async (_req: Request, res: Response): Promise<void> => {
@@ -150,8 +151,8 @@ export const uploadInvoice = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const url = `/uploads/invoices/${req.file.filename}`;
-    sendSuccess(res, { url }, 201);
+    const result = await processAndStoreFile(req.file, 'invoices');
+    sendSuccess(res, { url: result.fileUrl }, 201);
   } catch (err) {
     console.error('uploadInvoice error:', err);
     sendError(res, 'Fakturanı yükləmək mümkün olmadı', 500);
