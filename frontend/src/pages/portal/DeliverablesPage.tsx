@@ -168,22 +168,7 @@ const PreviewModal = ({
     }
   };
 
-  const handleDownload = async () => {
-    if (!activeFile) return;
-    try {
-      const res = await fetch(activeFile.downloadUrl || url);
-      const blob = await res.blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = activeFile.name || 'file';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-    } catch {
-      window.open(activeFile.downloadUrl || url, '_blank');
-    }
-  };
+
 
   return (
     <div
@@ -215,14 +200,15 @@ const PreviewModal = ({
           </div>
           <div className="flex items-center gap-2">
             {url && (
-              <button
-                onClick={handleDownload}
+              <a
+                href={activeFile.downloadUrl || url}
+                download={activeFile.name || 'file'}
                 className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
                 style={{ color: 'var(--accent-text)', backgroundColor: 'var(--glow-accent-subtle)' }}
               >
                 <Download size={12} />
                 Yüklə
-              </button>
+              </a>
             )}
             <button
               onClick={onClose}
@@ -355,27 +341,7 @@ const DeliverablesPage = () => {
     );
   };
 
-  const handleDownload = async (d: Deliverable, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!d.files || d.files.length === 0) return;
-    
-    // Default to downloading the first file if clicked from the table
-    const f = d.files[0];
-    const url = getFileUrl(f);
-    try {
-      const res = await fetch(f.downloadUrl || url);
-      const blob = await res.blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = f.name || 'file';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-    } catch {
-      window.open(f.downloadUrl || url, '_blank');
-    }
-  };
+
 
   const monthNames = [
     'Yan', 'Fev', 'Mar', 'Apr', 'May', 'İyn',
@@ -493,8 +459,10 @@ const DeliverablesPage = () => {
                     </div>
                     <div className="col-span-2 text-right">
                       {hasFile ? (
-                        <button
-                          onClick={(e) => handleDownload(d, e)}
+                        <a
+                          href={d.files[0].downloadUrl || getFileUrl(d.files[0])}
+                          download={d.files[0].name || 'file'}
+                          onClick={(e) => e.stopPropagation()}
                           className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
                           style={{
                             color: 'var(--accent-text)',
@@ -503,7 +471,7 @@ const DeliverablesPage = () => {
                         >
                           <Download size={12} />
                           Yüklə
-                        </button>
+                        </a>
                       ) : (
                         <span className="text-xs" style={{ color: 'var(--text-ghost)' }}>
                           —
@@ -556,8 +524,10 @@ const DeliverablesPage = () => {
                         </span>
                       </div>
                       {hasFile && (
-                        <button
-                          onClick={(e) => handleDownload(d, e)}
+                        <a
+                          href={d.files[0].downloadUrl || getFileUrl(d.files[0])}
+                          download={d.files[0].name || 'file'}
+                          onClick={(e) => e.stopPropagation()}
                           className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80 shrink-0 ml-2"
                           style={{
                             color: 'var(--accent-text)',
@@ -566,7 +536,7 @@ const DeliverablesPage = () => {
                         >
                           <Download size={12} />
                           Yüklə
-                        </button>
+                        </a>
                       )}
                     </div>
                   </div>
