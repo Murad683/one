@@ -8,7 +8,7 @@ import { RegisterBody, LoginBody } from '../types/auth.types';
 // ─── Register ──────────────────────────────────
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password, role, packageId } = req.body as RegisterBody;
+    const { name, email, password, packageId } = req.body as RegisterBody;
 
     // Check for existing user
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -24,7 +24,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         name,
         email,
         password: hashedPassword,
-        ...(role && { role }),
+        role: 'CLIENT', // HARDCODE to prevent privilege escalation
         ...(packageId && { packageId }),
       },
     });

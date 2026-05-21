@@ -50,7 +50,7 @@ app.use('/uploads', (req, res, next) => {
   res.set('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 });
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// SECURITY FIX: Removed public static serving of /uploads directory to prevent unauthorized access.
 
 // â”€â”€â”€ Health Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.get('/health', (_req: Request, res: Response) => {
