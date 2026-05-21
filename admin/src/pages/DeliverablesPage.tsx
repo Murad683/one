@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Download, Edit2, FileX, Loader2, MessageCircle, Play, Plus, Search, Trash2, X } from 'lucide-react';
+import { Download, Edit2, FileX, MessageCircle, Play, Plus, Search, Trash2, X } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -13,7 +13,6 @@ import type { TableColumn } from '../components/ui/Table';
 import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
-import { downloadFile } from '../utils/fileUtils';
 
 type DeliverableStatus = 'PENDING' | 'PROCESSING' | 'READY' | 'ARCHIVED';
 
@@ -117,7 +116,6 @@ const PreviewOverlay = ({
   onClose: () => void;
 }) => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const activeFile = item.files?.[activeIndex];
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -135,17 +133,7 @@ const PreviewOverlay = ({
   const url = activeFile?.downloadUrl || resolveFileUrl(activeFile?.url);
   if (!url || !activeFile) return null;
 
-  const handleDownload = async () => {
-    const downloadLink = activeFile.downloadUrl || url;
-    if (!downloadLink || downloadingId) return;
 
-    setDownloadingId(activeFile.url);
-    try {
-      await downloadFile(downloadLink, activeFile.name || 'file');
-    } finally {
-      setDownloadingId(null);
-    }
-  };
 
   const renderMedia = () => {
     if (isVideoFile(activeFile.type, activeFile.name)) {
@@ -193,14 +181,14 @@ const PreviewOverlay = ({
         </div>
         <div className="flex items-center gap-3">
           {url && (
-            <button
-              onClick={handleDownload}
-              disabled={!!downloadingId}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-surface/10 hover:bg-surface/20 rounded-lg transition-colors backdrop-blur-md disabled:opacity-50 disabled:cursor-not-allowed"
+            <a
+              href={activeFile?.downloadUrl || url}
+              download={activeFile?.name || 'file'}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-surface/10 hover:bg-surface/20 rounded-lg transition-colors backdrop-blur-md"
             >
-              {downloadingId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-              {downloadingId ? 'Yüklənir...' : 'Yüklə'}
-            </button>
+              <Download className="h-4 w-4" />
+              Yüklə
+            </a>
           )}
           <button
             onClick={onClose}
