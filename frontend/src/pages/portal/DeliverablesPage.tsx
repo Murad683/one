@@ -395,8 +395,17 @@ const DeliverablesPage = () => {
               // 3. Otherwise render a placeholder
               const firstFileUrl = getFileUrl(firstFile);
               const isFirstFileImage = firstFile ? isImageFile(firstFile.type, firstFile.name) : false;
+              const AZURE_BLOB_URL = import.meta.env.VITE_AZURE_BLOB_URL;
+              const BASE_URL = AZURE_BLOB_URL || BACKEND;
+              
+              const resolvedThumb = d.thumbnailUrl
+                ? (d.thumbnailUrl.startsWith('http')
+                    ? d.thumbnailUrl
+                    : `${BASE_URL}/${d.thumbnailUrl}`)
+                : null;
+
               const thumbnailSrc: string | null =
-                d.thumbnailUrl ??
+                resolvedThumb ??
                 (isFirstFileImage && firstFileUrl ? firstFileUrl : null);
 
               return (

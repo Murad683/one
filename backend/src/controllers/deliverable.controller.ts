@@ -290,7 +290,7 @@ const generateVideoThumbnail = async (videoFilePath: string): Promise<string | n
         resolve(exists ? thumbnailPath : null);
       })
       .screenshots({
-        timestamps: ['00:00:01.000'],
+        timestamps: ['20%'],
         filename: thumbnailFileName,
         folder: outputDir,
         size: '640x?', // Preserve aspect ratio, cap width at 640px
