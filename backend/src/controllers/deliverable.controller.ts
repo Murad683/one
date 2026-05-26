@@ -8,6 +8,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import * as fs from 'fs';
 import * as os from 'os';
+import * as crypto from 'crypto';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
@@ -342,7 +343,7 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
       // Trigger if DB says it's a video OR if the actual uploaded file is a video mimetype
       const isVideoByDb = deliverable.category?.isVideo === true || deliverable.type === 'VIDEO';
       const isVideoByMime = file.mimetype?.startsWith('video/') === true;
-      const shouldGenerateThumb = (isVideoByDb || isVideoByMime) && !newThumbnailUrl && !!file.path;
+      const shouldGenerateThumb = (isVideoByDb || isVideoByMime) && !newThumbnailUrl && (!!file.path || !!file.buffer);
 
       console.log('[Thumb Debug] Thumbnail condition check:', {
         isVideoByDb,
@@ -351,48 +352,71 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
         deliverableType: deliverable.type,
         fileMimetype: file.mimetype,
         filePath: file.path,
+        hasBuffer: !!file.buffer,
+        bufferLength: file.buffer?.length,
         alreadyHasThumb: !!newThumbnailUrl,
         shouldGenerateThumb,
       });
 
       if (shouldGenerateThumb) {
-        console.log('--- STARTING THUMBNAIL GEN ---', { isVideoByDb, isVideoByMime, fileMimeType: file.mimetype, filePath: file.path });
-        // file.path is the temp disk path written by Multer (disk storage)
-        const localThumbPath = await generateVideoThumbnail(file.path);
-        console.log('[Thumb Debug] generateVideoThumbnail returned:', localThumbPath);
+        // Temp file paths — declared here so `finally` can always clean them up
+        let tempVideoPath: string | undefined;
+        let tempThumbPath: string | undefined;
 
-        if (localThumbPath) {
-          try {
+        try {
+          // Resolve the video source path on disk.
+          // If Multer used disk storage, file.path exists. Otherwise, write the buffer.
+          let videoInputPath = file.path;
+
+          if (!videoInputPath && file.buffer) {
+            const ext = path.extname(file.originalname) || '.mp4';
+            tempVideoPath = path.join(os.tmpdir(), `${crypto.randomUUID()}${ext}`);
+            console.log('[Thumb Debug] file.path is undefined — writing buffer to temp file:', tempVideoPath, '| buffer size:', file.buffer.length);
+            await fs.promises.writeFile(tempVideoPath, file.buffer);
+            videoInputPath = tempVideoPath;
+          }
+
+          console.log('--- STARTING THUMBNAIL GEN ---', { isVideoByDb, isVideoByMime, fileMimeType: file.mimetype, videoInputPath });
+
+          // Generate the thumbnail frame
+          tempThumbPath = await generateVideoThumbnail(videoInputPath!) ?? undefined;
+          console.log('[Thumb Debug] generateVideoThumbnail returned:', tempThumbPath);
+
+          if (tempThumbPath) {
             console.log('[Thumb Debug] Attempting to upload thumbnail to Azure...');
-            // Re-use the same Azure upload utility already used in this codebase.
-            // We construct a minimal Multer-like file object from the saved thumbnail.
-            const thumbFileBuffer = fs.readFileSync(localThumbPath);
+            const thumbFileBuffer = await fs.promises.readFile(tempThumbPath);
             console.log('[Thumb Debug] Thumbnail file buffer size:', thumbFileBuffer.length);
+
             const thumbMulterFile: Express.Multer.File = {
               fieldname: 'thumbnail',
-              originalname: path.basename(localThumbPath),
+              originalname: path.basename(tempThumbPath),
               encoding: '7bit',
               mimetype: 'image/jpeg',
               buffer: thumbFileBuffer,
               size: thumbFileBuffer.length,
               stream: null as any,
               destination: os.tmpdir(),
-              filename: path.basename(localThumbPath),
-              path: localThumbPath,
+              filename: path.basename(tempThumbPath),
+              path: tempThumbPath,
             };
 
             const thumbResult = await processAndStoreFile(thumbMulterFile, 'thumbnails');
             newThumbnailUrl = thumbResult.url;
             console.log('[Thumb Debug] Azure upload SUCCESS. thumbnailUrl:', newThumbnailUrl);
-          } catch (thumbUploadError) {
-            console.error('Azure Thumbnail Upload Error:', thumbUploadError);
-            newThumbnailUrl = null; // Graceful degradation
-          } finally {
-            // Always clean up the local temp file
-            try { fs.unlinkSync(localThumbPath); } catch (_) {}
+          } else {
+            console.log('[Thumb Debug] generateVideoThumbnail returned null — no thumbnail generated.');
           }
-        } else {
-          console.log('[Thumb Debug] generateVideoThumbnail returned null — no thumbnail generated.');
+        } catch (thumbError) {
+          console.error('Azure Thumbnail Upload Error:', thumbError);
+          newThumbnailUrl = null; // Graceful degradation
+        } finally {
+          // Aggressive async cleanup — never block, never throw
+          if (tempVideoPath) {
+            await fs.promises.unlink(tempVideoPath).catch((err) => console.error('Video Cleanup Error:', err));
+          }
+          if (tempThumbPath) {
+            await fs.promises.unlink(tempThumbPath).catch((err) => console.error('Thumb Cleanup Error:', err));
+          }
         }
       }
       // --- END THUMBNAIL GENERATION ---
