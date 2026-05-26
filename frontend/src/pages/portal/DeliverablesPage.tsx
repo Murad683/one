@@ -359,17 +359,21 @@ const DeliverablesPage = () => {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="rounded-xl overflow-hidden bg-slate-900 border border-white/[0.06] animate-pulse">
-                <div className="w-full aspect-video bg-slate-800" />
+              <div 
+                key={i} 
+                className="rounded-xl overflow-hidden animate-pulse border"
+                style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--card-border)' }}
+              >
+                <div className="w-full aspect-video" style={{ backgroundColor: 'var(--bg-elevated)' }} />
                 <div className="px-3 py-2.5 flex flex-col gap-2">
-                  <div className="h-4 w-3/4 rounded bg-slate-800" />
-                  <div className="h-3 w-1/2 rounded bg-slate-800" />
+                  <div className="h-4 w-3/4 rounded" style={{ backgroundColor: 'var(--bg-elevated)' }} />
+                  <div className="h-3 w-1/2 rounded" style={{ backgroundColor: 'var(--bg-elevated)' }} />
                 </div>
               </div>
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-white/20 gap-3">
+          <div className="flex flex-col items-center justify-center py-24 gap-3" style={{ color: 'var(--text-faint)' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
               <polyline points="14 2 14 8 20 8"/>
@@ -413,14 +417,20 @@ const DeliverablesPage = () => {
                   key={d.id}
                   onClick={() => hasFile && setSelectedItem(d)}
                   className={[
-                    'relative group rounded-xl overflow-hidden bg-slate-900',
-                    'border border-white/[0.06]',
+                    'relative group rounded-xl overflow-hidden border',
                     'transition-transform duration-200 ease-out',
-                    hasFile ? 'cursor-pointer hover:scale-[1.02] hover:shadow-2xl hover:shadow-black/40' : 'cursor-default opacity-60',
+                    hasFile ? 'cursor-pointer hover:scale-[1.02] hover:shadow-xl hover:shadow-[var(--shadow-color,rgba(0,0,0,0.1))]' : 'cursor-default opacity-60',
                   ].join(' ')}
+                  style={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderColor: 'var(--card-border)',
+                  }}
                 >
                   {/* ── THUMBNAIL AREA ── */}
-                  <div className="relative w-full aspect-video bg-slate-800 flex items-center justify-center overflow-hidden">
+                  <div 
+                    className="relative w-full aspect-video flex items-center justify-center overflow-hidden"
+                    style={{ backgroundColor: 'var(--bg-elevated)' }}
+                  >
 
                     {thumbnailSrc ? (
                       /* Render ONLY an <img> tag — NEVER a <video> tag here */
@@ -432,7 +442,7 @@ const DeliverablesPage = () => {
                       />
                     ) : (
                       /* Fallback placeholder when no thumbnail is available */
-                      <div className="flex flex-col items-center justify-center gap-2 text-white/20">
+                      <div className="flex flex-col items-center justify-center gap-2" style={{ color: 'var(--text-faint)' }}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="2" y="3" width="20" height="14" rx="2" />
                           <path d="M8 21h8M12 17v4" />
@@ -469,14 +479,14 @@ const DeliverablesPage = () => {
 
                   {/* ── CARD FOOTER ── */}
                   <div className="px-3 py-2.5 flex flex-col gap-0.5">
-                    <p className="text-sm font-medium text-white truncate leading-snug">
+                    <p className="text-sm font-medium truncate leading-snug" style={{ color: 'var(--text-primary)' }}>
                       {d.title ?? 'Başlıksız'}
                     </p>
                     <div className="flex items-center justify-between mt-0.5">
-                      <span className="text-[11px] text-white/40">
+                      <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
                         {d.category?.name ?? d.type ?? '—'}
                       </span>
-                      <span className="text-[11px] text-white/30">
+                      <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
                         {d.month}/{d.year}
                       </span>
                     </div>
