@@ -5,8 +5,11 @@ import { sendSuccess, sendError } from '../utils/response.util';
 import { processAndStoreFile, deleteFile, getSecureDownloadUrl, cleanupOrphanFiles } from '../services/upload.service';
 import { uploadSiteMediaArray } from '../middleware/upload.middleware';
 import ffmpeg from 'fluent-ffmpeg';
+import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import * as fs from 'fs';
 import * as os from 'os';
+
+ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 // No longer needed: resolveStoragePath
 
@@ -270,7 +273,7 @@ const generateVideoThumbnail = async (videoFilePath: string): Promise<string | n
 
     ffmpeg(videoFilePath)
       .on('error', (err) => {
-        console.error('[Thumbnail] FFmpeg error — skipping thumbnail generation:', err.message);
+        console.error('Thumbnail Gen Error:', err);
         resolve(null); // Graceful degradation: return null, do NOT throw
       })
       .on('end', () => {

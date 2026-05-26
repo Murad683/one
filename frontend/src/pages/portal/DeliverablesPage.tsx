@@ -390,11 +390,14 @@ const DeliverablesPage = () => {
 
               // Resolve the thumbnail source with strict priority:
               // 1. Use server-generated thumbnailUrl (for videos with a processed thumb)
-              // 2. Fall back to the first file's URL only if it is NOT a video (i.e., it is an image)
+              // 2. Fall back to the first file's signed URL only if it is an image
+              //    (uses getFileUrl which resolves downloadUrl/SAS — same as PreviewModal)
               // 3. Otherwise render a placeholder
+              const firstFileUrl = getFileUrl(firstFile);
+              const isFirstFileImage = firstFile ? isImageFile(firstFile.type, firstFile.name) : false;
               const thumbnailSrc: string | null =
                 d.thumbnailUrl ??
-                (!isVideoType && firstFile?.url ? firstFile.url : null);
+                (isFirstFileImage && firstFileUrl ? firstFileUrl : null);
 
               return (
                 <div
