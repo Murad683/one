@@ -69,16 +69,7 @@ const getFileUrl = (f: { url: string; downloadUrl?: string | null } | null | und
   return f.url;
 };
 
-/* ─── Skeleton Row ───────────────────────────── */
-const SkeletonRow = () => (
-  <div className="flex items-center justify-between py-5 animate-pulse">
-    <div className="flex flex-col gap-2">
-      <div className="h-4 w-28 rounded" style={{ backgroundColor: 'var(--bg-elevated)' }} />
-      <div className="h-3 w-40 rounded" style={{ backgroundColor: 'var(--bg-elevated)' }} />
-    </div>
-    <div className="h-5 w-16 rounded-full" style={{ backgroundColor: 'var(--bg-elevated)' }} />
-  </div>
-);
+
 
 /* ─── Dynamic Media Preview ──────────────────── */
 const MediaPreview = ({
@@ -342,12 +333,6 @@ const DeliverablesPage = () => {
     );
   };
 
-
-
-  const monthNames = [
-    'Yan', 'Fev', 'Mar', 'Apr', 'May', 'İyn',
-    'İyl', 'Avq', 'Sen', 'Okt', 'Noy', 'Dek',
-  ];
 
   return (
     <div className="pb-28 lg:pb-12">
