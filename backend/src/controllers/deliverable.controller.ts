@@ -338,9 +338,25 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
         type: result.mimeType,
       });
 
-      // --- THUMBNAIL GENERATION (videos only, runs once for the first video found) ---
-      if (isVideo && !newThumbnailUrl && file.path) {
-        console.log('--- STARTING THUMBNAIL GEN ---', { isVideo, fileMimeType: file.mimetype, filePath: file.path });
+      // --- THUMBNAIL GENERATION ---
+      // Trigger if DB says it's a video OR if the actual uploaded file is a video mimetype
+      const isVideoByDb = deliverable.category?.isVideo === true || deliverable.type === 'VIDEO';
+      const isVideoByMime = file.mimetype?.startsWith('video/') === true;
+      const shouldGenerateThumb = (isVideoByDb || isVideoByMime) && !newThumbnailUrl && !!file.path;
+
+      console.log('[Thumb Debug] Thumbnail condition check:', {
+        isVideoByDb,
+        isVideoByMime,
+        categoryIsVideo: deliverable.category?.isVideo,
+        deliverableType: deliverable.type,
+        fileMimetype: file.mimetype,
+        filePath: file.path,
+        alreadyHasThumb: !!newThumbnailUrl,
+        shouldGenerateThumb,
+      });
+
+      if (shouldGenerateThumb) {
+        console.log('--- STARTING THUMBNAIL GEN ---', { isVideoByDb, isVideoByMime, fileMimeType: file.mimetype, filePath: file.path });
         // file.path is the temp disk path written by Multer (disk storage)
         const localThumbPath = await generateVideoThumbnail(file.path);
         console.log('[Thumb Debug] generateVideoThumbnail returned:', localThumbPath);
@@ -378,8 +394,6 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
         } else {
           console.log('[Thumb Debug] generateVideoThumbnail returned null — no thumbnail generated.');
         }
-      } else if (isVideo && !newThumbnailUrl) {
-        console.log('[Thumb Debug] Skipped thumbnail gen — file.path is falsy:', file.path);
       }
       // --- END THUMBNAIL GENERATION ---
     }
