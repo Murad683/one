@@ -76,9 +76,20 @@ export const getDeliverables = async (req: Request, res: Response): Promise<void
             }
           })
         );
+
+        let signedThumbnailUrl = d.thumbnailUrl;
+        if (signedThumbnailUrl && typeof signedThumbnailUrl === 'string') {
+          try {
+            signedThumbnailUrl = await getSecureDownloadUrl(signedThumbnailUrl);
+          } catch (e) {
+            console.warn('Failed to sign thumbnailUrl', e);
+          }
+        }
+
         return {
           ...d,
           files: filesWithSignedUrls,
+          thumbnailUrl: signedThumbnailUrl,
         };
       })
     );
