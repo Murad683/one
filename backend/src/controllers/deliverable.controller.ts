@@ -76,7 +76,17 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
             }
           })
         );
-        return { ...d, files: filesWithSignedUrls };
+
+        let signedThumbnailUrl = d.thumbnailUrl;
+        if (signedThumbnailUrl && typeof signedThumbnailUrl === 'string') {
+          try {
+            signedThumbnailUrl = await getSecureDownloadUrl(signedThumbnailUrl);
+          } catch (e) {
+            console.warn('Failed to sign thumbnailUrl', e);
+          }
+        }
+
+        return { ...d, files: filesWithSignedUrls, thumbnailUrl: signedThumbnailUrl };
       })
     );
 
@@ -151,9 +161,20 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
             }
           })
         );
+
+        let signedThumbnailUrl = d.thumbnailUrl;
+        if (signedThumbnailUrl && typeof signedThumbnailUrl === 'string') {
+          try {
+            signedThumbnailUrl = await getSecureDownloadUrl(signedThumbnailUrl);
+          } catch (e) {
+            console.warn('Failed to sign thumbnailUrl', e);
+          }
+        }
+
         return {
           ...d,
           files: filesWithSignedUrls,
+          thumbnailUrl: signedThumbnailUrl,
         };
       })
     );
