@@ -444,16 +444,11 @@ const DeliverablesPage = () => {
                     {/* ── PLAY ICON OVERLAY (only for video types that have a thumbnail) ── */}
                     {isVideoType && thumbnailSrc && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
-                          {/* Play triangle SVG — do not use an external icon library here */}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="white"
-                            className="w-5 h-5 translate-x-0.5"
-                          >
-                            <path d="M8 5.14v14l11-7-11-7z" />
-                          </svg>
+                        <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center transition-all duration-300 group-hover:bg-black/50 group-hover:scale-110 border border-white/10 shadow-xl">
+                          <Play 
+                            className="w-5 h-5 text-white fill-white translate-x-[2px]" 
+                            strokeWidth={1.5}
+                          />
                         </div>
                       </div>
                     )}
