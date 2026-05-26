@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '../../api/client';
-import { FolderOpen, Download, Play, X, Send, FileX } from 'lucide-react';
+import { Download, Play, X, Send, FileX } from 'lucide-react';
 
 interface Deliverable {
   id: string;
@@ -14,6 +14,7 @@ interface Deliverable {
   files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null }[];
   notes: string | null;
   clientFeedback: string | null;
+  thumbnailUrl?: string | null;
   createdAt: string;
 }
 
@@ -371,178 +372,126 @@ const DeliverablesPage = () => {
 
       <div className="px-4 sm:px-6 md:px-10">
         {loading ? (
-          <div
-            className="rounded-2xl border divide-y"
-            style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-          >
-            <div className="px-6">
-              <SkeletonRow />
-            </div>
-            <div className="px-6">
-              <SkeletonRow />
-            </div>
-            <div className="px-6">
-              <SkeletonRow />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-xl overflow-hidden bg-slate-900 border border-white/[0.06] animate-pulse">
+                <div className="w-full aspect-video bg-slate-800" />
+                <div className="px-3 py-2.5 flex flex-col gap-2">
+                  <div className="h-4 w-3/4 rounded bg-slate-800" />
+                  <div className="h-3 w-1/2 rounded bg-slate-800" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24">
-            <FolderOpen size={40} style={{ color: 'var(--text-ghost)' }} className="mb-4" />
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              Hələ ki heç bir material yüklənməyib.
-            </p>
+          <div className="flex flex-col items-center justify-center py-24 text-white/20 gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <p className="text-sm tracking-wide">Hələ heç bir material yoxdur</p>
           </div>
         ) : (
-          <div>
-            {/* ── Desktop Table (hidden on mobile) ── */}
-            <div
-              className="hidden sm:block rounded-2xl border"
-              style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
-            >
-              {/* Table Header */}
-              <div
-                className="grid grid-cols-12 gap-4 px-6 py-3 text-[10px] uppercase tracking-widest font-medium border-b"
-                style={{ color: 'var(--text-ghost)', borderColor: 'var(--border-subtle)' }}
-              >
-                <span className="col-span-3">Növ</span>
-                <span className="col-span-2">Dövr</span>
-                <span className="col-span-3">Fayl</span>
-                <span className="col-span-2">Status</span>
-                <span className="col-span-2 text-right">Əməliyyat</span>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+            {items.map((d) => {
+              const hasFile = d.files && d.files.length > 0;
+              const firstFile = hasFile ? d.files[0] : null;
 
-              {/* Rows */}
-              {items.map((d, i) => {
-                const status = statusConfig[d.status] ?? statusConfig.PENDING;
-                const hasFile = d.files && d.files.length > 0;
-                const primaryFile = hasFile ? d.files[0] : null;
-                const isMedia =
-                  hasFile && primaryFile &&
-                  (isVideoFile(primaryFile.type, primaryFile.name) || isImageFile(primaryFile.type, primaryFile.name));
+              // Determine if this deliverable is a video type
+              const isVideoType =
+                d.category?.isVideo === true ||
+                d.type === 'VIDEO' ||
+                (firstFile?.type && firstFile.type.startsWith('video/'));
 
-                return (
-                  <div
-                    key={d.id}
-                    className="grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors hover:bg-white/[0.02]"
-                    style={{
-                      borderBottom:
-                        i < items.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                      cursor: hasFile ? 'pointer' : 'default',
-                    }}
-                    onClick={() => hasFile && setSelectedItem(d)}
-                  >
-                    <span
-                      className="col-span-3 text-sm font-medium"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
-                      {d.category?.name || typeLabels[d.type || ''] || d.type || 'Növ yoxdur'}
-                    </span>
-                    <span className="col-span-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {monthNames[d.month - 1]} {d.year}
-                    </span>
-                    <div className="col-span-3 flex items-center gap-1.5">
-                      {isMedia && <Play size={11} style={{ color: 'var(--accent-text)' }} />}
-                      <span
-                        className="text-xs truncate font-medium"
-                        style={{ color: hasFile ? 'var(--text-secondary)' : 'var(--text-faint)' }}
-                      >
-                        {d.title ?? 'Başlıksız'} {hasFile && d.files.length > 1 && <span className="text-xs font-normal opacity-70">({d.files.length})</span>}
+              // Resolve the thumbnail source with strict priority:
+              // 1. Use server-generated thumbnailUrl (for videos with a processed thumb)
+              // 2. Fall back to the first file's URL only if it is NOT a video (i.e., it is an image)
+              // 3. Otherwise render a placeholder
+              const thumbnailSrc: string | null =
+                d.thumbnailUrl ??
+                (!isVideoType && firstFile?.url ? firstFile.url : null);
+
+              return (
+                <div
+                  key={d.id}
+                  onClick={() => hasFile && setSelectedItem(d)}
+                  className={[
+                    'relative group rounded-xl overflow-hidden bg-slate-900',
+                    'border border-white/[0.06]',
+                    'transition-transform duration-200 ease-out',
+                    hasFile ? 'cursor-pointer hover:scale-[1.02] hover:shadow-2xl hover:shadow-black/40' : 'cursor-default opacity-60',
+                  ].join(' ')}
+                >
+                  {/* ── THUMBNAIL AREA ── */}
+                  <div className="relative w-full aspect-video bg-slate-800 flex items-center justify-center overflow-hidden">
+
+                    {thumbnailSrc ? (
+                      /* Render ONLY an <img> tag — NEVER a <video> tag here */
+                      <img
+                        src={thumbnailSrc}
+                        alt={d.title}
+                        className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-80"
+                        loading="lazy"
+                      />
+                    ) : (
+                      /* Fallback placeholder when no thumbnail is available */
+                      <div className="flex flex-col items-center justify-center gap-2 text-white/20">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="3" width="20" height="14" rx="2" />
+                          <path d="M8 21h8M12 17v4" />
+                        </svg>
+                        <span className="text-[10px] tracking-widest uppercase">Önizləmə yoxdur</span>
+                      </div>
+                    )}
+
+                    {/* ── PLAY ICON OVERLAY (only for video types that have a thumbnail) ── */}
+                    {isVideoType && thumbnailSrc && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+                          {/* Play triangle SVG — do not use an external icon library here */}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="white"
+                            className="w-5 h-5 translate-x-0.5"
+                          >
+                            <path d="M8 5.14v14l11-7-11-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── STATUS BADGE (top-right corner) ── */}
+                    <div className="absolute top-2 right-2">
+                      <span className={[
+                        'text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full',
+                        d.status === 'READY'      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : '',
+                        d.status === 'PENDING'    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'    : '',
+                        d.status === 'PROCESSING' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'       : '',
+                        d.status === 'ARCHIVED'   ? 'bg-white/10 text-white/40 border border-white/10'             : '',
+                      ].join(' ')}>
+                        {d.status}
                       </span>
-                    </div>
-                    <div className="col-span-2">
-                      <span
-                        className="text-[10px] uppercase tracking-wider font-semibold px-2.5 py-1 rounded-full inline-block"
-                        style={{ color: status.color, backgroundColor: status.bg }}
-                      >
-                        {status.label}
-                      </span>
-                    </div>
-                    <div className="col-span-2 text-right">
-                      {hasFile ? (
-                        <a
-                          href={d.files[0].downloadUrl || getFileUrl(d.files[0])}
-                          download={d.files[0].name || 'file'}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-                          style={{
-                            color: 'var(--accent-text)',
-                            backgroundColor: 'var(--glow-accent-subtle)',
-                          }}
-                        >
-                          <Download size={12} />
-                          Yüklə
-                        </a>
-                      ) : (
-                        <span className="text-xs" style={{ color: 'var(--text-ghost)' }}>
-                          —
-                        </span>
-                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
 
-            {/* ── Mobile Card View (shown only on mobile) ── */}
-            <div className="sm:hidden flex flex-col gap-3">
-              {items.map((d) => {
-                const status = statusConfig[d.status] ?? statusConfig.PENDING;
-                const hasFile = d.files && d.files.length > 0;
-                const primaryFile = hasFile ? d.files[0] : null;
-                const isMedia =
-                  hasFile && primaryFile &&
-                  (isVideoFile(primaryFile.type, primaryFile.name) || isImageFile(primaryFile.type, primaryFile.name));
-
-                return (
-                  <div
-                    key={d.id}
-                    className="rounded-xl border p-4"
-                    style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', cursor: hasFile ? 'pointer' : 'default' }}
-                    onClick={() => hasFile && setSelectedItem(d)}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                          {d.category?.name || typeLabels[d.type || ''] || d.type || 'Növ yoxdur'}
-                        </p>
-                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                          {monthNames[d.month - 1]} {d.year}
-                        </p>
-                      </div>
-                      <span
-                        className="text-[10px] uppercase tracking-wider font-semibold px-2.5 py-1 rounded-full shrink-0"
-                        style={{ color: status.color, backgroundColor: status.bg }}
-                      >
-                        {status.label}
+                  {/* ── CARD FOOTER ── */}
+                  <div className="px-3 py-2.5 flex flex-col gap-0.5">
+                    <p className="text-sm font-medium text-white truncate leading-snug">
+                      {d.title ?? 'Başlıksız'}
+                    </p>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span className="text-[11px] text-white/40">
+                        {d.category?.name ?? d.type ?? '—'}
+                      </span>
+                      <span className="text-[11px] text-white/30">
+                        {d.month}/{d.year}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        {isMedia && <Play size={11} style={{ color: 'var(--accent-text)' }} />}
-                        <span className="text-xs truncate font-medium" style={{ color: hasFile ? 'var(--text-secondary)' : 'var(--text-faint)' }}>
-                          {d.title ?? 'Fayl yoxdur'} {hasFile && d.files.length > 1 && <span className="text-[10px] font-normal opacity-70">({d.files.length})</span>}
-                        </span>
-                      </div>
-                      {hasFile && (
-                        <a
-                          href={d.files[0].downloadUrl || getFileUrl(d.files[0])}
-                          download={d.files[0].name || 'file'}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80 shrink-0 ml-2"
-                          style={{
-                            color: 'var(--accent-text)',
-                            backgroundColor: 'var(--glow-accent-subtle)',
-                          }}
-                        >
-                          <Download size={12} />
-                          Yüklə
-                        </a>
-                      )}
-                    </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

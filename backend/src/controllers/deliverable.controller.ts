@@ -4,6 +4,9 @@ import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { processAndStoreFile, deleteFile, getSecureDownloadUrl, cleanupOrphanFiles } from '../services/upload.service';
 import { uploadSiteMediaArray } from '../middleware/upload.middleware';
+import ffmpeg from 'fluent-ffmpeg';
+import * as fs from 'fs';
+import * as os from 'os';
 
 // No longer needed: resolveStoragePath
 
@@ -253,6 +256,35 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
   }
 };
 
+/**
+ * Generates a JPG thumbnail from a video file using FFmpeg.
+ * Extracts the frame at the 1-second mark.
+ * Returns the local file path of the generated thumbnail, or null on failure.
+ * NEVER throws — all errors are caught and logged gracefully.
+ */
+const generateVideoThumbnail = async (videoFilePath: string): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const outputDir = os.tmpdir();
+    const thumbnailFileName = `thumb_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.jpg`;
+    const thumbnailPath = path.join(outputDir, thumbnailFileName);
+
+    ffmpeg(videoFilePath)
+      .on('error', (err) => {
+        console.error('[Thumbnail] FFmpeg error — skipping thumbnail generation:', err.message);
+        resolve(null); // Graceful degradation: return null, do NOT throw
+      })
+      .on('end', () => {
+        resolve(thumbnailPath);
+      })
+      .screenshots({
+        timestamps: ['00:00:01.000'],
+        filename: thumbnailFileName,
+        folder: outputDir,
+        size: '640x?', // Preserve aspect ratio, cap width at 640px
+      });
+  });
+};
+
 // PATCH /api/v1/deliverables/:id/upload (Admin only)
 export const uploadDeliverableFile = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -283,6 +315,8 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
     const folder = isVideo ? 'videos' : 'designs';
 
     const newFileObjects = [];
+    let newThumbnailUrl: string | null = null;
+
     for (const file of uploadedFiles) {
       const result = await processAndStoreFile(file, folder);
       newFileObjects.push({
@@ -291,6 +325,42 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
         size: result.fileSize,
         type: result.mimeType,
       });
+
+      // --- THUMBNAIL GENERATION (videos only, runs once for the first video found) ---
+      if (isVideo && !newThumbnailUrl && file.path) {
+        // file.path is the temp disk path written by Multer (disk storage)
+        const localThumbPath = await generateVideoThumbnail(file.path);
+
+        if (localThumbPath) {
+          try {
+            // Re-use the same Azure upload utility already used in this codebase.
+            // We construct a minimal Multer-like file object from the saved thumbnail.
+            const thumbFileBuffer = fs.readFileSync(localThumbPath);
+            const thumbMulterFile: Express.Multer.File = {
+              fieldname: 'thumbnail',
+              originalname: path.basename(localThumbPath),
+              encoding: '7bit',
+              mimetype: 'image/jpeg',
+              buffer: thumbFileBuffer,
+              size: thumbFileBuffer.length,
+              stream: null as any,
+              destination: os.tmpdir(),
+              filename: path.basename(localThumbPath),
+              path: localThumbPath,
+            };
+
+            const thumbResult = await processAndStoreFile(thumbMulterFile, 'thumbnails');
+            newThumbnailUrl = thumbResult.url;
+          } catch (thumbUploadError) {
+            console.error('[Thumbnail] Azure upload failed — skipping thumbnailUrl:', thumbUploadError);
+            newThumbnailUrl = null; // Graceful degradation
+          } finally {
+            // Always clean up the local temp file
+            try { fs.unlinkSync(localThumbPath); } catch (_) {}
+          }
+        }
+      }
+      // --- END THUMBNAIL GENERATION ---
     }
 
     const updated = await prisma.deliverable.update({
@@ -300,6 +370,7 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
         uploadedAt: new Date(),
         status: 'READY',
         clientFeedback: null, // Reset feedback so client can review new version
+        ...(newThumbnailUrl !== undefined && { thumbnailUrl: newThumbnailUrl }),
       },
     });
 

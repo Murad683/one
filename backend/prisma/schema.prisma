@@ -102,6 +102,7 @@ model Deliverable {
   notes          String?
   clientFeedback String?           @db.Text
   uploadedAt     DateTime?
+  thumbnailUrl   String?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   client         User                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
