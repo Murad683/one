@@ -14,6 +14,12 @@ model User {
   role         Role          @default(CLIENT)
   isActive     Boolean       @default(true)
   packageId    String?
+  igUsername    String?
+  igBio        String?
+  igFollowers  String?
+  igFollowing  String?
+  igPostsCount String?
+  igProfilePic String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   package      Package?      @relation(fields: [packageId], references: [id], onDelete: SetNull)

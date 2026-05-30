@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import PortalSidebar from './PortalSidebar';
 import { LayoutDashboard, FolderOpen, CreditCard, MessageCircle, LogOut, Sun, Moon } from 'lucide-react';
+import ProfileSettingsModal from '../ui/ProfileSettingsModal';
 
 const mobileNavItems = [
   { to: '/portal/panel', icon: LayoutDashboard, label: 'İcmal' },
@@ -14,6 +16,7 @@ const mobileNavItems = [
 const PortalLayout = () => {
   const { user, logout } = useAuth();
   const { toggleTheme, isDark } = useTheme(); // Corrected: theme is not used
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -47,7 +50,11 @@ const PortalLayout = () => {
               {isDark ? <Moon size={16} /> : <Sun size={16} />}
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
+              <span
+                className="text-[11px] cursor-pointer hover:underline"
+                style={{ color: 'var(--text-faint)' }}
+                onClick={() => setIsProfileModalOpen(true)}
+              >
                 {user?.name}
               </span>
               <button
@@ -87,6 +94,12 @@ const PortalLayout = () => {
             </NavLink>
           ))}
         </nav>
+
+        {/* Profile Settings Modal */}
+        <ProfileSettingsModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+        />
       </main>
     </div>
   );

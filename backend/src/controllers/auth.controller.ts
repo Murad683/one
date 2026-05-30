@@ -4,6 +4,7 @@ import { hashPassword, comparePassword } from '../utils/password.util';
 import { signToken } from '../utils/jwt.util';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { RegisterBody, LoginBody } from '../types/auth.types';
+import { UpdateProfileBody } from '../utils/validators/profile.validators';
 
 // ─── Register ──────────────────────────────────
 export const register = async (req: Request, res: Response): Promise<void> => {
@@ -93,6 +94,12 @@ export const me = async (req: Request, res: Response): Promise<void> => {
         name: true,
         role: true,
         isActive: true,
+        igUsername: true,
+        igBio: true,
+        igFollowers: true,
+        igFollowing: true,
+        igPostsCount: true,
+        igProfilePic: true,
         createdAt: true,
         updatedAt: true,
         package: {
@@ -127,6 +134,33 @@ export const me = async (req: Request, res: Response): Promise<void> => {
     });
   } catch (err) {
     console.error('Me error:', err);
+    sendError(res, 'Internal Server Error', 500);
+  }
+};
+
+// ─── Update Profile (Protected) ────────────────
+export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const body = req.body as UpdateProfileBody;
+
+    const updateData: Record<string, string | null | undefined> = {};
+    if (body.igUsername !== undefined) updateData.igUsername = body.igUsername;
+    if (body.igBio !== undefined) updateData.igBio = body.igBio;
+    if (body.igFollowers !== undefined) updateData.igFollowers = body.igFollowers;
+    if (body.igFollowing !== undefined) updateData.igFollowing = body.igFollowing;
+    if (body.igPostsCount !== undefined) updateData.igPostsCount = body.igPostsCount;
+    if (body.igProfilePic !== undefined) updateData.igProfilePic = body.igProfilePic;
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    const { password: _, ...safeUser } = updated;
+    sendSuccess(res, { user: safeUser });
+  } catch (err) {
+    console.error('Update profile error:', err);
     sendError(res, 'Internal Server Error', 500);
   }
 };

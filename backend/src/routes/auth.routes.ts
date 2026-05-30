@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { register, login, me } from '../controllers/auth.controller';
+import { register, login, me, updateProfile } from '../controllers/auth.controller';
 import { verifyTokenMiddleware } from '../middleware/verifyToken.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { registerSchema, loginSchema } from '../utils/validators/auth.validators';
+import { updateProfileSchema } from '../utils/validators/profile.validators';
 import { authRateLimiter } from '../middleware/rateLimiter.middleware';
 
 const router = Router();
@@ -91,5 +92,42 @@ router.post('/login', authRateLimiter, validate(loginSchema), login);
  *         description: Unauthorized — invalid or missing token
  */
 router.get('/me', verifyTokenMiddleware, me);
+
+/**
+ * @swagger
+ * /auth/profile:
+ *   patch:
+ *     summary: Update authenticated user's profile (Instagram fields)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               igUsername:
+ *                 type: string
+ *               igBio:
+ *                 type: string
+ *               igFollowers:
+ *                 type: string
+ *               igFollowing:
+ *                 type: string
+ *               igPostsCount:
+ *                 type: string
+ *               igProfilePic:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       422:
+ *         description: Validation failed
+ */
+router.patch('/profile', verifyTokenMiddleware, validate(updateProfileSchema), updateProfile);
 
 export default router;

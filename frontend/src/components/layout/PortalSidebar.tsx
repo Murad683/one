@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSiteSettings } from '../../hooks/useSiteData';
-import { LayoutDashboard, FolderOpen, CreditCard, MessageCircle, LogOut, User, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, FolderOpen, CreditCard, MessageCircle, LogOut, User, Sun, Moon, Settings } from 'lucide-react';
+import ProfileSettingsModal from '../ui/ProfileSettingsModal';
 
 const navItems = [
   { to: '/portal/panel', icon: LayoutDashboard, label: 'İcmal' },
@@ -15,6 +17,7 @@ const PortalSidebar = () => {
   const { user, logout } = useAuth();
   const { toggleTheme, isDark } = useTheme(); // Corrected: theme is not used
   const { data: settings } = useSiteSettings();
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   return (
     <aside
@@ -79,18 +82,24 @@ const PortalSidebar = () => {
       >
         <div className="flex items-center gap-3">
           <div
-            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-            style={{ backgroundColor: 'var(--bg-elevated)' }}
+            className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer rounded-lg px-1 py-1 -mx-1 transition-all duration-200 hover:bg-white/5"
+            onClick={() => setIsProfileModalOpen(true)}
+            title="Profil Ayarları"
           >
-            <User size={14} style={{ color: 'var(--text-faint)' }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium truncate" style={{ color: 'var(--text-secondary)' }}>
-              {user?.name}
-            </p>
-            <p className="text-[10px] truncate" style={{ color: 'var(--text-ghost)' }}>
-              {user?.email}
-            </p>
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+              style={{ backgroundColor: 'var(--bg-elevated)' }}
+            >
+              <User size={14} style={{ color: 'var(--text-faint)' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium truncate" style={{ color: 'var(--text-secondary)' }}>
+                {user?.name}
+              </p>
+              <p className="text-[10px] truncate" style={{ color: 'var(--text-ghost)' }}>
+                {user?.email}
+              </p>
+            </div>
           </div>
           <button
             onClick={logout}
@@ -102,6 +111,12 @@ const PortalSidebar = () => {
           </button>
         </div>
       </div>
+
+      {/* Profile Settings Modal */}
+      <ProfileSettingsModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </aside>
   );
 };
