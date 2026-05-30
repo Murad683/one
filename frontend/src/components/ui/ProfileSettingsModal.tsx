@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera, Save, Loader2, UploadCloud } from 'lucide-react';
+import { X, Camera, Save, Loader2, UploadCloud, Plus, Trash2 } from 'lucide-react';
 import { cinematicEasing } from '../../utils/animations';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../api/client';
@@ -18,6 +18,14 @@ interface ProfileFormData {
   igFollowing: string;
   igPostsCount: string;
   igProfilePic: string;
+}
+
+interface HighlightItem {
+  title: string;
+  imageUrl: string;
+  /** Only set for new highlights that need uploading */
+  _file?: File;
+  _preview?: string;
 }
 
 const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -57,6 +65,13 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
     igProfilePic: '',
   });
 
+  // ─── Highlights State ─────────────────────────
+  const [highlights, setHighlights] = useState<HighlightItem[]>([]);
+  const [newHighlightTitle, setNewHighlightTitle] = useState('');
+  const [newHighlightFile, setNewHighlightFile] = useState<File | null>(null);
+  const [newHighlightPreview, setNewHighlightPreview] = useState<string | null>(null);
+  const highlightFileRef = useRef<HTMLInputElement>(null);
+
   // Pre-fill form with existing user data
   useEffect(() => {
     if (isOpen && user) {
@@ -70,6 +85,18 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
       });
       setAvatarPreview(resolveFileUrl(user.igProfilePic) || null);
       setAvatarFile(null);
+
+      // Load existing highlights
+      const existing = user.igHighlights;
+      if (Array.isArray(existing) && existing.length > 0) {
+        setHighlights(existing.map((h) => ({ title: h.title, imageUrl: h.imageUrl })));
+      } else {
+        setHighlights([]);
+      }
+
+      setNewHighlightTitle('');
+      setNewHighlightFile(null);
+      setNewHighlightPreview(null);
       setError('');
       setSuccess('');
     }
@@ -111,6 +138,38 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
     }
   };
 
+  // ─── Highlight Handlers ─────────────────────────
+  const handleHighlightFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setNewHighlightFile(file);
+      setNewHighlightPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const addHighlight = () => {
+    if (!newHighlightFile || !newHighlightTitle.trim()) return;
+    if (highlights.length >= 20) return;
+
+    setHighlights((prev) => [
+      ...prev,
+      {
+        title: newHighlightTitle.trim(),
+        imageUrl: '',
+        _file: newHighlightFile,
+        _preview: newHighlightPreview || undefined,
+      },
+    ]);
+    setNewHighlightTitle('');
+    setNewHighlightFile(null);
+    setNewHighlightPreview(null);
+    if (highlightFileRef.current) highlightFileRef.current.value = '';
+  };
+
+  const removeHighlight = (index: number) => {
+    setHighlights((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -130,6 +189,22 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
         finalProfilePic = uploadRes.data?.data?.url || uploadRes.data?.url || uploadRes.data?.data?.storageKey || finalProfilePic;
       }
 
+      // Upload new highlight images
+      const finalHighlights: { title: string; imageUrl: string }[] = [];
+      for (const h of highlights) {
+        if (h._file) {
+          const hlData = new FormData();
+          hlData.append('file', h._file);
+          const hlRes = await apiClient.post('/uploads/highlights', hlData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          const uploadedUrl = hlRes.data?.data?.url || hlRes.data?.url || hlRes.data?.data?.storageKey || '';
+          finalHighlights.push({ title: h.title, imageUrl: uploadedUrl });
+        } else {
+          finalHighlights.push({ title: h.title, imageUrl: h.imageUrl });
+        }
+      }
+
       await apiClient.patch('/auth/profile', {
         igUsername: formData.igUsername || null,
         igBio: formData.igBio || null,
@@ -137,6 +212,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
         igFollowing: formData.igFollowing || null,
         igPostsCount: formData.igPostsCount || null,
         igProfilePic: finalProfilePic || null,
+        igHighlights: finalHighlights,
       });
 
       await refreshUser();
@@ -347,6 +423,118 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
                   </div>
                 </div>
 
+                {/* ─── Highlights Section ─────────────────────── */}
+                <div className="flex flex-col gap-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-medium uppercase tracking-wider" style={labelStyle}>
+                      Önə Çıxanlar (Highlights)
+                    </label>
+                    <span className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
+                      {highlights.length}/20
+                    </span>
+                  </div>
+
+                  {/* Existing Highlights */}
+                  {highlights.length > 0 && (
+                    <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+                      {highlights.map((h, idx) => (
+                        <div key={idx} className="flex flex-col items-center gap-1.5 shrink-0 relative group" style={{ width: '68px' }}>
+                          <div className="relative">
+                            <div
+                              className="w-14 h-14 rounded-full overflow-hidden border-2 flex items-center justify-center"
+                              style={{
+                                borderColor: 'var(--card-border)',
+                                backgroundColor: 'var(--bg-elevated)',
+                              }}
+                            >
+                              <img
+                                src={h._preview || resolveFileUrl(h.imageUrl)}
+                                alt={h.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeHighlight(idx)}
+                              disabled={isSubmitting}
+                              className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                              style={{
+                                backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                                color: '#fff',
+                              }}
+                            >
+                              <X size={10} />
+                            </button>
+                          </div>
+                          <span
+                            className="text-[10px] text-center truncate w-full leading-tight"
+                            style={{ color: 'var(--text-muted)' }}
+                          >
+                            {h.title}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add New Highlight */}
+                  {highlights.length < 20 && (
+                    <div
+                      className="rounded-xl p-4 flex flex-col gap-3"
+                      style={inputStyle}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-12 h-12 rounded-full overflow-hidden shrink-0 flex items-center justify-center border cursor-pointer transition-all hover:opacity-80"
+                          style={{
+                            borderColor: 'var(--card-border)',
+                            backgroundColor: 'var(--bg-elevated)',
+                          }}
+                          onClick={() => highlightFileRef.current?.click()}
+                        >
+                          {newHighlightPreview ? (
+                            <img src={newHighlightPreview} alt="Preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <Plus size={18} style={{ color: 'var(--text-muted)' }} />
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          ref={highlightFileRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleHighlightFileChange}
+                          disabled={isSubmitting}
+                        />
+                        <input
+                          type="text"
+                          value={newHighlightTitle}
+                          onChange={(e) => setNewHighlightTitle(e.target.value.slice(0, 30))}
+                          placeholder="Başlıq..."
+                          disabled={isSubmitting}
+                          className="flex-1 bg-transparent text-sm focus:outline-none"
+                          style={{ color: 'var(--text-primary)' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={addHighlight}
+                          disabled={isSubmitting || !newHighlightFile || !newHighlightTitle.trim()}
+                          className="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-30 cursor-pointer"
+                          style={{
+                            backgroundColor: 'var(--glow-accent-subtle)',
+                            color: 'var(--accent-text)',
+                          }}
+                        >
+                          Əlavə et
+                        </button>
+                      </div>
+                      <p className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
+                        Dairəvi şəkil və qısa başlıq əlavə edin
+                      </p>
+                    </div>
+                  )}
+                </div>
+
                 {/* Error / Success Messages */}
                 {error && (
                   <motion.p
@@ -413,3 +601,4 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
 };
 
 export default ProfileSettingsModal;
+

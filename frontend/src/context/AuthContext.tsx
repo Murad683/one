@@ -19,6 +19,7 @@ interface User {
   igFollowing?: string | null;
   igPostsCount?: string | null;
   igProfilePic?: string | null;
+  igHighlights?: { title: string; imageUrl: string }[] | null;
 }
 
 interface AuthContextType {

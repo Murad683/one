@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { processAndStoreFile } from '../services/upload.service';
 import { sendError, sendSuccess } from '../utils/response.util';
 
-const allowedFolders = new Set(['thumbnails', 'avatars', 'images']);
+const allowedFolders = new Set(['thumbnails', 'avatars', 'images', 'highlights']);
 
 export const uploadImageFile = async (req: Request, res: Response): Promise<void> => {
   try {

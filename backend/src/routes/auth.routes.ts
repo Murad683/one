@@ -120,6 +120,15 @@ router.get('/me', verifyTokenMiddleware, me);
  *                 type: string
  *               igProfilePic:
  *                 type: string
+ *               igHighlights:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     title:
+ *                       type: string
+ *                     imageUrl:
+ *                       type: string
  *     responses:
  *       200:
  *         description: Profile updated successfully

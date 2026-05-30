@@ -100,6 +100,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
         igFollowing: true,
         igPostsCount: true,
         igProfilePic: true,
+        igHighlights: true,
         createdAt: true,
         updatedAt: true,
         package: {
@@ -144,13 +145,14 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
     const userId = req.user!.id;
     const body = req.body as UpdateProfileBody;
 
-    const updateData: Record<string, string | null | undefined> = {};
+    const updateData: Record<string, unknown> = {};
     if (body.igUsername !== undefined) updateData.igUsername = body.igUsername;
     if (body.igBio !== undefined) updateData.igBio = body.igBio;
     if (body.igFollowers !== undefined) updateData.igFollowers = body.igFollowers;
     if (body.igFollowing !== undefined) updateData.igFollowing = body.igFollowing;
     if (body.igPostsCount !== undefined) updateData.igPostsCount = body.igPostsCount;
     if (body.igProfilePic !== undefined) updateData.igProfilePic = body.igProfilePic;
+    if (body.igHighlights !== undefined) updateData.igHighlights = body.igHighlights;
 
     const updated = await prisma.user.update({
       where: { id: userId },

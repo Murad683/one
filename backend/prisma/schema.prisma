@@ -20,6 +20,7 @@ model User {
   igFollowing  String?
   igPostsCount String?
   igProfilePic String?
+  igHighlights Json          @default("[]")
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   package      Package?      @relation(fields: [packageId], references: [id], onDelete: SetNull)

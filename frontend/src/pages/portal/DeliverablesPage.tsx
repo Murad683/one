@@ -389,6 +389,7 @@ const DeliverablesPage = () => {
   const igFollowing = user?.igFollowing || '0';
   const igPostsCount = user?.igPostsCount || '0';
   const igProfilePic = user?.igProfilePic || null;
+  const igHighlights: { title: string; imageUrl: string }[] = Array.isArray(user?.igHighlights) ? user.igHighlights : [];
 
   // Count only READY items as "posts"
   const actualPostCount = items.filter((d) => d.status === 'READY').length;
@@ -518,6 +519,46 @@ const DeliverablesPage = () => {
               <p className="font-semibold">{user?.name || 'User'}</p>
               <p className="whitespace-pre-line leading-[18px]">{igBio}</p>
             </div>
+
+            {/* ── Instagram Highlights Row ── */}
+            {igHighlights.length > 0 && (
+              <div className="mt-4 overflow-x-auto no-scrollbar">
+                <div className="flex gap-4 md:gap-5 pb-1" style={{ minWidth: 'min-content' }}>
+                  {igHighlights.map((h, idx) => (
+                    <div key={idx} className="flex flex-col items-center gap-1 shrink-0 select-none" style={{ width: '66px' }}>
+                      {/* Outer gradient ring */}
+                      <div
+                        className="rounded-full p-[2px]"
+                        style={{
+                          background: 'linear-gradient(135deg, #833AB4, #FD1D1D, #F77737)',
+                        }}
+                      >
+                        {/* White padding ring */}
+                        <div
+                          className="rounded-full p-[2px]"
+                          style={{ backgroundColor: 'var(--ig-bg)' }}
+                        >
+                          <div className="w-[56px] h-[56px] md:w-[64px] md:h-[64px] rounded-full overflow-hidden">
+                            <img
+                              src={resolveFileUrl(h.imageUrl)}
+                              alt={h.title}
+                              className="w-full h-full object-cover"
+                              draggable={false}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <span
+                        className="text-[11px] text-center truncate w-full leading-tight"
+                        style={{ color: 'var(--ig-text)' }}
+                      >
+                        {h.title}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Mobile: Buttons Row (Hidden on Desktop) */}
             <div className="flex md:hidden items-center gap-2 mt-4">

@@ -7,6 +7,12 @@ export const updateProfileSchema = z.object({
   igFollowing: z.string().max(20).optional().nullable(),
   igPostsCount: z.string().max(20).optional().nullable(),
   igProfilePic: z.string().max(500).optional().nullable(),
+  igHighlights: z.array(
+    z.object({
+      title: z.string().max(30),
+      imageUrl: z.string().max(500),
+    })
+  ).max(20).optional(),
 });
 
 export type UpdateProfileBody = z.infer<typeof updateProfileSchema>;

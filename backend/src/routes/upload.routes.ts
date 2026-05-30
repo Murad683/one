@@ -12,7 +12,7 @@ router.post(
   isAdmin,
   (req, _res, next) => {
     const folder = typeof req.query.folder === 'string' ? req.query.folder : 'images';
-    req.uploadSubfolder = ['thumbnails', 'avatars', 'images'].includes(folder) ? folder : 'images';
+    req.uploadSubfolder = ['thumbnails', 'avatars', 'images', 'highlights'].includes(folder) ? folder : 'images';
     next();
   },
   uploadImage,
@@ -26,6 +26,17 @@ router.post(
   verifyTokenMiddleware,
   (req, _res, next) => {
     req.query.folder = 'avatars';
+    next();
+  },
+  uploadImage,
+  uploadImageFile
+);
+
+router.post(
+  '/highlights',
+  verifyTokenMiddleware,
+  (req, _res, next) => {
+    req.query.folder = 'highlights';
     next();
   },
   uploadImage,
