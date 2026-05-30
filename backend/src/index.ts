@@ -40,7 +40,9 @@ app.use(cors({
   credentials: true 
 }));
 app.use(globalRateLimiter);
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
