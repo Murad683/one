@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Loader2, Plus, Save, X, UploadCloud, Instagram } from 'lucide-react';
+import { Plus, Save, X, UploadCloud } from 'lucide-react';
 import Button from '../ui/Button';
 import Combobox from '../ui/Combobox';
 import { api } from '../../lib/api';
@@ -153,7 +153,6 @@ export const HighlightsManager: React.FC<HighlightsManagerProps> = ({ clients, o
     <div className="space-y-6 max-w-4xl">
       <div className="bg-surface border border-edge rounded-xl p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-heading mb-4 flex items-center gap-2">
-          <Instagram className="h-5 w-5" />
           Instagram Önə Çıxanlar (Highlights)
         </h3>
         
