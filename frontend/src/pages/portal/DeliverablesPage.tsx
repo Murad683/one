@@ -29,35 +29,20 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 };
 
 const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const AZURE_BLOB_URL = import.meta.env.VITE_AZURE_BLOB_URL;
 
 const resolveFileUrl = (fileUrl: string | null | undefined): string => {
   if (!fileUrl) return '';
   if (fileUrl.startsWith('http') || fileUrl.startsWith('blob:')) return fileUrl;
   
-  const normalized = fileUrl.replace(/\\/g, '/');
-  
-  if (AZURE_BLOB_URL) {
-    // If the path accidentally includes uploads/, remove it so we don't duplicate it if the container is already 'uploads'
-    // Actually, typical DB paths are 'avatars/...', 'images/...', 'thumbnails/...'
-    let cleanPath = normalized;
-    if (cleanPath.startsWith('uploads/')) {
-      cleanPath = cleanPath.replace('uploads/', '');
-    }
-    return `${AZURE_BLOB_URL}/${cleanPath}`;
-  }
-
-  // Local fallback
-  if (normalized.includes('/uploads/')) {
-    const idx = normalized.indexOf('/uploads/');
-    return `${BACKEND}${normalized.substring(idx)}`;
-  }
-  
+  let normalized = fileUrl.replace(/\\/g, '/');
   if (normalized.startsWith('uploads/')) {
-    return `${BACKEND}/${normalized}`;
+    normalized = normalized.replace('uploads/', '');
+  } else if (normalized.includes('/uploads/')) {
+    normalized = normalized.split('/uploads/').pop() || normalized;
   }
 
-  return `${BACKEND}/uploads/${normalized}`;
+  // Use the backend proxy route which redirects to the SAS token URL
+  return `${BACKEND}/api/v1/uploads/${normalized}`;
 };
 
 /* ─── Media Type Helpers ─────────────────────── */
@@ -576,14 +561,8 @@ const DeliverablesPage = () => {
 
               const firstFileUrl = getFileUrl(firstFile);
               const isFirstFileImage = firstFile ? isImageFile(firstFile.type, firstFile.name) : false;
-              const AZURE_BLOB_URL = import.meta.env.VITE_AZURE_BLOB_URL;
-              const BASE_URL = AZURE_BLOB_URL || BACKEND;
 
-              const resolvedThumb = d.thumbnailUrl
-                ? (d.thumbnailUrl.startsWith('http')
-                    ? d.thumbnailUrl
-                    : `${BASE_URL}/${d.thumbnailUrl}`)
-                : null;
+              const resolvedThumb = d.thumbnailUrl ? resolveFileUrl(d.thumbnailUrl) : null;
 
               const thumbnailSrc: string | null =
                 resolvedThumb ??

@@ -31,10 +31,18 @@ export const assetUrl = (url?: string | null) => {
   if (!url) return '';
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) return url;
   
-  // Local assets (like /videos/hero-bg.mp4) should be returned as-is for the frontend
-  if (!url.startsWith('/uploads')) return url;
+  // Local static assets should be returned as-is (e.g., /videos/hero-bg.mp4 or /logo.jpg)
+  // Usually static assets start with / and aren't images/, avatars/, or thumbnails/
+  if (url.startsWith('/videos/') || url === '/logo.jpg') return url;
 
-  return `${apiOrigin()}${url.startsWith('/') ? url : `/${url}`}`;
+  let cleanUrl = url.replace(/\\/g, '/');
+  if (cleanUrl.startsWith('uploads/')) cleanUrl = cleanUrl.replace('uploads/', '');
+  else if (cleanUrl.startsWith('/uploads/')) cleanUrl = cleanUrl.replace('/uploads/', '');
+
+  if (cleanUrl.startsWith('/')) cleanUrl = cleanUrl.substring(1);
+
+  const baseUrl = api.defaults.baseURL || '';
+  return `${baseUrl}/uploads/${cleanUrl}`;
 };
 
 export const uploadImage = async (file: File, folder: 'thumbnails' | 'avatars' | 'images') => {

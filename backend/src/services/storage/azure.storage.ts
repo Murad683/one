@@ -41,17 +41,18 @@ export class AzureStorageProvider implements IStorageProvider {
     const publicContainers = ['avatars', 'images', 'thumbnails'];
     const isPublic = publicContainers.includes(containerName);
 
-    // Ensure the container exists dynamically with the correct access policy
-    await containerClient.createIfNotExists({
-      access: isPublic ? 'blob' : undefined,
-    });
+    // Ensure the container exists dynamically without specifying access policy in createIfNotExists
+    // because it will crash if the storage account denies public access.
+    await containerClient.createIfNotExists();
 
     // For already existing private containers, explicitly set them to public
     if (isPublic) {
       try {
         await containerClient.setAccessPolicy('blob');
       } catch (err) {
-        console.warn(`Could not update access policy for ${containerName}:`, err);
+        // If the storage account completely denies public access, this will throw 409 PublicAccessNotPermitted.
+        // We catch it and log a warning instead of crashing the upload.
+        console.warn(`Could not update access policy for ${containerName}. Public access might be disabled on the Azure Storage Account level.`);
       }
     }
 

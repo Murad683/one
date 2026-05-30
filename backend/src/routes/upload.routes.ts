@@ -19,6 +19,8 @@ router.post(
   uploadImageFile
 );
 
+import { getSecureDownloadUrl } from '../services/upload.service';
+
 router.post(
   '/avatar',
   verifyTokenMiddleware,
@@ -29,5 +31,17 @@ router.post(
   uploadImage,
   uploadImageFile
 );
+
+// Proxy route to redirect to Azure SAS URL for private images
+router.get('/:folder/:file', async (req, res) => {
+  try {
+    const { folder, file } = req.params;
+    const storageKey = `${folder}/${file}`;
+    const signedUrl = await getSecureDownloadUrl(storageKey);
+    res.redirect(signedUrl);
+  } catch (err) {
+    res.status(404).send('Not found');
+  }
+});
 
 export default router;

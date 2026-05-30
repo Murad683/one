@@ -93,18 +93,15 @@ const resolveFileUrl = (fileUrl: string | null | undefined): string => {
   if (!fileUrl) return '';
   if (fileUrl.startsWith('http')) return fileUrl;
   
-  const normalized = fileUrl.replace(/\\/g, '/');
-  if (normalized.includes('/uploads/')) {
-    const idx = normalized.indexOf('/uploads/');
-    return `${BACKEND}${normalized.substring(idx)}`;
-  }
-  
+  let normalized = fileUrl.replace(/\\/g, '/');
   if (normalized.startsWith('uploads/')) {
-    return `${BACKEND}/${normalized}`;
+    normalized = normalized.replace('uploads/', '');
+  } else if (normalized.includes('/uploads/')) {
+    normalized = normalized.split('/uploads/').pop() || normalized;
   }
 
-  // If it's an Azure storage key without a SAS token, return as-is
-  return fileUrl;
+  // Use the backend proxy route which redirects to the SAS token URL
+  return `${BACKEND}/api/v1/uploads/${normalized}`;
 };
 
 // ─── Admin Custom Media Preview Overlay ─────────
