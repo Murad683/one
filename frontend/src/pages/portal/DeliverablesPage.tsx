@@ -395,16 +395,70 @@ const DeliverablesPage = () => {
   const displayPostCount = igPostsCount !== '0' ? igPostsCount : String(actualPostCount);
 
   return (
-    <div className="pb-28 lg:pb-12">
+    <div className="pb-28 lg:pb-12 bg-[#FAFAFA] dark:bg-[#000000] text-[#262626] dark:text-[#F5F5F5] min-h-screen font-sans">
+      
+      {/* ── Mobile Top Nav ── */}
+      <div className="flex md:hidden items-center justify-between px-4 h-11 border-b border-[#DBDBDB] dark:border-[#262626]">
+        <button className="p-1 -ml-1">
+          <svg aria-label="Back" color="currentColor" fill="currentColor" height="24" role="img" viewBox="0 0 24 24" width="24"><path d="M21 17.502a.997.997 0 0 1-.707-.293L12 8.913l-8.293 8.296a1 1 0 1 1-1.414-1.414l9-9.004a1.03 1.03 0 0 1 1.414 0l9 9.004A1 1 0 0 1 21 17.502Z" transform="rotate(-90 12 12)"></path></svg>
+        </button>
+        <div className="flex items-center gap-1 font-bold text-[16px]">
+          {igUsername}
+          <svg aria-label="Verified" color="#0095f6" fill="#0095f6" height="12" role="img" viewBox="0 0 40 40" width="12"><path d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.358 40l3.232-5.6h6.162v-6.01L40 25.359 36.905 20 40 14.641l-5.248-3.03v-6.46h-6.419L25.358 0l-5.36 3.094Zm7.415 11.225 2.254 2.287-11.43 11.5-6.835-6.93 2.244-2.258 4.587 4.581 9.18-9.18Z" fillRule="evenodd"></path></svg>
+        </div>
+        <button className="p-1 -mr-1">
+          <svg aria-label="More options" color="currentColor" fill="currentColor" height="24" role="img" viewBox="0 0 24 24" width="24"><circle cx="12" cy="12" r="1.5"></circle><circle cx="6" cy="12" r="1.5"></circle><circle cx="18" cy="12" r="1.5"></circle></svg>
+        </button>
+      </div>
+
       {/* ── Instagram Profile Header ── */}
-      <div className="px-4 sm:px-6 md:px-10 pt-8 sm:pt-10 pb-6">
-        <div className="flex items-start gap-6 sm:gap-10 md:gap-16">
-          {/* Avatar */}
-          <div className="shrink-0">
+      <div className="px-4 sm:px-6 md:px-10 pt-4 md:pt-10 pb-6 max-w-4xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-16">
+          
+          {/* Mobile: Avatar + Stats Row */}
+          <div className="flex items-center gap-6 md:hidden">
+            <div className="shrink-0">
+              <div
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden flex items-center justify-center border-[2px] border-[#DBDBDB] dark:border-[#262626]"
+                style={{
+                  background: igProfilePic ? 'transparent' : 'linear-gradient(135deg, #833AB4, #FD1D1D, #F77737)',
+                }}
+              >
+                {igProfilePic ? (
+                  <img
+                    src={resolveFileUrl(igProfilePic)}
+                    alt={igUsername}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl sm:text-3xl font-bold text-white select-none">
+                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </span>
+                )}
+              </div>
+            </div>
+            {/* Mobile Stats */}
+            <div className="flex-1 flex justify-around items-center">
+              <div className="flex flex-col items-center">
+                <span className="text-[16px] font-semibold">{displayPostCount}</span>
+                <span className="text-[13px] text-[#262626] dark:text-[#F5F5F5]">posts</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-[16px] font-semibold">{igFollowers}</span>
+                <span className="text-[13px] text-[#262626] dark:text-[#F5F5F5]">followers</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-[16px] font-semibold">{igFollowing}</span>
+                <span className="text-[13px] text-[#262626] dark:text-[#F5F5F5]">following</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Avatar (Hidden on Mobile) */}
+          <div className="hidden md:block shrink-0">
             <div
-              className="w-20 h-20 sm:w-24 sm:h-24 md:w-[150px] md:h-[150px] rounded-full overflow-hidden flex items-center justify-center border-[3px]"
+              className="w-[150px] h-[150px] rounded-full overflow-hidden flex items-center justify-center border-[1px] border-[#DBDBDB] dark:border-[#262626]"
               style={{
-                borderColor: 'var(--accent-text)',
                 background: igProfilePic ? 'transparent' : 'linear-gradient(135deg, #833AB4, #FD1D1D, #F77737)',
               }}
             >
@@ -415,131 +469,89 @@ const DeliverablesPage = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span
-                  className="text-2xl sm:text-3xl md:text-5xl font-bold text-white select-none"
-                >
+                <span className="text-5xl font-bold text-white select-none">
                   {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Info */}
-          <div className="flex-1 min-w-0 pt-1">
-            {/* Username + Buttons */}
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
-              <h1
-                className="text-lg sm:text-xl font-normal truncate"
-                style={{ color: 'var(--text-primary)' }}
-              >
+          {/* Info (Desktop handles everything, Mobile handles Bio + Buttons here) */}
+          <div className="flex-1 min-w-0">
+            
+            {/* Desktop: Username + Buttons Row (Hidden on mobile) */}
+            <div className="hidden md:flex flex-wrap items-center gap-4 mb-5">
+              <h1 className="text-[20px] font-normal truncate">
                 {igUsername}
               </h1>
+              <svg aria-label="Verified" color="#0095f6" fill="#0095f6" height="18" role="img" viewBox="0 0 40 40" width="18"><path d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.358 40l3.232-5.6h6.162v-6.01L40 25.359 36.905 20 40 14.641l-5.248-3.03v-6.46h-6.419L25.358 0l-5.36 3.094Zm7.415 11.225 2.254 2.287-11.43 11.5-6.835-6.93 2.244-2.258 4.587 4.581 9.18-9.18Z" fillRule="evenodd"></path></svg>
               <div className="flex items-center gap-2">
-                <button
-                  className="px-4 sm:px-5 py-1.5 text-xs sm:text-[13px] font-semibold rounded-lg transition-all"
-                  style={{
-                    backgroundColor: 'var(--accent-text)',
-                    color: 'var(--accent-on-accent)',
-                  }}
-                >
+                <button className="px-5 py-1.5 text-[14px] font-semibold rounded-lg transition-all bg-[#0095F6] text-white hover:bg-[#1877F2]">
                   Follow
                 </button>
-                <button
-                  className="px-4 sm:px-5 py-1.5 text-xs sm:text-[13px] font-semibold rounded-lg border transition-all"
-                  style={{
-                    borderColor: 'var(--card-border)',
-                    color: 'var(--text-primary)',
-                    backgroundColor: 'var(--bg-elevated)',
-                  }}
-                >
+                <button className="px-5 py-1.5 text-[14px] font-semibold rounded-lg transition-all bg-[#EFEFEF] dark:bg-[#363636] text-[#000000] dark:text-[#F5F5F5] hover:bg-[#DBDBDB] dark:hover:bg-[#262626]">
                   Message
+                </button>
+                <button className="p-2 rounded-lg transition-all bg-[#EFEFEF] dark:bg-[#363636] text-[#000000] dark:text-[#F5F5F5] hover:bg-[#DBDBDB] dark:hover:bg-[#262626]">
+                  <svg aria-label="Discover People" color="currentColor" fill="currentColor" height="16" role="img" viewBox="0 0 24 24" width="16"><path d="M19.006 8.252H21.25a1.25 1.25 0 0 0 0-2.5h-2.244V3.5a1.25 1.25 0 1 0-2.5 0v2.252H14.25a1.25 1.25 0 0 0 0 2.5h2.256v2.248a1.25 1.25 0 1 0 2.5 0v-2.248Z"></path><path d="M22 19.25a2.75 2.75 0 0 1-2.75 2.75H4.75A2.75 2.75 0 0 1 2 19.25v-.403A6.837 6.837 0 0 1 8.815 12h6.37A6.837 6.837 0 0 1 22 18.847v.403ZM12 10.5a4 4 0 1 0-4-4 4.005 4.005 0 0 0 4 4Z"></path></svg>
                 </button>
               </div>
             </div>
 
-            {/* Stats */}
-            <div className="flex items-center gap-6 sm:gap-10 mb-4 sm:mb-5">
-              <div className="text-center sm:text-left">
-                <span className="text-sm sm:text-base font-semibold" style={{ color: 'var(--text-primary)' }}>{displayPostCount}</span>
-                <span className="text-xs sm:text-sm ml-1" style={{ color: 'var(--text-muted)' }}>posts</span>
-              </div>
-              <div className="text-center sm:text-left">
-                <span className="text-sm sm:text-base font-semibold" style={{ color: 'var(--text-primary)' }}>{igFollowers}</span>
-                <span className="text-xs sm:text-sm ml-1" style={{ color: 'var(--text-muted)' }}>followers</span>
-              </div>
-              <div className="text-center sm:text-left">
-                <span className="text-sm sm:text-base font-semibold" style={{ color: 'var(--text-primary)' }}>{igFollowing}</span>
-                <span className="text-xs sm:text-sm ml-1" style={{ color: 'var(--text-muted)' }}>following</span>
-              </div>
+            {/* Desktop: Stats Row (Hidden on mobile) */}
+            <div className="hidden md:flex items-center gap-10 mb-5 text-[16px]">
+              <div><span className="font-semibold">{displayPostCount}</span> posts</div>
+              <div><span className="font-semibold">{igFollowers}</span> followers</div>
+              <div><span className="font-semibold">{igFollowing}</span> following</div>
             </div>
 
-            {/* Bio */}
-            <div className="hidden sm:block">
-              <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--text-primary)' }}>
-                {user?.name || 'User'}
-              </p>
-              <p
-                className="text-sm leading-relaxed whitespace-pre-line"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                {igBio}
-              </p>
+            {/* Bio (Both Mobile & Desktop) */}
+            <div className="text-[14px]">
+              <p className="font-semibold">{user?.name || 'User'}</p>
+              <p className="whitespace-pre-line leading-[18px]">{igBio}</p>
             </div>
+
+            {/* Mobile: Buttons Row (Hidden on Desktop) */}
+            <div className="flex md:hidden items-center gap-2 mt-4">
+              <button className="flex-1 py-1.5 text-[14px] font-semibold rounded-lg transition-all bg-[#0095F6] text-white">
+                Follow
+              </button>
+              <button className="flex-1 py-1.5 text-[14px] font-semibold rounded-lg transition-all bg-[#EFEFEF] dark:bg-[#363636] text-[#000000] dark:text-[#F5F5F5]">
+                Message
+              </button>
+              <button className="p-1.5 rounded-lg transition-all bg-[#EFEFEF] dark:bg-[#363636] text-[#000000] dark:text-[#F5F5F5]">
+                <svg aria-label="Discover People" color="currentColor" fill="currentColor" height="16" role="img" viewBox="0 0 24 24" width="16"><path d="M19.006 8.252H21.25a1.25 1.25 0 0 0 0-2.5h-2.244V3.5a1.25 1.25 0 1 0-2.5 0v2.252H14.25a1.25 1.25 0 0 0 0 2.5h2.256v2.248a1.25 1.25 0 1 0 2.5 0v-2.248Z"></path><path d="M22 19.25a2.75 2.75 0 0 1-2.75 2.75H4.75A2.75 2.75 0 0 1 2 19.25v-.403A6.837 6.837 0 0 1 8.815 12h6.37A6.837 6.837 0 0 1 22 18.847v.403ZM12 10.5a4 4 0 1 0-4-4 4.005 4.005 0 0 0 4 4Z"></path></svg>
+              </button>
+            </div>
+
           </div>
         </div>
 
-        {/* Bio — mobile only (below avatar row) */}
-        <div className="sm:hidden mt-3">
-          <p className="text-sm font-semibold mb-0.5" style={{ color: 'var(--text-primary)' }}>
-            {user?.name || 'User'}
-          </p>
-          <p
-            className="text-sm leading-relaxed whitespace-pre-line"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            {igBio}
-          </p>
-        </div>
-
         {/* Tabs divider */}
-        <div
-          className="mt-6 sm:mt-8 border-t flex justify-center gap-12"
-          style={{ borderColor: 'var(--border-subtle)' }}
-        >
-          <button
-            className="flex items-center gap-1.5 py-3 text-xs uppercase tracking-widest font-medium border-t transition-colors"
-            style={{
-              color: 'var(--text-primary)',
-              borderColor: 'var(--text-primary)',
-              marginTop: '-1px',
-            }}
-          >
+        <div className="mt-8 border-t border-[#DBDBDB] dark:border-[#262626] flex justify-center gap-12">
+          <button className="flex items-center gap-1.5 py-4 text-[12px] uppercase tracking-widest font-semibold border-t-[1px] border-[#262626] dark:border-[#F5F5F5] text-[#262626] dark:text-[#F5F5F5] -mt-[1px]">
             <Grid3X3 size={12} />
             Posts
           </button>
-          <button
-            className="flex items-center gap-1.5 py-3 text-xs uppercase tracking-widest font-medium border-t border-transparent transition-colors"
-            style={{ color: 'var(--text-ghost)', marginTop: '-1px' }}
-          >
+          <button className="flex items-center gap-1.5 py-4 text-[12px] uppercase tracking-widest font-semibold border-t-[1px] border-transparent text-[#737373] dark:text-[#A8A8A8] -mt-[1px]">
             <Video size={12} />
             Reels
           </button>
         </div>
       </div>
 
-      <div className="px-0 sm:px-0 md:px-0">
+      <div className="px-0 sm:px-0 md:px-0 bg-[#FAFAFA] dark:bg-[#000000]">
         {loading ? (
-          <div className="grid grid-cols-3 gap-[2px] sm:gap-1 w-full">
+          <div className="grid grid-cols-3 gap-[2px] sm:gap-1 w-full max-w-4xl mx-auto">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
-                className="aspect-[3/4] animate-pulse"
-                style={{ backgroundColor: 'var(--bg-elevated)' }}
+                className="aspect-[3/4] animate-pulse bg-[#EFEFEF] dark:bg-[#262626]"
               />
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-3" style={{ color: 'var(--text-faint)' }}>
+          <div className="flex flex-col items-center justify-center py-24 gap-3 text-[#737373] dark:text-[#A8A8A8]">
             <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
               <polyline points="14 2 14 8 20 8"/>
@@ -547,7 +559,7 @@ const DeliverablesPage = () => {
             <p className="text-sm tracking-wide">Hələ heç bir material yoxdur</p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-[2px] sm:gap-1 w-full">
+          <div className="grid grid-cols-3 gap-[2px] sm:gap-1 w-full max-w-4xl mx-auto">
             {items.map((d) => {
               const hasFile = d.files && d.files.length > 0;
               const firstFile = hasFile ? d.files[0] : null;
