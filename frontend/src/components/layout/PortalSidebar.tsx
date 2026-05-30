@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSiteSettings } from '../../hooks/useSiteData';
-import { LayoutDashboard, FolderOpen, CreditCard, MessageCircle, LogOut, User, Sun, Moon, Settings } from 'lucide-react';
+import { LayoutDashboard, FolderOpen, CreditCard, MessageCircle, LogOut, User, Sun, Moon } from 'lucide-react';
 import ProfileSettingsModal from '../ui/ProfileSettingsModal';
 
 const navItems = [

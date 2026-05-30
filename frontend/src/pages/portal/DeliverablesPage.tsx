@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cinematicEasing } from '../../utils/animations';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { Download, Play, X, Send, FileX, Video, Image, Grid3X3, MessageCircle, MoreHorizontal } from 'lucide-react';
+import { Download, Play, X, FileX, Video, Image, Grid3X3, MessageCircle } from 'lucide-react';
 
 interface Deliverable {
   id: string;
@@ -26,14 +26,6 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
   PROCESSING: { label: 'Hazırlanır', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.08)' },
   READY: { label: 'Hazırdır', color: 'var(--accent-text)', bg: 'var(--glow-accent-subtle)' },
   ARCHIVED: { label: 'Arxiv', color: 'var(--text-faint)', bg: 'var(--bg-elevated)' },
-};
-
-const typeLabels: Record<string, string> = {
-  VIDEO: 'Video Material',
-  SMM_DESIGN: 'SMM Dizayn',
-  BRANDING: 'Brendinq / Loqo',
-  REPORT: 'Hesabat / Sənəd',
-  OTHER: 'Digər',
 };
 
 const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -395,10 +387,9 @@ const DeliverablesPage = () => {
           {/* Avatar */}
           <div className="shrink-0">
             <div
-              className="w-20 h-20 sm:w-24 sm:h-24 md:w-[150px] md:h-[150px] rounded-full overflow-hidden ring-[3px] ring-offset-2 flex items-center justify-center"
+              className="w-20 h-20 sm:w-24 sm:h-24 md:w-[150px] md:h-[150px] rounded-full overflow-hidden flex items-center justify-center border-[3px]"
               style={{
-                ringColor: 'var(--accent-text)',
-                ringOffsetColor: 'var(--bg-primary)',
+                borderColor: 'var(--accent-text)',
                 background: igProfilePic ? 'transparent' : 'linear-gradient(135deg, #833AB4, #FD1D1D, #F77737)',
               }}
             >

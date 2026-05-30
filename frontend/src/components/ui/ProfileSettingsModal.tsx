@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Instagram, Save, Loader2 } from 'lucide-react';
+import { X, Camera, Save, Loader2 } from 'lucide-react';
 import { cinematicEasing } from '../../utils/animations';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../api/client';
@@ -165,7 +165,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
                   className="p-2.5 rounded-xl"
                   style={{ backgroundColor: 'var(--glow-accent-subtle)' }}
                 >
-                  <Instagram size={20} style={{ color: 'var(--accent-text)' }} />
+                  <Camera size={20} style={{ color: 'var(--accent-text)' }} />
                 </div>
                 <div>
                   <h2
