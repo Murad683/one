@@ -522,34 +522,29 @@ const DeliverablesPage = () => {
 
             {/* ── Instagram Highlights Row ── */}
             {igHighlights.length > 0 && (
-              <div className="mt-4 overflow-x-auto no-scrollbar">
-                <div className="flex gap-4 md:gap-5 pb-1" style={{ minWidth: 'min-content' }}>
+              <div className="mt-4 md:mt-6 overflow-x-auto no-scrollbar">
+                <div className="flex gap-4 md:gap-8 pb-1" style={{ minWidth: 'min-content' }}>
                   {igHighlights.map((h, idx) => (
-                    <div key={idx} className="flex flex-col items-center gap-1 shrink-0 select-none" style={{ width: '66px' }}>
-                      {/* Outer gradient ring */}
+                    <div key={idx} className="flex flex-col items-center gap-2 shrink-0 select-none w-[72px] md:w-[85px]">
+                      {/* Outer grey ring */}
                       <div
-                        className="rounded-full p-[2px]"
+                        className="rounded-full flex items-center justify-center shrink-0 w-[64px] h-[64px] md:w-[80px] md:h-[80px]"
                         style={{
-                          background: 'linear-gradient(135deg, #833AB4, #FD1D1D, #F77737)',
+                          border: '1px solid var(--ig-border)',
+                          padding: '3px',
                         }}
                       >
-                        {/* White padding ring */}
-                        <div
-                          className="rounded-full p-[2px]"
-                          style={{ backgroundColor: 'var(--ig-bg)' }}
-                        >
-                          <div className="w-[56px] h-[56px] md:w-[64px] md:h-[64px] rounded-full overflow-hidden">
-                            <img
-                              src={resolveFileUrl(h.imageUrl)}
-                              alt={h.title}
-                              className="w-full h-full object-cover"
-                              draggable={false}
-                            />
-                          </div>
+                        <div className="w-full h-full rounded-full overflow-hidden" style={{ backgroundColor: 'var(--ig-bg)' }}>
+                          <img
+                            src={resolveFileUrl(h.imageUrl)}
+                            alt={h.title}
+                            className="w-full h-full object-cover"
+                            draggable={false}
+                          />
                         </div>
                       </div>
                       <span
-                        className="text-[11px] text-center truncate w-full leading-tight"
+                        className="text-[11px] md:text-[12px] text-center truncate w-full"
                         style={{ color: 'var(--ig-text)' }}
                       >
                         {h.title}
