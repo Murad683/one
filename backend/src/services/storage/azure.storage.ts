@@ -37,8 +37,23 @@ export class AzureStorageProvider implements IStorageProvider {
     const containerName = folder.toLowerCase();
     const containerClient = this.blobServiceClient.getContainerClient(containerName);
 
-    // Ensure the container exists dynamically
-    await containerClient.createIfNotExists();
+    // Determine if the container should be public
+    const publicContainers = ['avatars', 'images', 'thumbnails'];
+    const isPublic = publicContainers.includes(containerName);
+
+    // Ensure the container exists dynamically with the correct access policy
+    await containerClient.createIfNotExists({
+      access: isPublic ? 'blob' : undefined,
+    });
+
+    // For already existing private containers, explicitly set them to public
+    if (isPublic) {
+      try {
+        await containerClient.setAccessPolicy('blob');
+      } catch (err) {
+        console.warn(`Could not update access policy for ${containerName}:`, err);
+      }
+    }
 
     const uniqueName = `${uuidv4()}-${Date.now()}${path.extname(file.originalname)}`;
     const blockBlobClient = containerClient.getBlockBlobClient(uniqueName);
