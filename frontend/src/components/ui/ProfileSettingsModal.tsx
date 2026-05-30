@@ -21,12 +21,22 @@ interface ProfileFormData {
 }
 
 const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const AZURE_BLOB_URL = import.meta.env.VITE_AZURE_BLOB_URL;
 
 const resolveFileUrl = (fileUrl: string | null | undefined): string => {
   if (!fileUrl) return '';
   if (fileUrl.startsWith('http') || fileUrl.startsWith('blob:')) return fileUrl;
   
   const normalized = fileUrl.replace(/\\/g, '/');
+  
+  if (AZURE_BLOB_URL) {
+    let cleanPath = normalized;
+    if (cleanPath.startsWith('uploads/')) {
+      cleanPath = cleanPath.replace('uploads/', '');
+    }
+    return `${AZURE_BLOB_URL}/${cleanPath}`;
+  }
+
   if (normalized.includes('/uploads/')) {
     const idx = normalized.indexOf('/uploads/');
     return `${BACKEND}${normalized.substring(idx)}`;
@@ -125,7 +135,9 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
       if (avatarFile) {
         const fileData = new FormData();
         fileData.append('file', avatarFile);
-        const uploadRes = await apiClient.post('/uploads/avatar', fileData);
+        const uploadRes = await apiClient.post('/uploads/avatar', fileData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
         // Typical structure: uploadRes.data.data.url
         finalProfilePic = uploadRes.data?.data?.url || uploadRes.data?.url || uploadRes.data?.data?.storageKey || finalProfilePic;
       }
