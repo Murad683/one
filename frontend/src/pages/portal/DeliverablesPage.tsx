@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cinematicEasing } from '../../utils/animations';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { Download, Play, X, Send, FileX, Video, Image, Grid3X3, MessageCircle } from 'lucide-react';
+import { Download, Play, X, Send, FileX, Video, Image, Grid3X3, MessageCircle, MoreHorizontal } from 'lucide-react';
 
 interface Deliverable {
   id: string;
@@ -86,8 +88,8 @@ const MediaPreview = ({
 
   if (isVideoFile(mimeType, fileName)) {
     return (
-      <div className="w-full bg-black" style={{ aspectRatio: '16/9' }}>
-        <video controls autoPlay={false} className="w-full max-h-[70vh]" src={url}>
+      <div className="w-full h-full bg-black flex items-center justify-center relative">
+        <video controls autoPlay className="w-full h-full object-contain" src={url}>
           Brauzeriniz video formatını dəstəkləmir.
         </video>
       </div>
@@ -96,14 +98,11 @@ const MediaPreview = ({
 
   if (isImageFile(mimeType, fileName)) {
     return (
-      <div
-        className="w-full flex items-center justify-center p-4"
-        style={{ backgroundColor: 'var(--bg-elevated)' }}
-      >
+      <div className="w-full h-full bg-black flex items-center justify-center relative">
         <img
           src={url}
           alt="Önizləmə"
-          className="object-contain w-full max-h-[70vh] rounded-lg"
+          className="w-full h-full object-contain"
         />
       </div>
     );
@@ -112,7 +111,7 @@ const MediaPreview = ({
   // PDF, ZIP, AI, etc. — no inline preview
   return (
     <div
-      className="flex flex-col items-center justify-center py-12 gap-3"
+      className="w-full h-full flex flex-col items-center justify-center py-12 gap-3"
       style={{ backgroundColor: 'var(--bg-elevated)' }}
     >
       <FileX size={36} style={{ color: 'var(--text-ghost)' }} />
@@ -123,7 +122,7 @@ const MediaPreview = ({
   );
 };
 
-/* ─── Preview Modal ──────────────────────────── */
+/* ─── Preview Modal (Instagram Style) ────────── */
 const PreviewModal = ({
   item,
   onClose,
@@ -133,6 +132,7 @@ const PreviewModal = ({
   onClose: () => void;
   onFeedbackSent: (id: string, fullFeedback: string) => void;
 }) => {
+  const { user } = useAuth();
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [feedbackHistory, setFeedbackHistory] = useState(item.clientFeedback || '');
@@ -161,148 +161,190 @@ const PreviewModal = ({
     }
   };
 
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEscape);
+    document.body.classList.add('lock-scroll');
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+      document.body.classList.remove('lock-scroll');
+    };
+  }, [onClose]);
 
+  const igUsername = user?.igUsername || 'username';
+  const igProfilePic = user?.igProfilePic || null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center sm:p-4 md:p-8"
       style={{ backgroundColor: 'var(--modal-backdrop)' }}
       onClick={onClose}
     >
-      <div
-        className="relative w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl border overflow-hidden flex flex-col"
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.3, ease: cinematicEasing }}
+        className="relative w-full max-w-6xl h-full md:h-[85vh] md:max-h-[800px] rounded-none sm:rounded-xl md:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl"
         style={{
           backgroundColor: 'var(--bg-secondary)',
           borderColor: 'var(--card-border)',
-          maxHeight: '92vh',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ── Header ── */}
-        <div
-          className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0"
-          style={{ borderColor: 'var(--border-subtle)' }}
+        {/* Mobile close button overlay */}
+        <button
+          onClick={onClose}
+          className="md:hidden absolute top-4 right-4 z-50 p-2 rounded-full backdrop-blur-md bg-black/40 text-white border border-white/10"
         >
-          <div>
-            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              {item.title || item.category?.name || typeLabels[item.type || ''] || item.type || 'Fayl'}
-            </p>
-            <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
-              {item.category?.name || typeLabels[item.type || ''] || item.type} — {statusConfig[item.status]?.label}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {url && (
-              <a
-                href={activeFile.downloadUrl || url}
-                download={activeFile.name || 'file'}
-                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-                style={{ color: 'var(--accent-text)', backgroundColor: 'var(--glow-accent-subtle)' }}
-              >
-                <Download size={12} />
-                Yüklə
-              </a>
-            )}
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg transition-colors hover:opacity-80"
-              style={{ color: 'var(--text-faint)' }}
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </div>
+          <X size={20} />
+        </button>
 
-        {/* ── Scrollable Body ── */}
-        <div className="overflow-y-auto">
-          {/* Dynamic Media Preview */}
-          {activeFile && <MediaPreview url={url} mimeType={activeFile.type} fileName={activeFile.name} />}
+        {/* Desktop close button */}
+        <button
+          onClick={onClose}
+          className="hidden md:flex absolute top-4 right-4 z-50 p-2 rounded-full backdrop-blur-md transition-all cursor-pointer hover:bg-white/10"
+          style={{ color: 'var(--text-primary)', backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)', borderWidth: '1px' }}
+        >
+          <X size={20} />
+        </button>
+
+        {/* LEFT COLUMN: MEDIA VIEWER */}
+        <div className="flex-1 bg-black flex flex-col relative h-[50vh] md:h-full overflow-hidden">
+          {activeFile ? (
+            <MediaPreview url={url} mimeType={activeFile.type} fileName={activeFile.name} />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-white/50 text-sm">Media tapılmadı</div>
+          )}
           
-          {/* Thumbnails strip if multiple files */}
+          {/* Multi-file thumbnails */}
           {item.files && item.files.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto p-4 w-full justify-center" style={{ backgroundColor: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-subtle)' }}>
+            <div className="absolute bottom-4 left-0 right-0 flex gap-2 justify-center px-4">
               {item.files.map((f, idx) => (
                 <button
                   key={f.url}
                   onClick={() => setActiveIndex(idx)}
-                  className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                    idx === activeIndex ? 'border-blue-500 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
+                  className={`shrink-0 w-12 h-12 rounded-full overflow-hidden border-2 transition-all ${
+                    idx === activeIndex ? 'border-white shadow-md scale-110' : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 >
                   {isImageFile(f.type, f.name) ? (
                     <img src={getFileUrl(f)} className="w-full h-full object-cover" alt={f.name} />
                   ) : isVideoFile(f.type, f.name) ? (
-                    <div className="w-full h-full bg-black flex items-center justify-center"><Play className="h-6 w-6 text-white" /></div>
+                    <div className="w-full h-full bg-zinc-900 flex items-center justify-center"><Play className="h-4 w-4 text-white" /></div>
                   ) : (
-                    <div className="w-full h-full bg-slate-800 flex items-center justify-center"><FileX className="h-6 w-6 text-white" /></div>
+                    <div className="w-full h-full bg-zinc-900 flex items-center justify-center"><FileX className="h-4 w-4 text-white" /></div>
                   )}
                 </button>
               ))}
             </div>
           )}
+        </div>
 
-          {/* Feedback Section */}
-          <div className="px-4 sm:px-6 py-4 sm:py-5" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-            <p
-              className="text-[11px] uppercase tracking-widest font-medium mb-3"
-              style={{ color: 'var(--text-ghost)' }}
-            >
-              Rəyiniz
-            </p>
-
-            {/* Feedback history — read-only, always visible when content exists */}
-            {feedbackHistory && (
-              <div
-                className="rounded-xl p-3 mb-4 text-xs leading-relaxed whitespace-pre-wrap"
-                style={{
-                  backgroundColor: 'var(--bg-elevated)',
-                  color: 'var(--text-secondary)',
-                  border: '1px solid var(--border-subtle)',
-                }}
-              >
-                {feedbackHistory}
+        {/* RIGHT COLUMN: COMMENTS & DETAILS */}
+        <div className="w-full md:w-[400px] lg:w-[450px] flex flex-col h-[50vh] md:h-full border-t md:border-t-0 md:border-l" style={{ borderColor: 'var(--border-subtle)' }}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 sm:py-4 border-b shrink-0" style={{ borderColor: 'var(--border-subtle)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center">
+                {igProfilePic ? (
+                  <img src={igProfilePic} alt={igUsername} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white text-xs font-bold">{user?.name?.charAt(0) || 'U'}</span>
+                )}
               </div>
-            )}
-
-            {/* Always-active textarea */}
-            <textarea
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder={feedbackHistory ? 'Əlavə rəy yazın...' : 'Bu material haqqında rəyinizi yazın...'}
-              rows={3}
-              disabled={isSending}
-              className="w-full rounded-xl py-3 px-4 text-sm resize-none focus:outline-none transition-all disabled:opacity-50"
-              style={{
-                backgroundColor: 'var(--input-bg)',
-                border: '1px solid var(--input-border)',
-                color: 'var(--text-primary)',
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSendFeedback();
-              }}
-            />
-            {error && (
-              <p className="text-xs mt-1.5" style={{ color: '#EF4444' }}>
-                {error}
-              </p>
-            )}
-            <div className="flex items-center justify-between mt-3">
-              <p className="text-[10px]" style={{ color: 'var(--text-ghost)' }}>
-                Ctrl+Enter ilə göndər
-              </p>
-              <button
-                onClick={handleSendFeedback}
-                disabled={isSending || !newMessage.trim()}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full transition-all hover:opacity-90 disabled:opacity-40 bg-accent"
-                style={{ color: 'var(--accent-on-accent)' }}
-              >
-                <Send size={13} />
-                {isSending ? 'Göndərilir...' : 'Göndər'}
-              </button>
+              <div className="flex flex-col">
+                <p className="text-sm font-semibold leading-tight" style={{ color: 'var(--text-primary)' }}>{igUsername}</p>
+                <p className="text-[11px] leading-tight" style={{ color: 'var(--text-faint)' }}>{item.title || item.category?.name || 'Post'}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center">
+              {url && (
+                <a
+                  href={activeFile?.downloadUrl || url}
+                  download={activeFile?.name || 'file'}
+                  className="p-1.5 md:mr-10 rounded-lg transition-colors hover:opacity-80 flex items-center"
+                  style={{ color: 'var(--text-primary)' }}
+                  title="Yüklə"
+                >
+                  <Download size={20} />
+                </a>
+              )}
             </div>
           </div>
+
+          {/* Body (Scrollable Comments) */}
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            {/* "Caption" / Original Note */}
+            <div className="flex gap-3 mb-6">
+               <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden flex items-center justify-center border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--bg-elevated)' }}>
+                 <span className="text-[10px] font-bold" style={{ color: 'var(--accent-text)' }}>ONE</span>
+               </div>
+               <div className="flex-1">
+                 <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                   <span className="font-semibold mr-2">one_agency</span>
+                   {item.notes || 'Yeni material çatdırıldı!'}
+                 </p>
+                 <p className="text-[11px] mt-1" style={{ color: 'var(--text-faint)' }}>
+                   Status: {statusConfig[item.status]?.label} • {item.month}/{item.year}
+                 </p>
+               </div>
+            </div>
+
+            {/* Client Comments */}
+            {feedbackHistory && (
+              <div className="flex gap-3">
+                 <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center">
+                   {igProfilePic ? (
+                     <img src={igProfilePic} alt={igUsername} className="w-full h-full object-cover" />
+                   ) : (
+                     <span className="text-white text-xs font-bold">{user?.name?.charAt(0) || 'U'}</span>
+                   )}
+                 </div>
+                 <div className="flex-1">
+                   <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
+                     <span className="font-semibold mr-2">{igUsername}</span>
+                     {feedbackHistory}
+                   </p>
+                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer (Add Comment) */}
+          <div className="border-t p-4 shrink-0 flex flex-col" style={{ borderColor: 'var(--border-subtle)' }}>
+             {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+             <div className="flex items-center gap-2">
+               <textarea
+                 value={newMessage}
+                 onChange={(e) => setNewMessage(e.target.value)}
+                 placeholder="Add a comment..."
+                 rows={1}
+                 disabled={isSending}
+                 className="flex-1 bg-transparent text-sm resize-none focus:outline-none max-h-20"
+                 style={{ color: 'var(--text-primary)' }}
+                 onKeyDown={(e) => {
+                   if (e.key === 'Enter' && !e.shiftKey) {
+                     e.preventDefault();
+                     handleSendFeedback();
+                   }
+                 }}
+               />
+               <button
+                 onClick={handleSendFeedback}
+                 disabled={isSending || !newMessage.trim()}
+                 className="text-sm font-semibold transition-opacity disabled:opacity-40"
+                 style={{ color: 'var(--accent-text)' }}
+               >
+                 {isSending ? '...' : 'Post'}
+               </button>
+             </div>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
@@ -578,13 +620,15 @@ const DeliverablesPage = () => {
       </div>
 
       {/* Preview Modal — only rendered when a row is selected */}
-      {selectedItem && (
-        <PreviewModal
-          item={selectedItem}
-          onClose={() => setSelectedItem(null)}
-          onFeedbackSent={handleFeedbackSent}
-        />
-      )}
+      <AnimatePresence>
+        {selectedItem && (
+          <PreviewModal
+            item={selectedItem}
+            onClose={() => setSelectedItem(null)}
+            onFeedbackSent={handleFeedbackSent}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
