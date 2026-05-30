@@ -395,10 +395,10 @@ const DeliverablesPage = () => {
   const displayPostCount = igPostsCount !== '0' ? igPostsCount : String(actualPostCount);
 
   return (
-    <div className="pb-28 lg:pb-12 bg-[#FAFAFA] dark:bg-[#000000] text-[#262626] dark:text-[#F5F5F5] min-h-screen font-sans">
+    <div className="pb-28 lg:pb-12 min-h-screen font-sans" style={{ backgroundColor: 'var(--ig-bg)', color: 'var(--ig-text)' }}>
       
       {/* ── Mobile Top Nav ── */}
-      <div className="flex md:hidden items-center justify-between px-4 h-11 border-b border-[#DBDBDB] dark:border-[#262626]">
+      <div className="flex md:hidden items-center justify-between px-4 h-11 border-b" style={{ borderColor: 'var(--ig-border)' }}>
         <button className="p-1 -ml-1">
           <svg aria-label="Back" color="currentColor" fill="currentColor" height="24" role="img" viewBox="0 0 24 24" width="24"><path d="M21 17.502a.997.997 0 0 1-.707-.293L12 8.913l-8.293 8.296a1 1 0 1 1-1.414-1.414l9-9.004a1.03 1.03 0 0 1 1.414 0l9 9.004A1 1 0 0 1 21 17.502Z" transform="rotate(-90 12 12)"></path></svg>
         </button>
@@ -419,8 +419,9 @@ const DeliverablesPage = () => {
           <div className="flex items-center gap-6 md:hidden">
             <div className="shrink-0">
               <div
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden flex items-center justify-center border-[2px] border-[#DBDBDB] dark:border-[#262626]"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden flex items-center justify-center border-[2px]"
                 style={{
+                  borderColor: 'var(--ig-border)',
                   background: igProfilePic ? 'transparent' : 'linear-gradient(135deg, #833AB4, #FD1D1D, #F77737)',
                 }}
               >
@@ -441,15 +442,15 @@ const DeliverablesPage = () => {
             <div className="flex-1 flex justify-around items-center">
               <div className="flex flex-col items-center">
                 <span className="text-[16px] font-semibold">{displayPostCount}</span>
-                <span className="text-[13px] text-[#262626] dark:text-[#F5F5F5]">posts</span>
+                <span className="text-[13px]" style={{ color: 'var(--ig-text)' }}>posts</span>
               </div>
               <div className="flex flex-col items-center">
                 <span className="text-[16px] font-semibold">{igFollowers}</span>
-                <span className="text-[13px] text-[#262626] dark:text-[#F5F5F5]">followers</span>
+                <span className="text-[13px]" style={{ color: 'var(--ig-text)' }}>followers</span>
               </div>
               <div className="flex flex-col items-center">
                 <span className="text-[16px] font-semibold">{igFollowing}</span>
-                <span className="text-[13px] text-[#262626] dark:text-[#F5F5F5]">following</span>
+                <span className="text-[13px]" style={{ color: 'var(--ig-text)' }}>following</span>
               </div>
             </div>
           </div>
@@ -457,8 +458,9 @@ const DeliverablesPage = () => {
           {/* Desktop Avatar (Hidden on Mobile) */}
           <div className="hidden md:block shrink-0">
             <div
-              className="w-[150px] h-[150px] rounded-full overflow-hidden flex items-center justify-center border-[1px] border-[#DBDBDB] dark:border-[#262626]"
+              className="w-[150px] h-[150px] rounded-full overflow-hidden flex items-center justify-center border-[1px]"
               style={{
+                borderColor: 'var(--ig-border)',
                 background: igProfilePic ? 'transparent' : 'linear-gradient(135deg, #833AB4, #FD1D1D, #F77737)',
               }}
             >
@@ -489,10 +491,16 @@ const DeliverablesPage = () => {
                 <button className="px-5 py-1.5 text-[14px] font-semibold rounded-lg transition-all bg-[#0095F6] text-white hover:bg-[#1877F2]">
                   Follow
                 </button>
-                <button className="px-5 py-1.5 text-[14px] font-semibold rounded-lg transition-all bg-[#EFEFEF] dark:bg-[#363636] text-[#000000] dark:text-[#F5F5F5] hover:bg-[#DBDBDB] dark:hover:bg-[#262626]">
+                <button 
+                  className="px-5 py-1.5 text-[14px] font-semibold rounded-lg transition-all"
+                  style={{ backgroundColor: 'var(--ig-btn-gray-bg)', color: 'var(--ig-btn-gray-text)' }}
+                >
                   Message
                 </button>
-                <button className="p-2 rounded-lg transition-all bg-[#EFEFEF] dark:bg-[#363636] text-[#000000] dark:text-[#F5F5F5] hover:bg-[#DBDBDB] dark:hover:bg-[#262626]">
+                <button 
+                  className="p-2 rounded-lg transition-all"
+                  style={{ backgroundColor: 'var(--ig-btn-gray-bg)', color: 'var(--ig-btn-gray-text)' }}
+                >
                   <svg aria-label="Discover People" color="currentColor" fill="currentColor" height="16" role="img" viewBox="0 0 24 24" width="16"><path d="M19.006 8.252H21.25a1.25 1.25 0 0 0 0-2.5h-2.244V3.5a1.25 1.25 0 1 0-2.5 0v2.252H14.25a1.25 1.25 0 0 0 0 2.5h2.256v2.248a1.25 1.25 0 1 0 2.5 0v-2.248Z"></path><path d="M22 19.25a2.75 2.75 0 0 1-2.75 2.75H4.75A2.75 2.75 0 0 1 2 19.25v-.403A6.837 6.837 0 0 1 8.815 12h6.37A6.837 6.837 0 0 1 22 18.847v.403ZM12 10.5a4 4 0 1 0-4-4 4.005 4.005 0 0 0 4 4Z"></path></svg>
                 </button>
               </div>
@@ -516,10 +524,16 @@ const DeliverablesPage = () => {
               <button className="flex-1 py-1.5 text-[14px] font-semibold rounded-lg transition-all bg-[#0095F6] text-white">
                 Follow
               </button>
-              <button className="flex-1 py-1.5 text-[14px] font-semibold rounded-lg transition-all bg-[#EFEFEF] dark:bg-[#363636] text-[#000000] dark:text-[#F5F5F5]">
+              <button 
+                className="flex-1 py-1.5 text-[14px] font-semibold rounded-lg transition-all"
+                style={{ backgroundColor: 'var(--ig-btn-gray-bg)', color: 'var(--ig-btn-gray-text)' }}
+              >
                 Message
               </button>
-              <button className="p-1.5 rounded-lg transition-all bg-[#EFEFEF] dark:bg-[#363636] text-[#000000] dark:text-[#F5F5F5]">
+              <button 
+                className="p-1.5 rounded-lg transition-all"
+                style={{ backgroundColor: 'var(--ig-btn-gray-bg)', color: 'var(--ig-btn-gray-text)' }}
+              >
                 <svg aria-label="Discover People" color="currentColor" fill="currentColor" height="16" role="img" viewBox="0 0 24 24" width="16"><path d="M19.006 8.252H21.25a1.25 1.25 0 0 0 0-2.5h-2.244V3.5a1.25 1.25 0 1 0-2.5 0v2.252H14.25a1.25 1.25 0 0 0 0 2.5h2.256v2.248a1.25 1.25 0 1 0 2.5 0v-2.248Z"></path><path d="M22 19.25a2.75 2.75 0 0 1-2.75 2.75H4.75A2.75 2.75 0 0 1 2 19.25v-.403A6.837 6.837 0 0 1 8.815 12h6.37A6.837 6.837 0 0 1 22 18.847v.403ZM12 10.5a4 4 0 1 0-4-4 4.005 4.005 0 0 0 4 4Z"></path></svg>
               </button>
             </div>
@@ -528,30 +542,37 @@ const DeliverablesPage = () => {
         </div>
 
         {/* Tabs divider */}
-        <div className="mt-8 border-t border-[#DBDBDB] dark:border-[#262626] flex justify-center gap-12">
-          <button className="flex items-center gap-1.5 py-4 text-[12px] uppercase tracking-widest font-semibold border-t-[1px] border-[#262626] dark:border-[#F5F5F5] text-[#262626] dark:text-[#F5F5F5] -mt-[1px]">
+        <div className="mt-8 border-t flex justify-center gap-12" style={{ borderColor: 'var(--ig-border)' }}>
+          <button 
+            className="flex items-center gap-1.5 py-4 text-[12px] uppercase tracking-widest font-semibold border-t-[1px] -mt-[1px]"
+            style={{ borderColor: 'var(--ig-text)', color: 'var(--ig-text)' }}
+          >
             <Grid3X3 size={12} />
             Posts
           </button>
-          <button className="flex items-center gap-1.5 py-4 text-[12px] uppercase tracking-widest font-semibold border-t-[1px] border-transparent text-[#737373] dark:text-[#A8A8A8] -mt-[1px]">
+          <button 
+            className="flex items-center gap-1.5 py-4 text-[12px] uppercase tracking-widest font-semibold border-t-[1px] border-transparent -mt-[1px]"
+            style={{ color: 'var(--ig-text-secondary)' }}
+          >
             <Video size={12} />
             Reels
           </button>
         </div>
       </div>
 
-      <div className="px-0 sm:px-0 md:px-0 bg-[#FAFAFA] dark:bg-[#000000]">
+      <div className="px-0 sm:px-0 md:px-0" style={{ backgroundColor: 'var(--ig-bg)' }}>
         {loading ? (
           <div className="grid grid-cols-3 gap-[2px] sm:gap-1 w-full max-w-4xl mx-auto">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
-                className="aspect-[3/4] animate-pulse bg-[#EFEFEF] dark:bg-[#262626]"
+                className="aspect-[3/4] animate-pulse"
+                style={{ backgroundColor: 'var(--ig-empty-bg)' }}
               />
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-3 text-[#737373] dark:text-[#A8A8A8]">
+          <div className="flex flex-col items-center justify-center py-24 gap-3" style={{ color: 'var(--ig-text-secondary)' }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
               <polyline points="14 2 14 8 20 8"/>

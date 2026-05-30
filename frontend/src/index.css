@@ -91,6 +91,16 @@
   --accent-text: #A3E635;
   --accent-on-accent: #000000;
   --bg-image: url('/dark-back.jpg');
+  
+  /* Instagram Profile Variables (Dark) */
+  --ig-bg: #000000;
+  --ig-text: #F5F5F5;
+  --ig-text-secondary: #A8A8A8;
+  --ig-border: #262626;
+  --ig-btn-gray-bg: #363636;
+  --ig-btn-gray-text: #F5F5F5;
+  --ig-btn-gray-hover: #262626;
+  --ig-empty-bg: #262626;
 }
 
 /* ─── Light Theme ───────────────────────────── */
@@ -123,6 +133,16 @@
   --accent-text: #65A30D;
   --accent-on-accent: #000000;
   --bg-image: url('/light-back.jpg');
+
+  /* Instagram Profile Variables (Light) */
+  --ig-bg: #FAFAFA;
+  --ig-text: #262626;
+  --ig-text-secondary: #737373;
+  --ig-border: #DBDBDB;
+  --ig-btn-gray-bg: #EFEFEF;
+  --ig-btn-gray-text: #000000;
+  --ig-btn-gray-hover: #DBDBDB;
+  --ig-empty-bg: #EFEFEF;
 }
 
 @layer base {
