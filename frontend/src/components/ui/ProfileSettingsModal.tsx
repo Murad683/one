@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera, Save, Loader2, UploadCloud, Plus, Trash2 } from 'lucide-react';
+import { X, Camera, Save, Loader2, UploadCloud, Plus } from 'lucide-react';
 import { cinematicEasing } from '../../utils/animations';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../api/client';
