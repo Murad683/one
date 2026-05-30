@@ -144,8 +144,13 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
       setTimeout(() => {
         onClose();
       }, 1200);
-    } catch {
-      setError('Profil yenilənərkən xəta baş verdi.');
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || err?.message || '';
+      if (errMsg === 'File too large' || errMsg.includes('File too large') || errMsg.includes('too large')) {
+        setError('Şəkil çox böyükdür. Zəhmət olmasa 10 MB-dan kiçik ölçülü şəkil yükləyin.');
+      } else {
+        setError('Profil yenilənərkən xəta baş verdi.');
+      }
     } finally {
       setIsSubmitting(false);
     }
