@@ -19,4 +19,15 @@ router.post(
   uploadImageFile
 );
 
+router.post(
+  '/avatar',
+  verifyTokenMiddleware,
+  (req, _res, next) => {
+    req.query.folder = 'avatars';
+    next();
+  },
+  uploadImage,
+  uploadImageFile
+);
+
 export default router;

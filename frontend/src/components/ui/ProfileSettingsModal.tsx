@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera, Save, Loader2 } from 'lucide-react';
+import { X, Camera, Save, Loader2, UploadCloud } from 'lucide-react';
 import { cinematicEasing } from '../../utils/animations';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../api/client';
@@ -27,6 +27,10 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [formData, setFormData] = useState<ProfileFormData>({
     igUsername: '',
     igBio: '',
@@ -47,6 +51,8 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
         igPostsCount: user.igPostsCount || '',
         igProfilePic: user.igProfilePic || '',
       });
+      setAvatarPreview(user.igProfilePic || null);
+      setAvatarFile(null);
       setError('');
       setSuccess('');
     }
@@ -80,6 +86,14 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -87,13 +101,25 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
     setSuccess('');
 
     try {
+      let finalProfilePic = formData.igProfilePic;
+
+      if (avatarFile) {
+        const fileData = new FormData();
+        fileData.append('file', avatarFile);
+        const uploadRes = await apiClient.post('/upload/avatar', fileData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        // Typical structure: uploadRes.data.data.url
+        finalProfilePic = uploadRes.data?.data?.url || uploadRes.data?.url || uploadRes.data?.data?.storageKey || finalProfilePic;
+      }
+
       await apiClient.patch('/auth/profile', {
         igUsername: formData.igUsername || null,
         igBio: formData.igBio || null,
         igFollowers: formData.igFollowers || null,
         igFollowing: formData.igFollowing || null,
         igPostsCount: formData.igPostsCount || null,
-        igProfilePic: formData.igProfilePic || null,
+        igProfilePic: finalProfilePic || null,
       });
 
       await refreshUser();
@@ -267,21 +293,36 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
                   />
                 </div>
 
-                {/* Profile Picture URL */}
+                {/* Profile Picture Upload */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-medium uppercase tracking-wider" style={labelStyle}>
-                    Profil Şəkli URL
+                    Profil Şəkli
                   </label>
-                  <input
-                    type="text"
-                    name="igProfilePic"
-                    value={formData.igProfilePic}
-                    onChange={handleChange}
-                    placeholder="https://example.com/avatar.jpg"
-                    disabled={isSubmitting}
-                    className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors disabled:opacity-50"
+                  <div 
+                    className="w-full rounded-xl p-4 flex items-center gap-4 cursor-pointer transition-all hover:opacity-80"
                     style={inputStyle}
-                  />
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleFileChange} 
+                      disabled={isSubmitting}
+                    />
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden shrink-0 flex items-center justify-center border" style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--bg-elevated)' }}>
+                      {avatarPreview ? (
+                        <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <UploadCloud size={20} style={{ color: 'var(--text-muted)' }} />
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Şəkil yükləyin</span>
+                      <span className="text-[11px] sm:text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Mövcud şəkli dəyişmək üçün klikləyin</span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Error / Success Messages */}
