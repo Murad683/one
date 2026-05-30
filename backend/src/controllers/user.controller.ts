@@ -29,6 +29,7 @@ export const getUsers = async (req: Request, res: Response) => {
           isActive: true,
           createdAt: true,
           updatedAt: true,
+          igHighlights: true,
         },
       }),
       prisma.user.count({ where }),
@@ -55,17 +56,19 @@ export const updateUser = async (req: Request, res: Response) => {
       return sendError(res, 'User not found', 404);
     }
 
-    const { name, email, password, isActive } = req.body;
+    const { name, email, password, isActive, igHighlights } = req.body;
     const data: {
       name?: string;
       email?: string;
       password?: string;
       isActive?: boolean;
+      igHighlights?: any;
     } = {};
 
     if (name !== undefined) data.name = name;
     if (email !== undefined) data.email = email;
     if (isActive !== undefined) data.isActive = isActive;
+    if (igHighlights !== undefined) data.igHighlights = igHighlights;
     if (password) data.password = await hashPassword(password);
 
     const user = await prisma.user.update({
@@ -79,6 +82,7 @@ export const updateUser = async (req: Request, res: Response) => {
         isActive: true,
         createdAt: true,
         updatedAt: true,
+        igHighlights: true,
       },
     });
 

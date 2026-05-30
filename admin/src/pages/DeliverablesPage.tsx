@@ -13,6 +13,7 @@ import type { TableColumn } from '../components/ui/Table';
 import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
+import { HighlightsManager } from '../components/deliverables/HighlightsManager';
 
 type DeliverableStatus = 'PENDING' | 'PROCESSING' | 'READY' | 'ARCHIVED';
 
@@ -20,6 +21,7 @@ interface ClientUser extends Record<string, unknown> {
   id: string;
   name: string;
   email: string;
+  igHighlights?: { title: string; imageUrl: string }[];
 }
 
 interface DeliverableCategory extends Record<string, unknown> {
@@ -249,6 +251,7 @@ export const DeliverablesPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<Deliverable | null>(null);
+  const [activeTab, setActiveTab] = useState<'files' | 'highlights'>('files');
 
   const { register, handleSubmit, reset, control, formState: { errors } } = useForm<DeliverableFormValues>({
     defaultValues,
@@ -471,7 +474,35 @@ export const DeliverablesPage = () => {
 
   return (
     <div className="space-y-4">
-      <section className="space-y-4">
+      {/* ── Tabs ── */}
+      <div className="flex border-b border-edge">
+        <button
+          onClick={() => setActiveTab('files')}
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'files'
+              ? 'border-accent text-accent'
+              : 'border-transparent text-muted hover:text-heading hover:border-edge'
+          }`}
+        >
+          Layihə Faylları
+        </button>
+        <button
+          onClick={() => setActiveTab('highlights')}
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'highlights'
+              ? 'border-accent text-accent'
+              : 'border-transparent text-muted hover:text-heading hover:border-edge'
+          }`}
+        >
+          Önə Çıxanlar (Highlights)
+        </button>
+      </div>
+
+      {activeTab === 'highlights' ? (
+        <HighlightsManager clients={clients} onRefreshClients={fetchClients} />
+      ) : (
+        <>
+          <section className="space-y-4 pt-2">
         <div>
           <h2 className="text-xl font-semibold text-heading">Fayl Kateqoriyaları (Növlər)</h2>
         </div>
@@ -671,6 +702,8 @@ export const DeliverablesPage = () => {
           </div>
         </div>
       </Modal>
+      </>
+      )}
     </div>
   );
 };
