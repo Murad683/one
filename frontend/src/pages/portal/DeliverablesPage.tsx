@@ -395,7 +395,7 @@ const DeliverablesPage = () => {
             >
               {igProfilePic ? (
                 <img
-                  src={igProfilePic}
+                  src={resolveFileUrl(igProfilePic)}
                   alt={igUsername}
                   className="w-full h-full object-cover"
                 />

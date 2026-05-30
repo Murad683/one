@@ -20,6 +20,25 @@ interface ProfileFormData {
   igProfilePic: string;
 }
 
+const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+const resolveFileUrl = (fileUrl: string | null | undefined): string => {
+  if (!fileUrl) return '';
+  if (fileUrl.startsWith('http') || fileUrl.startsWith('blob:')) return fileUrl;
+  
+  const normalized = fileUrl.replace(/\\/g, '/');
+  if (normalized.includes('/uploads/')) {
+    const idx = normalized.indexOf('/uploads/');
+    return `${BACKEND}${normalized.substring(idx)}`;
+  }
+  
+  if (normalized.startsWith('uploads/')) {
+    return `${BACKEND}/${normalized}`;
+  }
+
+  return `${BACKEND}/uploads/${normalized}`;
+};
+
 const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onClose }) => {
   const backdropRef = useRef<HTMLDivElement>(null);
   const { user, refreshUser } = useAuth();
@@ -51,7 +70,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
         igPostsCount: user.igPostsCount || '',
         igProfilePic: user.igProfilePic || '',
       });
-      setAvatarPreview(user.igProfilePic || null);
+      setAvatarPreview(resolveFileUrl(user.igProfilePic) || null);
       setAvatarFile(null);
       setError('');
       setSuccess('');
