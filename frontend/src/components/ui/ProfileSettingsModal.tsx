@@ -125,9 +125,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
       if (avatarFile) {
         const fileData = new FormData();
         fileData.append('file', avatarFile);
-        const uploadRes = await apiClient.post('/uploads/avatar', fileData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        const uploadRes = await apiClient.post('/uploads/avatar', fileData);
         // Typical structure: uploadRes.data.data.url
         finalProfilePic = uploadRes.data?.data?.url || uploadRes.data?.url || uploadRes.data?.data?.storageKey || finalProfilePic;
       }

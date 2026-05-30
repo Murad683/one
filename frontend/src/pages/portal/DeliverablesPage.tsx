@@ -30,6 +30,23 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 
 const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+const resolveFileUrl = (fileUrl: string | null | undefined): string => {
+  if (!fileUrl) return '';
+  if (fileUrl.startsWith('http') || fileUrl.startsWith('blob:')) return fileUrl;
+  
+  const normalized = fileUrl.replace(/\\/g, '/');
+  if (normalized.includes('/uploads/')) {
+    const idx = normalized.indexOf('/uploads/');
+    return `${BACKEND}${normalized.substring(idx)}`;
+  }
+  
+  if (normalized.startsWith('uploads/')) {
+    return `${BACKEND}/${normalized}`;
+  }
+
+  return `${BACKEND}/uploads/${normalized}`;
+};
+
 /* ─── Media Type Helpers ─────────────────────── */
 const getExt = (fileName: string | null): string =>
   fileName?.split('.').pop()?.toLowerCase() ?? '';
