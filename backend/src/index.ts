@@ -36,26 +36,13 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ─── Global Middleware ──────────────────────────
-const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL]
-  .filter(Boolean)
-  .map(url => url!.replace(/\/$/, ''));
-
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL].filter(Boolean) as string[];
 app.use(cors({ 
   origin: (origin, callback) => {
-    if (!origin) {
-      return callback(null, true);
-    }
-    const originNoSlash = origin.replace(/\/$/, '');
-    
-    // Check if the origin is in the allowed list or is a Vercel deployment
-    if (
-      allowedOrigins.includes(originNoSlash) || 
-      originNoSlash.endsWith('.vercel.app') ||
-      originNoSlash.startsWith('http://localhost')
-    ) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(null, false);
+      callback(new Error('Not allowed by CORS'));
     }
   }, 
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 

@@ -40,8 +40,10 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh failed, clear tokens and redirect to login
-        window.location.href = '/portal';
+        // Refresh failed, clear tokens and redirect to login if in portal area
+        if (window.location.pathname.startsWith('/portal/')) {
+          window.location.href = '/portal';
+        }
         return Promise.reject(refreshError);
       }
     }
