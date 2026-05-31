@@ -47,6 +47,7 @@ app.use(cors({
     }
   }, 
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token', 'X-Portal'],
   credentials: true 
 }));
 app.use(globalRateLimiter);
