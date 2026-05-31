@@ -12,7 +12,7 @@ interface LoginFormValues {
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const token = useAuthStore((state) => state.token);
+  const user = useAuthStore((state) => state.user);
   const login = useAuthStore((state) => state.login);
   const [error, setError] = useState('');
 
@@ -47,7 +47,7 @@ export const LoginPage = () => {
     }
   };
 
-  if (token) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/" replace />;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-surface-hover px-4">
