@@ -20,6 +20,8 @@ api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
+      localStorage.removeItem('admin-auth');
+      localStorage.removeItem('admin_user');
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
