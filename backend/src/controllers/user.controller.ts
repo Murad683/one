@@ -56,7 +56,7 @@ export const updateUser = async (req: Request, res: Response) => {
       return sendError(res, 'User not found', 404);
     }
 
-    if (req.user!.role !== 'ADMIN' && req.user!.id !== id) {
+    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && req.user!.id !== id) {
       return sendError(res, 'Forbidden', 403);
     }
 
@@ -105,7 +105,7 @@ export const deleteUser = async (req: Request, res: Response) => {
       return sendError(res, 'User not found', 404);
     }
 
-    if (req.user!.role !== 'ADMIN' && req.user!.id !== id) {
+    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && req.user!.id !== id) {
       return sendError(res, 'Forbidden', 403);
     }
 
