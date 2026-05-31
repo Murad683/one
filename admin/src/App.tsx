@@ -14,10 +14,11 @@ import { MessagesPage } from './pages/MessagesPage';
 import { TicketsPage } from './pages/TicketsPage';
 import { AddPaymentPage } from './pages/AddPaymentPage';
 import { AdminManagementPage } from './pages/AdminManagementPage';
+import { UnauthorizedPage } from './pages/UnauthorizedPage';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
-  { path: '/unauthorized', element: <div className="p-6">Giriş qadağandır</div> },
+  { path: '/unauthorized', element: <UnauthorizedPage /> },
   {
     element: <RequireAuth />,
     children: [
