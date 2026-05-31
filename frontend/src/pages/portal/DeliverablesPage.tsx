@@ -33,13 +33,7 @@ const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const sanitizeUrl = (url: string | null | undefined): string => {
   if (!url) return '';
   const lower = url.toLowerCase();
-  if (lower.startsWith('javascript:') || lower.startsWith('data:') || lower.startsWith('blob:')) {
-    return '/placeholder.jpg';
-  }
-  if (!lower.startsWith('https://') && !lower.startsWith('/')) {
-    if (lower.startsWith('http://localhost') || lower.startsWith('http://127.0.0.1')) {
-      return url;
-    }
+  if (lower.startsWith('javascript:') || lower.startsWith('data:')) {
     return '/placeholder.jpg';
   }
   return url;
