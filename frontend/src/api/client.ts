@@ -34,7 +34,14 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       try {
         // Use a fresh axios instance to avoid interceptor loops
-        const res = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
+        const res = await axios.post(
+          `${API_BASE_URL}/auth/refresh`,
+          {},
+          {
+            withCredentials: true,
+            headers: { 'x-csrf-token': '1' }
+          }
+        );
         
         if (res.data?.success) {
           return apiClient(originalRequest);
