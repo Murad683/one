@@ -39,18 +39,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Restore session on mount
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
-
     (apiClient.get('/auth/me') as Promise<{ data: { user: User } }>)
       .then((res) => {
         setUser(res.data.user);
       })
       .catch(() => {
-        localStorage.removeItem('auth_token');
         setUser(null);
       })
       .finally(() => {
@@ -60,17 +53,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await apiClient.post('/auth/login', { email, password }) as unknown as {
-      data: { token: string; user: User };
+      data: { user: User };
     };
-    localStorage.setItem('auth_token', res.data.token);
     setUser(res.data.user);
     navigate('/portal/panel');
   }, [navigate]);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('auth_token');
-    setUser(null);
-    navigate('/portal');
+  const logout = useCallback(async () => {
+    try {
+      await apiClient.post('/auth/logout', {});
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      setUser(null);
+      navigate('/portal');
+    }
   }, [navigate]);
 
   const refreshUser = useCallback(async () => {

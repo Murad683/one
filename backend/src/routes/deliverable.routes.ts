@@ -6,7 +6,9 @@ import { validate } from '../middleware/validate.middleware';
 import {
   createDeliverableSchema,
   updateDeliverableStatusSchema,
+  updateDeliverableSchema,
 } from '../utils/validators/deliverable.validators';
+import { uploadRateLimiter } from '../middleware/rateLimiter.middleware';
 
 const router = Router();
 
@@ -167,6 +169,7 @@ router.patch(
   '/:id/upload',
   verifyTokenMiddleware,
   isAdmin,
+  uploadRateLimiter,
   ctrl.dynamicUploadMiddleware,
   ctrl.uploadDeliverableFile
 );
@@ -210,7 +213,13 @@ router.patch(
   ctrl.updateStatus
 );
 
-router.patch('/:id', verifyTokenMiddleware, isAdmin, ctrl.updateDeliverable);
+router.patch(
+  '/:id',
+  verifyTokenMiddleware,
+  isAdmin,
+  validate(updateDeliverableSchema),
+  ctrl.updateDeliverable
+);
 
 /**
  * @swagger

@@ -27,6 +27,7 @@ model User {
   deliverables Deliverable[]
   payments     Payment[]
   tickets      Ticket[]
+  refreshTokens RefreshToken[]
 }
 
 model Project {
@@ -236,4 +237,13 @@ enum TicketStatus {
   OPEN
   IN_PROGRESS
   CLOSED
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }

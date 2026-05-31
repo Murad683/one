@@ -8,13 +8,13 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
-// Request interceptor — attach auth token from localStorage
+// Request interceptor to attach CSRF token for state-changing requests
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (config.method && ['post', 'put', 'patch', 'delete'].includes(config.method.toLowerCase())) {
+    config.headers['x-csrf-token'] = '1';
   }
   return config;
 });
@@ -22,7 +22,30 @@ apiClient.interceptors.request.use((config) => {
 // Response interceptor for easy data access
 apiClient.interceptors.response.use(
   (response) => response.data,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+    // Prevent infinite loop by not retrying login or refresh
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      originalRequest.url !== '/auth/login' &&
+      originalRequest.url !== '/auth/refresh'
+    ) {
+      originalRequest._retry = true;
+      try {
+        // Use a fresh axios instance to avoid interceptor loops
+        const res = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
+        
+        if (res.data?.success) {
+          return apiClient(originalRequest);
+        }
+      } catch (refreshError) {
+        // Refresh failed, clear tokens and redirect to login
+        window.location.href = '/portal';
+        return Promise.reject(refreshError);
+      }
+    }
+    
     console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }

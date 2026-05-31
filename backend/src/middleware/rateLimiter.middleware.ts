@@ -23,3 +23,27 @@ export const globalRateLimiter = rateLimit({
   legacyHeaders: false,
   skip: (req) => req.method === 'OPTIONS',
 });
+
+export const uploadRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // Limit each IP to 10 upload requests per windowMs
+  message: {
+    success: false,
+    message: 'Too many upload attempts, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
+});
+
+export const contactRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // Limit each IP to 5 contact requests per windowMs
+  message: {
+    success: false,
+    message: 'Too many contact requests, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
+});

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, me, updateProfile } from '../controllers/auth.controller';
+import { register, login, me, updateProfile, refresh, logout } from '../controllers/auth.controller';
 import { verifyTokenMiddleware } from '../middleware/verifyToken.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { registerSchema, loginSchema } from '../utils/validators/auth.validators';
@@ -76,6 +76,51 @@ router.post('/register', validate(registerSchema), register);
  *         description: Invalid credentials
  */
 router.post('/login', authRateLimiter, validate(loginSchema), login);
+
+/**
+ * @swagger
+ * /auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [refreshToken]
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: New tokens generated
+ *       401:
+ *         description: Invalid or expired refresh token
+ */
+router.post('/refresh', refresh);
+
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout and revoke refresh token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ */
+router.post('/logout', logout);
 
 /**
  * @swagger

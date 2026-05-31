@@ -91,19 +91,34 @@ const isImageFile = (mimeType: string | null | undefined, fileName: string | nul
   return ['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'].includes(getExt(fileName));
 };
 
+const sanitizeUrl = (url: string | null | undefined): string => {
+  if (!url) return '';
+  const lower = url.toLowerCase();
+  if (lower.startsWith('javascript:') || lower.startsWith('data:') || lower.startsWith('blob:')) {
+    return '/placeholder.jpg';
+  }
+  if (!lower.startsWith('https://') && !lower.startsWith('/')) {
+    if (lower.startsWith('http://localhost') || lower.startsWith('http://127.0.0.1')) {
+      return url;
+    }
+    return '/placeholder.jpg';
+  }
+  return url;
+};
+
 const resolveFileUrl = (fileUrl: string | null | undefined): string => {
-  if (!fileUrl) return '';
-  if (fileUrl.startsWith('http')) return fileUrl;
+  const url = sanitizeUrl(fileUrl);
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
   
-  let normalized = fileUrl.replace(/\\/g, '/');
+  let normalized = url.replace(/\\/g, '/');
   if (normalized.startsWith('uploads/')) {
     normalized = normalized.replace('uploads/', '');
   } else if (normalized.includes('/uploads/')) {
     normalized = normalized.split('/uploads/').pop() || normalized;
   }
 
-  // Use the backend proxy route which redirects to the SAS token URL
-  return `${BACKEND}/api/v1/uploads/${normalized}`;
+  return sanitizeUrl(`${BACKEND}/api/v1/uploads/${normalized}`);
 };
 
 // ─── Admin Custom Media Preview Overlay ─────────
@@ -129,7 +144,7 @@ const PreviewOverlay = ({
     };
   }, [onClose]);
 
-  const url = activeFile?.downloadUrl || resolveFileUrl(activeFile?.url);
+  const url = sanitizeUrl(activeFile?.downloadUrl || resolveFileUrl(activeFile?.url));
   if (!url || !activeFile) return null;
 
 
@@ -181,7 +196,7 @@ const PreviewOverlay = ({
         <div className="flex items-center gap-3">
           {url && (
             <a
-              href={activeFile?.downloadUrl || url}
+              href={sanitizeUrl(activeFile?.downloadUrl || url)}
               download={activeFile?.name || 'file'}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-surface/10 hover:bg-surface/20 rounded-lg transition-colors backdrop-blur-md"
             >
@@ -217,7 +232,7 @@ const PreviewOverlay = ({
                 }`}
               >
                 {isImageFile(f.type, f.name) ? (
-                  <img src={f.downloadUrl || resolveFileUrl(f.url)} className="w-full h-full object-cover" alt={f.name} />
+                  <img src={sanitizeUrl(f.downloadUrl || resolveFileUrl(f.url))} className="w-full h-full object-cover" alt={f.name} />
                 ) : isVideoFile(f.type, f.name) ? (
                   <div className="w-full h-full bg-black flex items-center justify-center"><Play className="h-6 w-6 text-white" /></div>
                 ) : (

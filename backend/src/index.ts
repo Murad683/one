@@ -2,8 +2,10 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction, Router } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { csrfProtection } from './middleware/csrf.middleware';
 import morgan from 'morgan';
 import path from 'path';
+import cookieParser from 'cookie-parser';
 
 // Route Imports
 import authRoutes from './routes/auth.routes';
@@ -24,7 +26,7 @@ import adminRoutes from './routes/admin.routes';
 
 import { sendError } from './utils/response.util';
 import { ensureUploadDirs } from './utils/ensureUploadDir';
-import { globalRateLimiter } from './middleware/rateLimiter.middleware';
+import { globalRateLimiter, contactRateLimiter, uploadRateLimiter } from './middleware/rateLimiter.middleware';
 import { xssSanitize } from './middleware/xss.middleware';
 
 // Bootstrap
@@ -34,18 +36,32 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ─── Global Middleware ──────────────────────────
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL].filter(Boolean) as string[];
 app.use(cors({ 
-  origin: true, 
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }, 
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 
   credentials: true 
 }));
 app.use(globalRateLimiter);
 app.use(helmet({
+  contentSecurityPolicy: true,
+  strictTransportSecurity: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  },
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(xssSanitize);
 // Static Files with Cross-Origin policy for all responses (including 404s)
 app.use('/uploads', (req, res, next) => {
@@ -62,6 +78,9 @@ app.get('/health', (_req: Request, res: Response) => {
 // â”€â”€â”€ API Router (v1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const apiRouter = Router();
 
+// Apply CSRF protection to all API routes
+apiRouter.use(csrfProtection);
+
 apiRouter.use('/users', userRoutes);
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/projects', projectRoutes);
@@ -72,16 +91,18 @@ apiRouter.use('/deliverables', deliverableRoutes);
 apiRouter.use('/site-settings', siteSettingsRoutes);
 apiRouter.use('/categories', categoryRoutes);
 apiRouter.use('/deliverable-categories', deliverableCategoryRoutes);
-apiRouter.use('/contact-submissions', contactSubmissionRoutes);
-apiRouter.use('/contact', contactSubmissionRoutes); // Alias for convenience
-apiRouter.use('/uploads', uploadRoutes);
+apiRouter.use('/contact-submissions', contactRateLimiter, contactSubmissionRoutes);
+apiRouter.use('/contact', contactRateLimiter, contactSubmissionRoutes); // Alias for convenience
+apiRouter.use('/uploads', uploadRateLimiter, uploadRoutes);
 apiRouter.use('/dashboard', dashboardRoutes);
 apiRouter.use('/admin', adminRoutes);
 
 app.use('/api/v1', apiRouter);
 
 // â”€â”€â”€ Swagger UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-app.use('/api-docs', swaggerRoutes);
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api-docs', swaggerRoutes);
+}
 
 // â”€â”€â”€ 404 Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use((req, res) => {

@@ -56,6 +56,10 @@ export const updateUser = async (req: Request, res: Response) => {
       return sendError(res, 'User not found', 404);
     }
 
+    if (req.user!.role !== 'ADMIN' && req.user!.id !== id) {
+      return sendError(res, 'Forbidden', 403);
+    }
+
     const { name, email, password, isActive, igHighlights } = req.body;
     const data: {
       name?: string;
@@ -99,6 +103,10 @@ export const deleteUser = async (req: Request, res: Response) => {
 
     if (!existing) {
       return sendError(res, 'User not found', 404);
+    }
+
+    if (req.user!.role !== 'ADMIN' && req.user!.id !== id) {
+      return sendError(res, 'Forbidden', 403);
     }
 
     // Prevent deleting the last admin or yourself if necessary?

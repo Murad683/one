@@ -8,6 +8,7 @@ import {
   createProjectSchema,
   updateProjectSchema,
 } from '../utils/validators/content.validators';
+import { uploadRateLimiter } from '../middleware/rateLimiter.middleware';
 
 const router = Router();
 
@@ -203,6 +204,7 @@ router.post(
   '/:id/thumbnail',
   verifyTokenMiddleware,
   isAdmin,
+  uploadRateLimiter,
   (req, _res, next) => { req.uploadSubfolder = 'thumbnails'; next(); },
   uploadImage,
   ctrl.uploadThumbnail

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import crypto from 'crypto';
 import prisma from '../utils/prisma';
 import { hashPassword, comparePassword } from '../utils/password.util';
 import { signToken } from '../utils/jwt.util';
@@ -36,7 +37,22 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Sign token
     const token = signToken({ id: user.id, email: user.email, role: user.role });
 
-    sendSuccess(res, { user: safeUser, token }, 201);
+    // Create refresh token
+    const refreshToken = crypto.randomBytes(40).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 15 * 60 * 1000 });
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    sendSuccess(res, { user: safeUser }, 201);
   } catch (err) {
     console.error('Register error:', err);
     sendError(res, 'Internal Server Error', 500);
@@ -74,9 +90,100 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // Sign token
     const token = signToken({ id: user.id, email: user.email, role: user.role });
 
-    sendSuccess(res, { user: safeUser, token });
+    // Create refresh token
+    const refreshToken = crypto.randomBytes(40).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 15 * 60 * 1000 });
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    sendSuccess(res, { user: safeUser });
   } catch (err) {
     console.error('Login error:', err);
+    sendError(res, 'Internal Server Error', 500);
+  }
+};
+
+// ─── Refresh Token ─────────────────────────────
+export const refresh = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const refreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+
+    if (!refreshToken) {
+      sendError(res, 'Refresh token required', 400);
+      return;
+    }
+
+    const storedToken = await prisma.refreshToken.findUnique({
+      where: { token: refreshToken },
+      include: { user: true },
+    });
+
+    if (!storedToken || storedToken.expiresAt < new Date()) {
+      if (storedToken) {
+        await prisma.refreshToken.delete({ where: { id: storedToken.id } });
+      }
+      sendError(res, 'Invalid or expired refresh token', 401);
+      return;
+    }
+
+    const user = storedToken.user;
+    if (!user.isActive) {
+      sendError(res, 'Account is deactivated', 403);
+      return;
+    }
+
+    // Generate new tokens
+    const newToken = signToken({ id: user.id, email: user.email, role: user.role });
+    const newRefreshToken = crypto.randomBytes(40).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    // Rotate token (delete old, create new)
+    await prisma.$transaction([
+      prisma.refreshToken.delete({ where: { id: storedToken.id } }),
+      prisma.refreshToken.create({
+        data: {
+          token: newRefreshToken,
+          userId: user.id,
+          expiresAt,
+        },
+      }),
+    ]);
+
+    res.cookie('token', newToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 15 * 60 * 1000 });
+    res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    sendSuccess(res, { message: 'Token refreshed' });
+  } catch (err) {
+    console.error('Refresh error:', err);
+    sendError(res, 'Internal Server Error', 500);
+  }
+};
+
+// ─── Logout ────────────────────────────────────
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const refreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+
+    if (refreshToken) {
+      await prisma.refreshToken.deleteMany({
+        where: { token: refreshToken },
+      });
+    }
+
+    res.clearCookie('token');
+    res.clearCookie('refreshToken');
+    sendSuccess(res, { message: 'Logged out successfully' });
+  } catch (err) {
+    console.error('Logout error:', err);
     sendError(res, 'Internal Server Error', 500);
   }
 };

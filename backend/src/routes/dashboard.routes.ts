@@ -10,6 +10,9 @@ import {
 import { verifyTokenMiddleware } from '../middleware/verifyToken.middleware';
 import { isAdminOrClient } from '../middleware/rbac.middleware';
 
+import { validate } from '../middleware/validate.middleware';
+import { createTicketSchema, submitFeedbackSchema } from '../utils/validators/dashboard.validators';
+
 const router = Router();
 
 /**
@@ -93,7 +96,7 @@ router.get('/payments', verifyTokenMiddleware, isAdminOrClient, getPayments);
  *       400:
  *         description: Validation error
  */
-router.post('/tickets', verifyTokenMiddleware, isAdminOrClient, createTicket);
+router.post('/tickets', verifyTokenMiddleware, isAdminOrClient, validate(createTicketSchema), createTicket);
 
 /**
  * @swagger
@@ -110,6 +113,6 @@ router.post('/tickets', verifyTokenMiddleware, isAdminOrClient, createTicket);
  *         description: Unauthorized
  */
 router.get('/tickets', verifyTokenMiddleware, isAdminOrClient, getTickets);
-router.patch('/deliverables/:id/feedback', verifyTokenMiddleware, isAdminOrClient, submitFeedback);
+router.patch('/deliverables/:id/feedback', verifyTokenMiddleware, isAdminOrClient, validate(submitFeedbackSchema), submitFeedback);
 
 export default router;

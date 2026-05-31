@@ -9,9 +9,12 @@ import {
 import { verifyTokenMiddleware } from '../middleware/verifyToken.middleware';
 import { isAdmin } from '../middleware/rbac.middleware';
 
+import { validate } from '../middleware/validate.middleware';
+import { createContactSubmissionSchema } from '../utils/validators/contactSubmission.validators';
+
 const router = Router();
 
-router.post('/', createSubmission);
+router.post('/', validate(createContactSubmissionSchema), createSubmission);
 router.get('/unread-count', verifyTokenMiddleware, isAdmin, getUnreadCount);
 router.get('/', verifyTokenMiddleware, isAdmin, getSubmissions);
 router.patch('/:id', verifyTokenMiddleware, isAdmin, updateSubmission);

@@ -36,6 +36,25 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
     setProgress(0);
     setErrorMessage(null);
 
+    // Client-side validation: Max Size 500MB
+    const maxSizeBytes = 500 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      setUploadState('error');
+      setErrorMessage(`File size exceeds the maximum limit of ${formatFileSize(maxSizeBytes)}.`);
+      return;
+    }
+
+    // Client-side validation: Expected Mime Type
+    const acceptedTypesStr = getDeliverableAcceptedFiles(deliverable.type);
+    if (acceptedTypesStr && acceptedTypesStr !== '*') {
+      const acceptedTypes = acceptedTypesStr.split(',').map(t => t.trim().toLowerCase());
+      if (!acceptedTypes.includes(file.type.toLowerCase())) {
+        setUploadState('error');
+        setErrorMessage('Unsupported file type.');
+        return;
+      }
+    }
+
     try {
       const res = await uploadDeliverableFile(deliverable.id, file, (percent) => {
         setProgress(percent);

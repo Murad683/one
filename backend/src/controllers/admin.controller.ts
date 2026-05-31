@@ -112,6 +112,10 @@ export const getClientUsers = async (req: Request, res: Response): Promise<void>
 export const updateUserPackage = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.userId as string;
+    if (req.user!.role !== 'ADMIN' && req.user!.id !== userId) {
+      sendError(res, 'Forbidden', 403);
+      return;
+    }
     const { packageId } = req.body;
 
     // Verify user exists
@@ -228,6 +232,10 @@ export const updateTicketStatus = async (req: Request, res: Response): Promise<v
 export const getUserPayments = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = String(req.params.userId);
+    if (req.user!.role !== 'ADMIN' && req.user!.id !== userId) {
+      sendError(res, 'Forbidden', 403);
+      return;
+    }
     const payments = await prisma.payment.findMany({
       where: { userId },
       orderBy: { paidAt: 'desc' },

@@ -30,19 +30,34 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
 
 const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+const sanitizeUrl = (url: string | null | undefined): string => {
+  if (!url) return '';
+  const lower = url.toLowerCase();
+  if (lower.startsWith('javascript:') || lower.startsWith('data:') || lower.startsWith('blob:')) {
+    return '/placeholder.jpg';
+  }
+  if (!lower.startsWith('https://') && !lower.startsWith('/')) {
+    if (lower.startsWith('http://localhost') || lower.startsWith('http://127.0.0.1')) {
+      return url;
+    }
+    return '/placeholder.jpg';
+  }
+  return url;
+};
+
 const resolveFileUrl = (fileUrl: string | null | undefined): string => {
-  if (!fileUrl) return '';
-  if (fileUrl.startsWith('http') || fileUrl.startsWith('blob:')) return fileUrl;
+  const url = sanitizeUrl(fileUrl);
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
   
-  let normalized = fileUrl.replace(/\\/g, '/');
+  let normalized = url.replace(/\\/g, '/');
   if (normalized.startsWith('uploads/')) {
     normalized = normalized.replace('uploads/', '');
   } else if (normalized.includes('/uploads/')) {
     normalized = normalized.split('/uploads/').pop() || normalized;
   }
 
-  // Use the backend proxy route which redirects to the SAS token URL
-  return `${BACKEND}/api/v1/uploads/${normalized}`;
+  return sanitizeUrl(`${BACKEND}/api/v1/uploads/${normalized}`);
 };
 
 /* ─── Media Type Helpers ─────────────────────── */
@@ -61,22 +76,23 @@ const isImageFile = (mimeType: string | null, fileName: string | null): boolean 
 
 const getFileUrl = (f: { url: string; downloadUrl?: string | null } | null | undefined): string => {
   if (!f) return '';
-  if (f.downloadUrl) return f.downloadUrl;
+  if (f.downloadUrl) return sanitizeUrl(f.downloadUrl);
   if (!f.url) return '';
-  if (f.url.startsWith('http')) return f.url;
   
-  const normalized = f.url.replace(/\\/g, '/');
+  const safeUrl = sanitizeUrl(f.url);
+  if (safeUrl.startsWith('http')) return safeUrl;
+  
+  const normalized = safeUrl.replace(/\\/g, '/');
   if (normalized.includes('/uploads/')) {
     const idx = normalized.indexOf('/uploads/');
-    return `${BACKEND}${normalized.substring(idx)}`;
+    return sanitizeUrl(`${BACKEND}${normalized.substring(idx)}`);
   }
   
   if (normalized.startsWith('uploads/')) {
-    return `${BACKEND}/${normalized}`;
+    return sanitizeUrl(`${BACKEND}/${normalized}`);
   }
 
-  // If it's an Azure storage key without a SAS token, return as-is
-  return f.url;
+  return safeUrl;
 };
 
 
@@ -181,7 +197,7 @@ const PreviewModal = ({
   }, [onClose]);
 
   const igUsername = user?.igUsername || 'username';
-  const igProfilePic = user?.igProfilePic || null;
+  const igProfilePic = sanitizeUrl(user?.igProfilePic || null);
 
   return (
     <div
@@ -388,7 +404,7 @@ const DeliverablesPage = () => {
   const igFollowers = user?.igFollowers || '10K';
   const igFollowing = user?.igFollowing || '0';
   const igPostsCount = user?.igPostsCount || '0';
-  const igProfilePic = user?.igProfilePic || null;
+  const igProfilePic = sanitizeUrl(user?.igProfilePic || null);
   const igHighlights: { title: string; imageUrl: string }[] = Array.isArray(user?.igHighlights) ? user.igHighlights : [];
 
   // Count only READY items as "posts"

@@ -3,8 +3,8 @@ import prisma from '../utils/prisma';
 
 // GET /api/v1/contact-submissions
 export const getSubmissions = async (req: Request, res: Response): Promise<void> => {
-  const page = parseInt(req.query.page as string) || 1;
-  const limit = parseInt(req.query.limit as string) || 20;
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
   const [submissions, total] = await Promise.all([
     prisma.contactSubmission.findMany({
       orderBy: { createdAt: 'desc' },

@@ -2,6 +2,7 @@ import { BlobServiceClient, generateBlobSASQueryParameters, BlobSASPermissions }
 import { IStorageProvider, UploadResult } from './storage.interface';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
 
 function extractStorageKey(keyOrUrl: string | null | undefined): string {
   if (!keyOrUrl) return '';
@@ -59,13 +60,17 @@ export class AzureStorageProvider implements IStorageProvider {
     const uniqueName = `${uuidv4()}-${Date.now()}${path.extname(file.originalname)}`;
     const blockBlobClient = containerClient.getBlockBlobClient(uniqueName);
 
-    if (!file.buffer) {
-      throw new Error('File buffer is undefined. Ensure multer.memoryStorage() is being used.');
+    if (!file.path) {
+      throw new Error('File path is undefined. Ensure multer.diskStorage() is being used.');
     }
 
-    await blockBlobClient.uploadData(file.buffer, {
-      blobHTTPHeaders: { blobContentType: file.mimetype },
-    });
+    try {
+      await blockBlobClient.uploadFile(file.path, {
+        blobHTTPHeaders: { blobContentType: file.mimetype },
+      });
+    } finally {
+      await fs.promises.unlink(file.path).catch(() => {});
+    }
 
     const storageKey = `${containerName}/${uniqueName}`;
 

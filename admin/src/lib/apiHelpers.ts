@@ -27,22 +27,36 @@ export const apiOrigin = () => {
   return baseUrl.replace(/\/api\/v\d+\/?$/, '').replace(/\/$/, '');
 };
 
-export const assetUrl = (url?: string | null) => {
+export const sanitizeUrl = (url: string | null | undefined): string => {
   if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) return url;
-  
-  // Local static assets should be returned as-is (e.g., /videos/hero-bg.mp4 or /logo.jpg)
-  // Usually static assets start with / and aren't images/, avatars/, or thumbnails/
-  if (url.startsWith('/videos/') || url === '/logo.jpg') return url;
+  const lower = url.toLowerCase();
+  if (lower.startsWith('javascript:') || lower.startsWith('data:') || lower.startsWith('blob:')) {
+    return '/placeholder.jpg';
+  }
+  if (!lower.startsWith('https://') && !lower.startsWith('/')) {
+    if (lower.startsWith('http://localhost') || lower.startsWith('http://127.0.0.1')) {
+      return url;
+    }
+    return '/placeholder.jpg';
+  }
+  return url;
+};
 
-  let cleanUrl = url.replace(/\\/g, '/');
+export const assetUrl = (url?: string | null) => {
+  const sanitized = sanitizeUrl(url);
+  if (!sanitized) return '';
+  if (sanitized.startsWith('http://') || sanitized.startsWith('https://')) return sanitized;
+  
+  if (sanitized.startsWith('/videos/') || sanitized === '/logo.jpg') return sanitized;
+
+  let cleanUrl = sanitized.replace(/\\/g, '/');
   if (cleanUrl.startsWith('uploads/')) cleanUrl = cleanUrl.replace('uploads/', '');
   else if (cleanUrl.startsWith('/uploads/')) cleanUrl = cleanUrl.replace('/uploads/', '');
 
   if (cleanUrl.startsWith('/')) cleanUrl = cleanUrl.substring(1);
 
   const baseUrl = api.defaults.baseURL || '';
-  return `${baseUrl}/uploads/${cleanUrl}`;
+  return sanitizeUrl(`${baseUrl}/uploads/${cleanUrl}`);
 };
 
 export const uploadImage = async (file: File, folder: 'thumbnails' | 'avatars' | 'images') => {

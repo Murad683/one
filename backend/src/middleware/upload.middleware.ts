@@ -1,6 +1,10 @@
 import multer, { FileFilterCallback } from 'multer';
 import { Request, Response, NextFunction } from 'express';
 import { sendError } from '../utils/response.util';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { fileTypeFromFile } from 'file-type';
 
 // Determine the max file size from env or default to 500MB
 const MAX_FILE_SIZE_MB = parseInt(process.env.MAX_FILE_SIZE_MB || '500', 10);
@@ -16,7 +20,38 @@ declare global {
   }
 }
 
-const storage = multer.memoryStorage();
+const storage = multer.diskStorage({
+  destination: os.tmpdir(),
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const checkSvg = async (filePath: string) => {
+  const buffer = Buffer.alloc(100);
+  const fd = await fs.promises.open(filePath, 'r');
+  await fd.read(buffer, 0, 100, 0);
+  await fd.close();
+  const content = buffer.toString('utf8').toLowerCase();
+  return content.includes('<svg') || content.includes('<?xml');
+};
+
+const validateFile = async (file: Express.Multer.File) => {
+  const isSvg = await checkSvg(file.path);
+  if (isSvg) throw new Error('SVG files are not allowed');
+
+  const type = await fileTypeFromFile(file.path);
+  if (!type) {
+    throw new Error('Could not determine file type. File may be corrupted or unsupported.');
+  }
+
+  if (type.mime !== file.mimetype) {
+    throw new Error(`File type mismatch: expected ${file.mimetype}, got ${type.mime}`);
+  }
+
+  // Override extension using the validated mime type extension
+  file.originalname = `${path.parse(file.originalname).name}.${type.ext}`;
+};
 
 const videoFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
   const allowedTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo'];
@@ -65,12 +100,20 @@ const imageFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCal
 
 const wrapMulter = (multerInstance: multer.Multer) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    multerInstance.single('file')(req, res, (err: any) => {
+    multerInstance.single('file')(req, res, async (err: any) => {
       if (err) {
         if (err instanceof multer.MulterError) {
           return sendError(res, err.message, 400);
         }
         return sendError(res, 'An unknown error occurred during upload', 500);
+      }
+      if (req.file) {
+        try {
+          await validateFile(req.file);
+        } catch (validationError: any) {
+          await fs.promises.unlink(req.file.path).catch(() => {});
+          return sendError(res, validationError.message || 'Invalid file', 400);
+        }
       }
       next();
     });
@@ -111,12 +154,24 @@ export const uploadSiteMedia = wrapMulter(
 
 export const wrapMulterArray = (multerInstance: multer.Multer, fieldName: string, maxCount: number) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    multerInstance.array(fieldName, maxCount)(req, res, (err: any) => {
+    multerInstance.array(fieldName, maxCount)(req, res, async (err: any) => {
       if (err) {
         if (err instanceof multer.MulterError) {
           return sendError(res, err.message, 400);
         }
         return sendError(res, 'An unknown error occurred during upload', 500);
+      }
+      if (req.files && Array.isArray(req.files)) {
+        for (const file of req.files) {
+          try {
+            await validateFile(file);
+          } catch (validationError: any) {
+            for (const f of req.files) {
+              await fs.promises.unlink(f.path).catch(() => {});
+            }
+            return sendError(res, validationError.message || 'Invalid file in upload array', 400);
+          }
+        }
       }
       next();
     });

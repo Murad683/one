@@ -11,7 +11,7 @@ const getSecret = (): string => {
 
 export const signToken = (payload: JwtPayload): string => {
   const secret = getSecret();
-  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+  const expiresIn = process.env.JWT_EXPIRES_IN || '15m';
   const options: SignOptions = {
     expiresIn: expiresIn as unknown as SignOptions['expiresIn'],
   };

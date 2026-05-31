@@ -17,6 +17,7 @@ import { getSubmissions } from '../controllers/contactSubmission.controller';
 import { verifyTokenMiddleware } from '../middleware/verifyToken.middleware';
 import { isAdmin, isSuperAdmin } from '../middleware/rbac.middleware';
 import { uploadInvoicePdf } from '../middleware/upload.middleware';
+import { uploadRateLimiter } from '../middleware/rateLimiter.middleware';
 
 const router = Router();
 
@@ -135,7 +136,7 @@ router.patch('/users/:userId/package', verifyTokenMiddleware, isAdmin, updateUse
  *       400:
  *         description: No file or invalid file type
  */
-router.post('/invoices/upload', verifyTokenMiddleware, isAdmin, uploadInvoicePdf, uploadInvoice);
+router.post('/invoices/upload', verifyTokenMiddleware, isAdmin, uploadRateLimiter, uploadInvoicePdf, uploadInvoice);
 
 router.get('/tickets', verifyTokenMiddleware, isAdmin, getAllTickets);
 router.patch('/tickets/:id/status', verifyTokenMiddleware, isAdmin, updateTicketStatus);

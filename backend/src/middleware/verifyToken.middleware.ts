@@ -1,23 +1,59 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwt.util';
 import { sendError } from '../utils/response.util';
+import prisma from '../utils/prisma';
 
-export const verifyTokenMiddleware = (
+// Simple in-memory cache to avoid DB hit on every request
+const activeUserCache = new Map<string, number>();
+const CACHE_TTL_MS = 60 * 1000; // 1 minute
+
+export const verifyTokenMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   const authHeader = req.headers.authorization;
+  const cookieToken = req.cookies?.token;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  let token = cookieToken;
+  if (!token && authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  }
+
+  if (!token) {
     sendError(res, 'No token provided', 401);
     return;
   }
 
-  const token = authHeader.split(' ')[1];
-
   try {
     const decoded = verifyToken(token);
+    const userId = decoded.id;
+
+    // Check cache first
+    const cachedTime = activeUserCache.get(userId);
+    const now = Date.now();
+
+    if (!cachedTime || now - cachedTime > CACHE_TTL_MS) {
+      // Not in cache or expired, check DB
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { isActive: true },
+      });
+
+      if (!user) {
+        sendError(res, 'User no longer exists', 401);
+        return;
+      }
+
+      if (!user.isActive) {
+        sendError(res, 'Account is deactivated', 403);
+        return;
+      }
+
+      // Update cache
+      activeUserCache.set(userId, now);
+    }
+
     req.user = decoded as any;
     next();
   } catch {

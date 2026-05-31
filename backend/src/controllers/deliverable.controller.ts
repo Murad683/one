@@ -33,6 +33,11 @@ export const dynamicUploadMiddleware = async (
       return;
     }
 
+    if (req.user!.role !== 'ADMIN' && deliverable.clientId !== req.user!.id) {
+      sendError(res, 'Forbidden', 403);
+      return;
+    }
+
     // Set the subfolder based on category isVideo flag or legacy type
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     req.uploadSubfolder = isVideo ? 'videos' : 'designs';
@@ -101,7 +106,7 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
 export const getAllDeliverables = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
-    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit as string) || 12));
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 12));
     const skip = (page - 1) * limit;
 
     const clientId = req.query.clientId as string | undefined;
@@ -244,6 +249,11 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
       return;
     }
 
+    if (req.user!.role !== 'ADMIN' && existing.clientId !== req.user!.id) {
+      sendError(res, 'Forbidden', 403);
+      return;
+    }
+
     const { clientId, title, type, categoryId, status, month, year, files, notes } = req.body;
 
     if (files && Array.isArray(files)) {
@@ -330,6 +340,11 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
 
     if (!deliverable) {
       sendError(res, 'Deliverable not found', 404);
+      return;
+    }
+
+    if (req.user!.role !== 'ADMIN' && deliverable.clientId !== req.user!.id) {
+      sendError(res, 'Forbidden', 403);
       return;
     }
 
@@ -472,6 +487,11 @@ export const updateStatus = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
+    if (req.user!.role !== 'ADMIN' && existing.clientId !== req.user!.id) {
+      sendError(res, 'Forbidden', 403);
+      return;
+    }
+
     const updated = await prisma.deliverable.update({
       where: { id },
       data: { status: req.body.status },
@@ -492,6 +512,11 @@ export const deleteDeliverable = async (req: Request, res: Response): Promise<vo
 
     if (!existing) {
       sendError(res, 'Deliverable not found', 404);
+      return;
+    }
+
+    if (req.user!.role !== 'ADMIN' && existing.clientId !== req.user!.id) {
+      sendError(res, 'Forbidden', 403);
       return;
     }
 

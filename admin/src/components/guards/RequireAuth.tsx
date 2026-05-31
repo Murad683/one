@@ -3,24 +3,31 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 
 export const RequireAuth = () => {
-  const token = useAuthStore((state) => state.token);
-  return token ? <Outlet /> : <Navigate to="/login" replace />;
+  const user = useAuthStore((state) => state.user);
+  const fetchMe = useAuthStore((state) => state.fetchMe);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchMe().finally(() => setIsLoading(false));
+  }, [fetchMe]);
+
+  if (isLoading) return <div className="p-6 text-sm text-muted">Loading...</div>;
+  return user ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export const RequireAdmin = () => {
-  const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const fetchMe = useAuthStore((state) => state.fetchMe);
-  const [isLoading, setIsLoading] = useState(Boolean(token && !user));
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!token || user) {
+    if (user) {
       setIsLoading(false);
       return;
     }
 
     fetchMe().finally(() => setIsLoading(false));
-  }, [fetchMe, token, user]);
+  }, [fetchMe, user]);
 
   if (isLoading) return <div className="p-6 text-sm text-muted">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;

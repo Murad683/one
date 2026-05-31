@@ -176,11 +176,16 @@ export const submitFeedback = async (req: Request, res: Response): Promise<void>
 
     // Verify deliverable belongs to this user
     const deliverable = await prisma.deliverable.findFirst({
-      where: { id: deliverableId, clientId: userId },
+      where: { id: deliverableId },
     });
 
     if (!deliverable) {
       sendError(res, 'Çatdırılma tapılmadı', 404);
+      return;
+    }
+
+    if (deliverable.clientId !== userId) {
+      sendError(res, 'Forbidden', 403);
       return;
     }
 
