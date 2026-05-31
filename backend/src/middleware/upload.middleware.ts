@@ -4,7 +4,7 @@ import { sendError } from '../utils/response.util';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { fileTypeFromFile } from 'file-type';
+import { fromFile } from 'file-type';
 
 // Determine the max file size from env or default to 500MB
 const MAX_FILE_SIZE_MB = parseInt(process.env.MAX_FILE_SIZE_MB || '500', 10);
@@ -40,7 +40,7 @@ const validateFile = async (file: Express.Multer.File) => {
   const isSvg = await checkSvg(file.path);
   if (isSvg) throw new Error('SVG files are not allowed');
 
-  const type = await fileTypeFromFile(file.path);
+  const type = await fromFile(file.path);
   if (!type) {
     throw new Error('Could not determine file type. File may be corrupted or unsupported.');
   }

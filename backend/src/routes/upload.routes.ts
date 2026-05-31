@@ -47,7 +47,8 @@ router.post(
 // Proxy route to redirect to Azure SAS URL for private images
 router.get('/:folder/:file', verifyTokenMiddleware, async (req, res) => {
   try {
-    const { folder, file } = req.params;
+    const folder = req.params.folder as string;
+    const file = req.params.file as string;
     const storageKey = `${folder}/${file}`;
 
     const userRole = (req as any).user?.role;
