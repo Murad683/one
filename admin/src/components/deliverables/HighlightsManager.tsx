@@ -28,7 +28,7 @@ const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const resolveFileUrl = (fileUrl: string | null | undefined): string => {
   if (!fileUrl) return '';
-  if (fileUrl.startsWith('http') || fileUrl.startsWith('blob:')) return fileUrl;
+  if (fileUrl.startsWith('http')) return fileUrl;
   
   let normalized = fileUrl.replace(/\\/g, '/');
   if (normalized.startsWith('uploads/')) {
@@ -36,7 +36,8 @@ const resolveFileUrl = (fileUrl: string | null | undefined): string => {
   } else if (normalized.includes('/uploads/')) {
     normalized = normalized.split('/uploads/').pop() || normalized;
   }
-  return `${BACKEND}/api/v1/uploads/${normalized}`;
+
+  return `${BACKEND}/api/v1/uploads/${normalized}?portal=admin`;
 };
 
 export const HighlightsManager: React.FC<HighlightsManagerProps> = ({ clients, onRefreshClients }) => {

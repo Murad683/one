@@ -12,9 +12,11 @@ export const verifyTokenMiddleware = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const authHeader = req.headers.authorization;
-  const cookieToken = req.cookies?.token;
+  const portal = req.headers['x-portal'] || req.query.portal;
+  const tokenName = portal === 'admin' ? 'adminToken' : 'token';
+  const cookieToken = req.cookies?.[tokenName];
 
+  const authHeader = req.headers.authorization;
   let token = cookieToken;
   if (!token && authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.split(' ')[1];

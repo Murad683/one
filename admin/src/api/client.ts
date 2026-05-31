@@ -11,6 +11,9 @@ const client = axios.create({
 
 // Request interceptor to attach CSRF token for state-changing requests
 client.interceptors.request.use((config) => {
+  if (config.headers) {
+    config.headers['X-Portal'] = 'admin';
+  }
   if (config.method && ['post', 'put', 'patch', 'delete'].includes(config.method.toLowerCase())) {
     config.headers['x-csrf-token'] = '1';
   }

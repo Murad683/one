@@ -51,8 +51,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     });
 
     const cookieOptions = { httpOnly: true, secure: true, sameSite: 'none' as const };
-    res.cookie('token', token, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
-    res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+    const isFromAdminPortal = req.headers['x-portal'] === 'admin';
+    const tokenName = isFromAdminPortal ? 'adminToken' : 'token';
+    const refreshName = isFromAdminPortal ? 'adminRefreshToken' : 'refreshToken';
+
+    res.cookie(tokenName, token, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
+    res.cookie(refreshName, refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
     sendSuccess(res, { user: safeUser }, 201);
   } catch (err) {
     console.error('Register error:', err);
@@ -105,8 +109,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
 
     const cookieOptions = { httpOnly: true, secure: true, sameSite: 'none' as const };
-    res.cookie('token', token, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
-    res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+    const isFromAdminPortal = req.headers['x-portal'] === 'admin';
+    const tokenName = isFromAdminPortal ? 'adminToken' : 'token';
+    const refreshName = isFromAdminPortal ? 'adminRefreshToken' : 'refreshToken';
+
+    res.cookie(tokenName, token, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
+    res.cookie(refreshName, refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
     sendSuccess(res, { user: safeUser });
   } catch (err) {
     console.error('Login error:', err);
@@ -117,7 +125,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 // ─── Refresh Token ─────────────────────────────
 export const refresh = async (req: Request, res: Response): Promise<void> => {
   try {
-    const refreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+    const isFromAdminPortal = req.headers['x-portal'] === 'admin';
+    const tokenName = isFromAdminPortal ? 'adminToken' : 'token';
+    const refreshName = isFromAdminPortal ? 'adminRefreshToken' : 'refreshToken';
+    
+    const refreshToken = req.cookies?.[refreshName] || req.body.refreshToken;
 
     if (!refreshToken) {
       sendError(res, 'Refresh token required', 400);
@@ -162,8 +174,8 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
     ]);
 
     const cookieOptions = { httpOnly: true, secure: true, sameSite: 'none' as const };
-    res.cookie('token', newToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
-    res.cookie('refreshToken', newRefreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie(tokenName, newToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
+    res.cookie(refreshName, newRefreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
     sendSuccess(res, { message: 'Token refreshed' });
   } catch (err) {
     console.error('Refresh error:', err);
@@ -174,7 +186,11 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
 // ─── Logout ────────────────────────────────────
 export const logout = async (req: Request, res: Response): Promise<void> => {
   try {
-    const refreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+    const isFromAdminPortal = req.headers['x-portal'] === 'admin';
+    const tokenName = isFromAdminPortal ? 'adminToken' : 'token';
+    const refreshName = isFromAdminPortal ? 'adminRefreshToken' : 'refreshToken';
+
+    const refreshToken = req.cookies?.[refreshName] || req.body.refreshToken;
 
     if (refreshToken) {
       await prisma.refreshToken.deleteMany({
@@ -182,8 +198,8 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
       });
     }
 
-    res.clearCookie('token');
-    res.clearCookie('refreshToken');
+    res.clearCookie(tokenName);
+    res.clearCookie(refreshName);
     sendSuccess(res, { message: 'Logged out successfully' });
   } catch (err) {
     console.error('Logout error:', err);

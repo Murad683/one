@@ -118,7 +118,7 @@ const resolveFileUrl = (fileUrl: string | null | undefined): string => {
     normalized = normalized.split('/uploads/').pop() || normalized;
   }
 
-  return sanitizeUrl(`${BACKEND}/api/v1/uploads/${normalized}`);
+  return sanitizeUrl(`${BACKEND}/api/v1/uploads/${normalized}?portal=admin`);
 };
 
 // ─── Admin Custom Media Preview Overlay ─────────

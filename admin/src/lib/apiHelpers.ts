@@ -30,13 +30,7 @@ export const apiOrigin = () => {
 export const sanitizeUrl = (url: string | null | undefined): string => {
   if (!url) return '';
   const lower = url.toLowerCase();
-  if (lower.startsWith('javascript:') || lower.startsWith('data:') || lower.startsWith('blob:')) {
-    return '/placeholder.jpg';
-  }
-  if (!lower.startsWith('https://') && !lower.startsWith('/')) {
-    if (lower.startsWith('http://localhost') || lower.startsWith('http://127.0.0.1')) {
-      return url;
-    }
+  if (lower.startsWith('javascript:') || lower.startsWith('data:')) {
     return '/placeholder.jpg';
   }
   return url;
@@ -56,7 +50,7 @@ export const assetUrl = (url?: string | null) => {
   if (cleanUrl.startsWith('/')) cleanUrl = cleanUrl.substring(1);
 
   const baseUrl = api.defaults.baseURL || '';
-  return sanitizeUrl(`${baseUrl}/uploads/${cleanUrl}`);
+  return sanitizeUrl(`${baseUrl}/uploads/${cleanUrl}?portal=admin`);
 };
 
 export const uploadImage = async (file: File, folder: 'thumbnails' | 'avatars' | 'images') => {
