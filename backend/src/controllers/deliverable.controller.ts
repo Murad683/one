@@ -33,7 +33,7 @@ export const dynamicUploadMiddleware = async (
       return;
     }
 
-    if (req.user!.role !== 'ADMIN' && deliverable.clientId !== req.user!.id) {
+    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && deliverable.clientId !== req.user!.id) {
       sendError(res, 'Forbidden', 403);
       return;
     }
@@ -249,7 +249,7 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    if (req.user!.role !== 'ADMIN' && existing.clientId !== req.user!.id) {
+    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && existing.clientId !== req.user!.id) {
       sendError(res, 'Forbidden', 403);
       return;
     }
@@ -343,7 +343,7 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
       return;
     }
 
-    if (req.user!.role !== 'ADMIN' && deliverable.clientId !== req.user!.id) {
+    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && deliverable.clientId !== req.user!.id) {
       sendError(res, 'Forbidden', 403);
       return;
     }
@@ -487,7 +487,7 @@ export const updateStatus = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    if (req.user!.role !== 'ADMIN' && existing.clientId !== req.user!.id) {
+    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && existing.clientId !== req.user!.id) {
       sendError(res, 'Forbidden', 403);
       return;
     }
@@ -515,7 +515,7 @@ export const deleteDeliverable = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    if (req.user!.role !== 'ADMIN' && existing.clientId !== req.user!.id) {
+    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && existing.clientId !== req.user!.id) {
       sendError(res, 'Forbidden', 403);
       return;
     }

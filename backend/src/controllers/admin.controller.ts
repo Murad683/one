@@ -112,7 +112,7 @@ export const getClientUsers = async (req: Request, res: Response): Promise<void>
 export const updateUserPackage = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.userId as string;
-    if (req.user!.role !== 'ADMIN' && req.user!.id !== userId) {
+    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && req.user!.id !== userId) {
       sendError(res, 'Forbidden', 403);
       return;
     }
@@ -232,7 +232,7 @@ export const updateTicketStatus = async (req: Request, res: Response): Promise<v
 export const getUserPayments = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = String(req.params.userId);
-    if (req.user!.role !== 'ADMIN' && req.user!.id !== userId) {
+    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && req.user!.id !== userId) {
       sendError(res, 'Forbidden', 403);
       return;
     }
