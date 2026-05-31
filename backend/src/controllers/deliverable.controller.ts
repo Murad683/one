@@ -367,14 +367,6 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
     let newThumbnailUrl: string | null = null;
 
     for (const file of uploadedFiles) {
-      const result = await processAndStoreFile(file, folder);
-      newFileObjects.push({
-        url: result.url,
-        name: result.fileName,
-        size: result.fileSize,
-        type: result.mimeType,
-      });
-
       // --- THUMBNAIL GENERATION ---
       // Trigger if DB says it's a video OR if the actual uploaded file is a video mimetype
       const isVideoByDb = deliverable.category?.isVideo === true || deliverable.type === 'VIDEO';
@@ -456,6 +448,14 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
         }
       }
       // --- END THUMBNAIL GENERATION ---
+
+      const result = await processAndStoreFile(file, folder);
+      newFileObjects.push({
+        url: result.url,
+        name: result.fileName,
+        size: result.fileSize,
+        type: result.mimeType,
+      });
     }
 
     const updated = await prisma.deliverable.update({
