@@ -42,6 +42,10 @@ client.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('adminRefreshToken');
         
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+        
         // Use a fresh axios instance to avoid interceptor loops
         const res = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
