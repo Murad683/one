@@ -50,7 +50,12 @@ export const assetUrl = (url?: string | null) => {
   if (cleanUrl.startsWith('/')) cleanUrl = cleanUrl.substring(1);
 
   const baseUrl = api.defaults.baseURL || '';
-  return sanitizeUrl(`${baseUrl}/uploads/${cleanUrl}?portal=admin`);
+  let url = `${baseUrl}/uploads/${cleanUrl}?portal=admin`;
+  const token = localStorage.getItem('adminToken');
+  if (token) {
+    url += `&adminToken=${token}`;
+  }
+  return sanitizeUrl(url);
 };
 
 export const uploadImage = async (file: File, folder: 'thumbnails' | 'avatars' | 'images') => {

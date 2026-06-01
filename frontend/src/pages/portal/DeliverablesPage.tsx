@@ -51,7 +51,12 @@ const resolveFileUrl = (fileUrl: string | null | undefined): string => {
     normalized = normalized.split('/uploads/').pop() || normalized;
   }
 
-  return sanitizeUrl(`${BACKEND}/api/v1/uploads/${normalized}`);
+  let url = `${BACKEND}/api/v1/uploads/${normalized}`;
+  const token = localStorage.getItem('token');
+  if (token) {
+    url += `?token=${token}`;
+  }
+  return sanitizeUrl(url);
 };
 
 /* ─── Media Type Helpers ─────────────────────── */

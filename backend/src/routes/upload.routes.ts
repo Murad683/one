@@ -44,19 +44,31 @@ router.post(
   uploadImageFile
 );
 
+const conditionalVerifyToken = (req: any, res: any, next: any) => {
+  const folder = req.params.folder;
+  const isPublicFolder = ['avatars', 'images', 'thumbnails', 'highlights'].includes(folder);
+  if (isPublicFolder) {
+    return next();
+  }
+  return verifyTokenMiddleware(req, res, next);
+};
+
 // Proxy route to redirect to Azure SAS URL for private images
-router.get('/:folder/:file', verifyTokenMiddleware, async (req, res) => {
+router.get('/:folder/:file', conditionalVerifyToken, async (req, res) => {
   try {
     const folder = req.params.folder as string;
     const file = req.params.file as string;
     const storageKey = `${folder}/${file}`;
 
-    const userRole = (req as any).user?.role;
-    const userId = (req as any).user?.id;
+    const isPublicFolder = ['avatars', 'images', 'thumbnails', 'highlights'].includes(folder);
 
-    if (!userId) {
-      return res.status(401).send('Unauthorized');
-    }
+    if (!isPublicFolder) {
+      const userRole = (req as any).user?.role;
+      const userId = (req as any).user?.id;
+
+      if (!userId) {
+        return res.status(401).send('Unauthorized');
+      }
 
     if (userRole !== 'SUPER_ADMIN' && userRole !== 'ADMIN') {
       let isOwner = false;

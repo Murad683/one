@@ -39,7 +39,7 @@ export class AzureStorageProvider implements IStorageProvider {
     const containerClient = this.blobServiceClient.getContainerClient(containerName);
 
     // Determine if the container should be public
-    const publicContainers = ['avatars', 'images', 'thumbnails'];
+    const publicContainers = ['avatars', 'images', 'thumbnails', 'highlights'];
     const isPublic = publicContainers.includes(containerName);
 
     // Ensure the container exists dynamically without specifying access policy in createIfNotExists

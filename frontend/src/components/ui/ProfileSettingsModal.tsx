@@ -36,7 +36,12 @@ const resolveFileUrl = (fileUrl: string | null | undefined): string => {
   }
 
   // Use the backend proxy route which redirects to the SAS token URL
-  return `${BACKEND}/api/v1/uploads/${normalized}`;
+  let url = `${BACKEND}/api/v1/uploads/${normalized}`;
+  const token = localStorage.getItem('token');
+  if (token) {
+    url += `?token=${token}`;
+  }
+  return url;
 };
 
 const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onClose }) => {

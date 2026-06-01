@@ -37,7 +37,12 @@ const resolveFileUrl = (fileUrl: string | null | undefined): string => {
     normalized = normalized.split('/uploads/').pop() || normalized;
   }
 
-  return `${BACKEND}/api/v1/uploads/${normalized}?portal=admin`;
+  let url = `${BACKEND}/api/v1/uploads/${normalized}?portal=admin`;
+  const token = localStorage.getItem('adminToken');
+  if (token) {
+    url += `&adminToken=${token}`;
+  }
+  return url;
 };
 
 export const HighlightsManager: React.FC<HighlightsManagerProps> = ({ clients, onRefreshClients }) => {

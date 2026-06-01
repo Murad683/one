@@ -23,6 +23,14 @@ export const verifyTokenMiddleware = async (
     token = authHeader.split(' ')[1];
   }
   
+  if (!token && req.query.token) {
+    token = String(req.query.token);
+  }
+  
+  if (!token && req.query.adminToken) {
+    token = String(req.query.adminToken);
+  }
+  
   // Fallback to cookie if Bearer token is not present
   if (!token) {
     token = cookieToken;
