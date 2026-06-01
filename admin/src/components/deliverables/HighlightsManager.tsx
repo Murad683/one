@@ -203,7 +203,7 @@ export const HighlightsManager: React.FC<HighlightsManagerProps> = ({ clients, o
                         type="button"
                         onClick={() => removeHighlight(idx)}
                         disabled={isSubmitting}
-                        className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md"
+                        className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all shadow-md"
                         title="Sil"
                       >
                         <X size={12} />
