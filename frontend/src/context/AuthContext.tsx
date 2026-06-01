@@ -53,8 +53,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await apiClient.post('/auth/login', { email, password }) as unknown as {
-      data: { user: User };
+      data: { user: User; token?: string; refreshToken?: string };
     };
+    if (res.data.token) {
+      localStorage.setItem('token', res.data.token);
+    }
+    if (res.data.refreshToken) {
+      localStorage.setItem('refreshToken', res.data.refreshToken);
+    }
     setUser(res.data.user);
     navigate('/portal/panel');
   }, [navigate]);
@@ -65,6 +71,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch {
       // Ignore network errors on logout
     } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
       setUser(null);
       navigate('/portal');
     }

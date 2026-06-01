@@ -25,15 +25,19 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       login: async (email, password) => {
-        const response = await api.post<ApiEnvelope<{ user: User }>>('/auth/login', {
+        const response = await api.post<ApiEnvelope<{ user: User; token?: string; refreshToken?: string }>>('/auth/login', {
           email,
           password,
         });
-        const { user } = response.data.data;
+        const { user, token, refreshToken } = response.data.data;
+        if (token) localStorage.setItem('adminToken', token);
+        if (refreshToken) localStorage.setItem('adminRefreshToken', refreshToken);
         set({ user });
       },
       logout: () => {
         api.post('/auth/logout').catch(() => {});
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminRefreshToken');
         set({ user: null });
       },
       fetchMe: async () => {

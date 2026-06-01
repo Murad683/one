@@ -8,10 +8,16 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-// Request interceptor to attach CSRF token for state-changing requests
+// Request interceptor to attach CSRF token and Bearer token
 api.interceptors.request.use((config) => {
   if (config.headers) {
     config.headers['X-Portal'] = 'admin';
+    
+    // Attach Bearer token from localStorage
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   if (config.method && ['post', 'put', 'patch', 'delete'].includes(config.method.toLowerCase())) {
     config.headers['x-csrf-token'] = '1';
@@ -21,13 +27,63 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (res) => res,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const originalRequest = error.config;
+    // Prevent infinite loop by not retrying login or refresh
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      originalRequest.url !== '/auth/login' &&
+      originalRequest.url !== '/auth/refresh'
+    ) {
+      originalRequest._retry = true;
+      try {
+        const refreshToken = localStorage.getItem('adminRefreshToken');
+        
+        // Use a fresh axios instance to avoid interceptor loops
+        const res = await axios.post(
+          `${BACKEND}/api/v1/auth/refresh`,
+          { refreshToken },
+          {
+            withCredentials: true,
+            headers: { 
+              'x-csrf-token': '1',
+              'X-Portal': 'admin'
+            }
+          }
+        );
+        
+        if (res.data?.success && res.data.data?.token) {
+          // Save new tokens
+          localStorage.setItem('adminToken', res.data.data.token);
+          if (res.data.data.refreshToken) {
+            localStorage.setItem('adminRefreshToken', res.data.data.refreshToken);
+          }
+          
+          // Update the failed request with new token and retry
+          originalRequest.headers.Authorization = `Bearer ${res.data.data.token}`;
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        // Refresh failed, clear tokens and redirect to login
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminRefreshToken');
+        localStorage.removeItem('admin-auth');
+        localStorage.removeItem('admin_user');
+        
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+        return Promise.reject(refreshError);
+      }
+    }
+
+    if (error.response?.status === 401 && window.location.pathname !== '/login') {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminRefreshToken');
       localStorage.removeItem('admin-auth');
       localStorage.removeItem('admin_user');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   },

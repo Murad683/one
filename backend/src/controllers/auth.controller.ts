@@ -57,7 +57,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     res.cookie(tokenName, token, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
     res.cookie(refreshName, refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
-    sendSuccess(res, { user: safeUser }, 201);
+    sendSuccess(res, { user: safeUser, token, refreshToken }, 201);
   } catch (err) {
     console.error('Register error:', err);
     sendError(res, 'Internal Server Error', 500);
@@ -115,7 +115,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     res.cookie(tokenName, token, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
     res.cookie(refreshName, refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
-    sendSuccess(res, { user: safeUser });
+    sendSuccess(res, { user: safeUser, token, refreshToken });
   } catch (err) {
     console.error('Login error:', err);
     sendError(res, 'Internal Server Error', 500);
@@ -176,7 +176,7 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
     const cookieOptions = { httpOnly: true, secure: true, sameSite: 'none' as const };
     res.cookie(tokenName, newToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
     res.cookie(refreshName, newRefreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
-    sendSuccess(res, { message: 'Token refreshed' });
+    sendSuccess(res, { message: 'Token refreshed', token: newToken, refreshToken: newRefreshToken });
   } catch (err) {
     console.error('Refresh error:', err);
     sendError(res, 'Internal Server Error', 500);
