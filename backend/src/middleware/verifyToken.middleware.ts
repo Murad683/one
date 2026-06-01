@@ -17,9 +17,15 @@ export const verifyTokenMiddleware = async (
   const cookieToken = req.cookies?.[tokenName];
 
   const authHeader = req.headers.authorization;
-  let token = cookieToken;
-  if (!token && authHeader && authHeader.startsWith('Bearer ')) {
+  let token: string | undefined;
+  
+  if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.split(' ')[1];
+  }
+  
+  // Fallback to cookie if Bearer token is not present
+  if (!token) {
+    token = cookieToken;
   }
 
   if (!token) {

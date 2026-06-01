@@ -198,8 +198,9 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
       });
     }
 
-    res.clearCookie(tokenName);
-    res.clearCookie(refreshName);
+    const cookieOptions = { httpOnly: true, secure: true, sameSite: 'none' as const };
+    res.clearCookie(tokenName, cookieOptions);
+    res.clearCookie(refreshName, cookieOptions);
     sendSuccess(res, { message: 'Logged out successfully' });
   } catch (err) {
     console.error('Logout error:', err);
