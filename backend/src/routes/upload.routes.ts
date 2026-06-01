@@ -91,6 +91,7 @@ router.get('/:folder/:file', conditionalVerifyToken, async (req, res) => {
         return res.status(403).send('Forbidden: Access denied to this file');
       }
     }
+    }
 
     const signedUrl = await getSecureDownloadUrl(storageKey);
     res.redirect(signedUrl);
