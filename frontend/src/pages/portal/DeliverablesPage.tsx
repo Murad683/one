@@ -272,7 +272,7 @@ const PreviewModal = ({
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center">
                 {igProfilePic ? (
-                  <img src={igProfilePic} alt={igUsername} className="w-full h-full object-cover" />
+                  <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-white text-xs font-bold">{user?.name?.charAt(0) || 'U'}</span>
                 )}
@@ -321,7 +321,7 @@ const PreviewModal = ({
               <div className="flex gap-3">
                  <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center">
                    {igProfilePic ? (
-                     <img src={igProfilePic} alt={igUsername} className="w-full h-full object-cover" />
+                     <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover" />
                    ) : (
                      <span className="text-white text-xs font-bold">{user?.name?.charAt(0) || 'U'}</span>
                    )}
