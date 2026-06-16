@@ -157,7 +157,7 @@ const PreviewOverlay = ({
   const renderMedia = () => {
     if (isVideoFile(activeFile.type, activeFile.name)) {
       return (
-        <video controls autoPlay={false} className="max-h-[75vh] max-w-full shadow-2xl outline-none" src={url} key={url}>
+        <video controls autoPlay={false} preload="metadata" crossOrigin="anonymous" className="max-h-[75vh] max-w-full shadow-2xl outline-none" src={url} key={url}>
           Brauzeriniz video formatını dəstəkləmir.
         </video>
       );

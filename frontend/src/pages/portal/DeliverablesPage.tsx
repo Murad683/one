@@ -111,7 +111,7 @@ const MediaPreview = ({
   if (isVideoFile(mimeType, fileName)) {
     return (
       <div className="w-full h-full bg-black flex items-center justify-center relative">
-        <video controls autoPlay className="w-full h-full object-contain" src={url}>
+        <video controls autoPlay preload="metadata" crossOrigin="anonymous" className="w-full h-full object-contain" src={url}>
           Brauzeriniz video formatını dəstəkləmir.
         </video>
       </div>

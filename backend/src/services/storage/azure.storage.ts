@@ -133,7 +133,7 @@ export class AzureStorageProvider implements IStorageProvider {
         permissions: BlobSASPermissions.from({ read: true }),
         startsOn,
         expiresOn,
-        contentDisposition: 'attachment',
+        contentDisposition: 'inline',
       };
 
       const sasToken = generateBlobSASQueryParameters(
