@@ -440,10 +440,16 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
         } finally {
           // Aggressive async cleanup — never block, never throw
           if (tempVideoPath) {
-            await fs.promises.unlink(tempVideoPath).catch((err) => console.error('Video Cleanup Error:', err));
+            try {
+              await fs.promises.access(tempVideoPath);
+              await fs.promises.unlink(tempVideoPath);
+            } catch {}
           }
           if (tempThumbPath) {
-            await fs.promises.unlink(tempThumbPath).catch((err) => console.error('Thumb Cleanup Error:', err));
+            try {
+              await fs.promises.access(tempThumbPath);
+              await fs.promises.unlink(tempThumbPath);
+            } catch {}
           }
         }
       }
