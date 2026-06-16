@@ -285,15 +285,33 @@ const PreviewModal = ({
             
             <div className="flex items-center">
               {url && (
-                <a
-                  href={activeFile?.downloadUrl || url}
-                  download={activeFile?.name || 'file'}
+                <button
+                  onClick={async () => {
+                    try {
+                      const fileUrl = activeFile?.downloadUrl || url;
+                      const blobName = activeFile?.url || url;
+                      const res = await api.get(
+                        `/deliverables/${item.id}/download-url`,
+                        { params: { blobName } }
+                      );
+                      if (res.data?.downloadUrl) {
+                        const tempA = document.createElement('a');
+                        tempA.href = res.data.downloadUrl;
+                        tempA.download = activeFile?.name || 'file';
+                        document.body.appendChild(tempA);
+                        tempA.click();
+                        document.body.removeChild(tempA);
+                      }
+                    } catch (err) {
+                      console.error('Download error:', err);
+                    }
+                  }}
                   className="p-1.5 md:mr-10 rounded-lg transition-colors hover:opacity-80 flex items-center"
                   style={{ color: 'var(--text-primary)' }}
                   title="Yüklə"
                 >
                   <Download size={20} />
-                </a>
+                </button>
               )}
             </div>
           </div>
