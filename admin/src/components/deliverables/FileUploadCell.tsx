@@ -30,6 +30,7 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const intervalRef = useRef<any>(null);
 
   const handleUpload = async (file: File) => {
     setUploadState('uploading');
@@ -56,10 +57,21 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
     }
 
     try {
+      let isUploadFinished = false;
       const res = await uploadDeliverableFile(deliverable.id, file, (percent) => {
-        setProgress(percent);
+        if (!isUploadFinished) {
+          setProgress(Math.round(percent * 0.6));
+          if (percent >= 100) {
+            isUploadFinished = true;
+            intervalRef.current = setInterval(() => {
+              setProgress(p => (p < 95 ? p + 1 : p));
+            }, 2000);
+          }
+        }
       });
       
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setProgress(100);
       setUploadState('success');
       onUploadSuccess(res.data);
       
@@ -67,6 +79,7 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
         setUploadState('idle');
       }, 2500);
     } catch (err: any) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
       setUploadState('error');
       setErrorMessage(err.response?.data?.message || 'Upload failed. Please try again.');
     }
@@ -100,10 +113,13 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
 
   // State: Uploading
   if (uploadState === 'uploading') {
+    let text = 'Yüklənir...';
+    if (progress >= 60) text = 'Optimallaşdırılır...';
+
     return (
       <div className="flex w-full min-w-[200px] flex-col justify-center">
         <div className="flex items-center justify-between text-xs text-muted">
-          <span className="truncate">Uploading...</span>
+          <span className="truncate">{text}</span>
           <span>{progress}%</span>
         </div>
         <div className="my-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
@@ -119,9 +135,17 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
   // State: Success
   if (uploadState === 'success') {
     return (
-      <div className="flex items-center gap-2 py-2">
-        <CheckCircle2 className="h-5 w-5 text-green-600" />
-        <span className="text-xs font-medium text-green-600">Upload complete!</span>
+      <div className="flex w-full min-w-[200px] flex-col justify-center">
+        <div className="flex items-center justify-between text-xs text-green-600 font-medium">
+          <span className="truncate">Hazırdır! ✓</span>
+          <span>100%</span>
+        </div>
+        <div className="my-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+          <div
+            className="h-full rounded-full bg-green-600 transition-all duration-300"
+            style={{ width: `100%` }}
+          />
+        </div>
       </div>
     );
   }

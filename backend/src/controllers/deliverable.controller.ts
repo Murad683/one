@@ -449,31 +449,42 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
       }
       // --- END THUMBNAIL GENERATION ---
 
-      // --- FASTSTART OPTIMIZATION ---
-      // Move moov atom to the beginning of MP4 so browsers can stream/seek without full download
+      // --- TRANSCODE OPTIMIZATION ---
       if (file.mimetype?.startsWith('video/') && file.path) {
         const ext = path.extname(file.path);
-        const optimizedPath = file.path.replace(ext, `-optimized${ext}`);
+        const outputPath = file.path.replace(ext, `-transcoded${ext}`);
         try {
           await new Promise<void>((resolve, reject) => {
             ffmpeg(file.path)
-              .outputOptions(['-c', 'copy', '-movflags', '+faststart'])
-              .output(optimizedPath)
+              .outputOptions([
+                '-c:v', 'libx264',
+                '-preset', 'fast',
+                '-crf', '23',
+                '-maxrate', '4000k',
+                '-bufsize', '8000k',
+                '-vf', 'scale=-2:1080',
+                '-c:a', 'aac',
+                '-b:a', '192k',
+                '-movflags', '+faststart',
+                '-f', 'mp4'
+              ])
+              .output(outputPath)
+              .on('progress', (progress) => {
+                console.log(`[Transcode] progress: ${progress.percent}%`);
+              })
               .on('end', () => resolve())
               .on('error', (err) => reject(err))
               .run();
           });
-          // Replace original temp file with the optimized one
           await fs.promises.unlink(file.path).catch(() => {});
-          file.path = optimizedPath;
-          console.log('[Faststart] Video optimized successfully:', optimizedPath);
-        } catch (faststartError) {
-          console.error('[Faststart] FFmpeg faststart failed, continuing with original file:', faststartError);
-          // Clean up the partially-written optimized file if it exists
-          await fs.promises.unlink(optimizedPath).catch(() => {});
+          file.path = outputPath;
+          console.log('[Transcode] Video transcoded successfully:', outputPath);
+        } catch (err) {
+          console.error('[Transcode] FFmpeg transcode failed, continuing with original file:', err);
+          await fs.promises.unlink(outputPath).catch(() => {});
         }
       }
-      // --- END FASTSTART OPTIMIZATION ---
+      // --- END TRANSCODE OPTIMIZATION ---
 
       const result = await processAndStoreFile(file, folder);
       newFileObjects.push({
