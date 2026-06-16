@@ -288,12 +288,11 @@ const PreviewModal = ({
                 <button
                   onClick={async () => {
                     try {
-                      const fileUrl = activeFile?.downloadUrl || url;
                       const blobName = activeFile?.url || url;
-                      const res = await api.get(
+                      const res = await apiClient.get(
                         `/deliverables/${item.id}/download-url`,
                         { params: { blobName } }
-                      );
+                      ) as any;
                       if (res.data?.downloadUrl) {
                         const tempA = document.createElement('a');
                         tempA.href = res.data.downloadUrl;
