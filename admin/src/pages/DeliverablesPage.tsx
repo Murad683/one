@@ -14,6 +14,61 @@ import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
 import { HighlightsManager } from '../components/deliverables/HighlightsManager';
+import { getUploadSasUrl, completeDeliverableUpload } from '../api/deliverables.api';
+import { BlockBlobClient } from '@azure/storage-blob';
+
+/**
+ * Extracts a JPEG thumbnail from a video file using an offscreen
+ * <video> + <canvas> pipeline. Seeks to 0.5s (or duration/10).
+ */
+const extractVideoThumbnail = (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    video.muted = true;
+    video.playsInline = true;
+
+    video.addEventListener('loadedmetadata', () => {
+      const seekTo = video.duration > 0.5 ? 0.5 : video.duration / 10;
+      video.currentTime = seekTo;
+    });
+
+    video.addEventListener('seeked', () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          URL.revokeObjectURL(url);
+          return reject(new Error('Failed to get canvas context'));
+        }
+        ctx.drawImage(video, 0, 0);
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(url);
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to generate thumbnail blob'));
+            }
+          },
+          'image/jpeg',
+          0.85
+        );
+      } catch (err) {
+        URL.revokeObjectURL(url);
+        reject(err);
+      }
+    });
+
+    video.addEventListener('error', () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Failed to load video for thumbnail extraction'));
+    });
+  });
+};
 
 type DeliverableStatus = 'PENDING' | 'PROCESSING' | 'READY' | 'ARCHIVED';
 
@@ -343,10 +398,42 @@ export const DeliverablesPage = () => {
   };
 
   const uploadDeliverableFile = async (id: string, files: File[]) => {
-    const formData = new FormData();
-    files.forEach(f => formData.append('files', f));
-    await api.patch(`/deliverables/${id}/upload`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    if (!files || files.length === 0) return;
+    const file = files[0];
+
+    // Step 1: Get SAS URLs from backend
+    const sasData = await getUploadSasUrl(id);
+
+    // Step 2: If video, extract thumbnail via canvas
+    const isVideo = file.type.startsWith('video/');
+    if (isVideo) {
+      try {
+        const thumbnailBlob = await extractVideoThumbnail(file);
+        const thumbClient = new BlockBlobClient(sasData.thumbSasUrl);
+        await thumbClient.uploadData(thumbnailBlob, {
+          blobHTTPHeaders: { blobContentType: 'image/jpeg' },
+        });
+      } catch (thumbErr) {
+        console.warn('Thumbnail generation/upload failed, continuing without thumbnail:', thumbErr);
+      }
+    }
+
+    // Step 3: Upload main file directly to Azure
+    const fileClient = new BlockBlobClient(sasData.fileSasUrl);
+    await fileClient.uploadData(file, {
+      blobHTTPHeaders: { blobContentType: file.type },
+      blockSize: 8 * 1024 * 1024,
+      concurrency: 4,
+    });
+
+    // Step 4: Notify backend that upload is complete
+    await completeDeliverableUpload(id, {
+      blobName: sasData.blobName,
+      container: sasData.container,
+      thumbBlobName: sasData.thumbBlobName,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
     });
   };
 
