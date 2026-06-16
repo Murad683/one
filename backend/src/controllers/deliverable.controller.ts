@@ -3,6 +3,7 @@ import path from 'path';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { processAndStoreFile, deleteFile, getSecureDownloadUrl, cleanupOrphanFiles } from '../services/upload.service';
+import { storageProvider } from '../services/storage/storage.factory';
 import { uploadSiteMediaArray } from '../middleware/upload.middleware';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
@@ -538,5 +539,55 @@ export const deleteDeliverable = async (req: Request, res: Response): Promise<vo
   } catch (err) {
     console.error('deleteDeliverable error:', err);
     sendError(res, 'Failed to delete deliverable', 500);
+  }
+};
+
+// GET /api/v1/deliverables/:id/upload-sas (Admin only)
+export const getUploadSasUrl = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+
+    const deliverable = await prisma.deliverable.findUnique({ where: { id } });
+    if (!deliverable) {
+      sendError(res, 'Deliverable not found', 404);
+      return;
+    }
+
+    const container = deliverable.type === 'VIDEO' ? 'videos' : 'designs';
+    const blobName = `${crypto.randomUUID()}-${Date.now()}.bin`;
+    const thumbBlobName = `${crypto.randomUUID()}-${Date.now()}.jpg`;
+
+    const fileSasUrl = await storageProvider.generateUploadSasUrl(container, blobName, 7200);
+    const thumbSasUrl = await storageProvider.generateUploadSasUrl('thumbnails', thumbBlobName, 7200);
+
+    sendSuccess(res, { fileSasUrl, thumbSasUrl, blobName, thumbBlobName, container });
+  } catch (err) {
+    console.error('getUploadSasUrl error:', err);
+    sendError(res, 'Failed to generate upload URL', 500);
+  }
+};
+
+// PATCH /api/v1/deliverables/:id/upload-complete (Admin only)
+export const completeUpload = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const { blobName, container, thumbBlobName, fileName, fileSize, fileType } = req.body;
+
+    const storageKey = `${container}/${blobName}`;
+    const isVideo = fileType?.startsWith('video/');
+
+    const updated = await prisma.deliverable.update({
+      where: { id },
+      data: {
+        files: [{ url: storageKey, name: fileName, size: fileSize, type: fileType }],
+        ...(isVideo && thumbBlobName ? { thumbnailUrl: `thumbnails/${thumbBlobName}` } : {}),
+        status: 'READY',
+      },
+    });
+
+    sendSuccess(res, updated);
+  } catch (err) {
+    console.error('completeUpload error:', err);
+    sendError(res, 'Failed to complete upload', 500);
   }
 };

@@ -13,12 +13,66 @@ import {
   formatFileSize,
   getDeliverableAcceptedFiles,
 } from '@/utils/deliverable.helpers';
-import { uploadDeliverableFile } from '@/api/deliverables.api';
+import { getUploadSasUrl, completeDeliverableUpload } from '@/api/deliverables.api';
+import { BlockBlobClient } from '@azure/storage-blob';
 
 interface FileUploadCellProps {
   deliverable: Deliverable;
   onUploadSuccess: (updated: Deliverable) => void;
 }
+
+/**
+ * Extracts a JPEG thumbnail from a video file using an offscreen
+ * <video> + <canvas> pipeline. Seeks to 0.5s (or duration/10).
+ */
+const extractVideoThumbnail = (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    video.muted = true;
+    video.playsInline = true;
+
+    video.addEventListener('loadedmetadata', () => {
+      const seekTo = video.duration > 0.5 ? 0.5 : video.duration / 10;
+      video.currentTime = seekTo;
+    });
+
+    video.addEventListener('seeked', () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          URL.revokeObjectURL(url);
+          return reject(new Error('Failed to get canvas context'));
+        }
+        ctx.drawImage(video, 0, 0);
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(url);
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to generate thumbnail blob'));
+            }
+          },
+          'image/jpeg',
+          0.85
+        );
+      } catch (err) {
+        URL.revokeObjectURL(url);
+        reject(err);
+      }
+    });
+
+    video.addEventListener('error', () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Failed to load video for thumbnail extraction'));
+    });
+  });
+};
 
 const FileUploadCell: React.FC<FileUploadCellProps> = ({
   deliverable,
@@ -56,19 +110,54 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
     }
 
     try {
-      const res = await uploadDeliverableFile(deliverable.id, file, (percent) => {
-        setProgress(percent);
+      // Step 1: Get SAS URLs from backend
+      const sasData = await getUploadSasUrl(deliverable.id);
+
+      // Step 2: If video, extract thumbnail via canvas
+      const isVideo = file.type.startsWith('video/');
+      if (isVideo) {
+        try {
+          const thumbnailBlob = await extractVideoThumbnail(file);
+          const thumbClient = new BlockBlobClient(sasData.thumbSasUrl);
+          await thumbClient.uploadData(thumbnailBlob, {
+            blobHTTPHeaders: { blobContentType: 'image/jpeg' },
+          });
+        } catch (thumbErr) {
+          console.warn('Thumbnail generation/upload failed, continuing without thumbnail:', thumbErr);
+        }
+      }
+
+      // Step 3: Upload main file directly to Azure
+      const fileClient = new BlockBlobClient(sasData.fileSasUrl);
+      await fileClient.uploadData(file, {
+        blobHTTPHeaders: { blobContentType: file.type },
+        onProgress: (p) => {
+          const percent = Math.round((p.loadedBytes / file.size) * 100);
+          setProgress(percent);
+        },
+        blockSize: 8 * 1024 * 1024,   // 8MB chunks
+        concurrency: 4,
       });
-      
+
+      // Step 4: Notify backend that upload is complete
+      await completeDeliverableUpload(deliverable.id, {
+        blobName: sasData.blobName,
+        container: sasData.container,
+        thumbBlobName: sasData.thumbBlobName,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+      });
+
       setUploadState('success');
-      onUploadSuccess(res.data);
-      
+      onUploadSuccess(deliverable);
+
       setTimeout(() => {
         setUploadState('idle');
       }, 2500);
     } catch (err: any) {
       setUploadState('error');
-      setErrorMessage(err.response?.data?.message || 'Upload failed. Please try again.');
+      setErrorMessage(err.response?.data?.message || err.message || 'Upload failed. Please try again.');
     }
   };
 
