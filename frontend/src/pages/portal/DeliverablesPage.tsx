@@ -294,12 +294,7 @@ const PreviewModal = ({
                         { params: { blobName } }
                       ) as any;
                       if (res.data?.downloadUrl) {
-                        const tempA = document.createElement('a');
-                        tempA.href = res.data.downloadUrl;
-                        tempA.download = activeFile?.name || 'file';
-                        document.body.appendChild(tempA);
-                        tempA.click();
-                        document.body.removeChild(tempA);
+                        window.location.href = res.data.downloadUrl;
                       }
                     } catch (err) {
                       console.error('Download error:', err);
