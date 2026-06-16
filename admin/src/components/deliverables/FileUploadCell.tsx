@@ -4,7 +4,6 @@ import {
   FileArchive,
   Upload,
   RefreshCw,
-  CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
 import type { Deliverable } from '@/types';
