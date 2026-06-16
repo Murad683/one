@@ -358,13 +358,6 @@ export const DeliverablesPage = () => {
     setIsModalOpen(true);
   };
 
-  const uploadDeliverableFile = async (id: string, files: File[]) => {
-    const formData = new FormData();
-    files.forEach(f => formData.append('files', f));
-    await api.patch(`/deliverables/${id}/upload`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  };
 
   const saveDeliverable = async (values: DeliverableFormValues) => {
     setIsSaving(true);
