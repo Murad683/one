@@ -73,7 +73,12 @@ export const getUploadSasUrl = async (deliverableId: string): Promise<{
   container: string;
 }> => {
   const response = await client.get(`/deliverables/${deliverableId}/upload-sas`);
-  return response.data.data;
+  // Backend wraps in { success, data }, but handle both envelope and direct shapes
+  const sasData = response.data?.data ?? response.data;
+  if (!sasData?.fileSasUrl) {
+    throw new Error('Backend returned invalid SAS URL response');
+  }
+  return sasData;
 };
 
 export const completeDeliverableUpload = async (
