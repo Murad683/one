@@ -10,5 +10,4 @@ export interface IStorageProvider {
   upload(file: Express.Multer.File, folder: string): Promise<UploadResult>;
   delete(storageKey: string): Promise<void>;
   getSignedUrl(storageKey: string, expiresInSeconds: number): Promise<string>;
-  generateUploadSasUrl(containerName: string, blobName: string, expiresInSeconds?: number): Promise<string>;
 }

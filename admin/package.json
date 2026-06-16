@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@azure/storage-blob": "^12.32.0",
     "axios": "^1.16.0",
     "lucide-react": "^1.16.0",
     "react": "^19.2.5",

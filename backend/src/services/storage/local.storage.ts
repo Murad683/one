@@ -35,8 +35,4 @@ export class LocalStorageProvider implements IStorageProvider {
     const folder = path.basename(path.dirname(storageKey));
     return `/uploads/${folder}/${filename}`;
   }
-
-  async generateUploadSasUrl(containerName: string, blobName: string, expiresInSeconds: number = 7200): Promise<string> {
-    throw new Error('LocalStorageProvider does not support SAS URL generation. Use Azure storage.');
-  }
 }

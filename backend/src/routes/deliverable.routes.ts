@@ -174,12 +174,6 @@ router.patch(
   ctrl.uploadDeliverableFile
 );
 
-// Direct-to-Azure upload: get write-only SAS URLs
-router.get('/:id/upload-sas', verifyTokenMiddleware, isAdmin, ctrl.getUploadSasUrl);
-
-// Direct-to-Azure upload: confirm upload and persist metadata
-router.patch('/:id/upload-complete', verifyTokenMiddleware, isAdmin, ctrl.completeUpload);
-
 /**
  * @swagger
  * /deliverables/{id}/status:

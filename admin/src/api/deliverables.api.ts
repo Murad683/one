@@ -64,33 +64,3 @@ export const updateDeliverableStatus = async (
 export const deleteDeliverable = async (id: string): Promise<void> => {
   await client.delete(`/deliverables/${id}`);
 };
-
-export const getUploadSasUrl = async (deliverableId: string): Promise<{
-  fileSasUrl: string;
-  thumbSasUrl: string;
-  blobName: string;
-  thumbBlobName: string;
-  container: string;
-}> => {
-  const response = await client.get(`/deliverables/${deliverableId}/upload-sas`);
-  // Backend wraps in { success, data }, but handle both envelope and direct shapes
-  const sasData = response.data?.data ?? response.data;
-  if (!sasData?.fileSasUrl) {
-    throw new Error('Backend returned invalid SAS URL response');
-  }
-  return sasData;
-};
-
-export const completeDeliverableUpload = async (
-  deliverableId: string,
-  data: {
-    blobName: string;
-    container: string;
-    thumbBlobName: string;
-    fileName: string;
-    fileSize: number;
-    fileType: string;
-  }
-): Promise<void> => {
-  await client.patch(`/deliverables/${deliverableId}/upload-complete`, data);
-};
