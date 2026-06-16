@@ -449,42 +449,87 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
       }
       // --- END THUMBNAIL GENERATION ---
 
-      // --- TRANSCODE OPTIMIZATION ---
+      // --- BACKGROUND TRANSCODE OPTIMIZATION ---
       if (file.mimetype?.startsWith('video/') && file.path) {
-        const ext = path.extname(file.path);
-        const outputPath = file.path.replace(ext, `-transcoded${ext}`);
-        try {
-          await new Promise<void>((resolve, reject) => {
-            ffmpeg(file.path)
-              .outputOptions([
-                '-c:v', 'libx264',
-                '-preset', 'fast',
-                '-crf', '23',
-                '-maxrate', '4000k',
-                '-bufsize', '8000k',
-                '-vf', 'scale=-2:1080',
-                '-c:a', 'aac',
-                '-b:a', '192k',
-                '-movflags', '+faststart',
-                '-f', 'mp4'
-              ])
-              .output(outputPath)
-              .on('progress', (progress) => {
-                console.log(`[Transcode] progress: ${progress.percent}%`);
-              })
-              .on('end', () => resolve())
-              .on('error', (err) => reject(err))
-              .run();
-          });
-          await fs.promises.unlink(file.path).catch(() => {});
-          file.path = outputPath;
-          console.log('[Transcode] Video transcoded successfully:', outputPath);
-        } catch (err) {
-          console.error('[Transcode] FFmpeg transcode failed, continuing with original file:', err);
-          await fs.promises.unlink(outputPath).catch(() => {});
-        }
+        const processingDeliverable = await prisma.deliverable.update({
+          where: { id },
+          data: {
+            processingStatus: 'PROCESSING',
+            status: 'PROCESSING',
+            clientFeedback: null,
+            ...(newThumbnailUrl !== undefined && { thumbnailUrl: newThumbnailUrl }),
+          }
+        });
+
+        // Return immediately
+        sendSuccess(res, processingDeliverable);
+
+        // Run background transcode
+        setImmediate(async () => {
+          const ext = path.extname(file.path);
+          const outputPath = file.path.replace(ext, `-transcoded.mp4`);
+          try {
+            await new Promise<void>((resolve, reject) => {
+              ffmpeg(file.path)
+                .outputOptions([
+                  '-c:v', 'libx264',
+                  '-preset', 'fast',
+                  '-crf', '23',
+                  '-maxrate', '4000k',
+                  '-bufsize', '8000k',
+                  '-vf', 'scale=-2:1080',
+                  '-c:a', 'aac',
+                  '-b:a', '192k',
+                  '-movflags', '+faststart',
+                  '-f', 'mp4'
+                ])
+                .output(outputPath)
+                .on('progress', (progress) => {
+                  if (progress.percent) console.log(`[Transcode] progress: ${Math.round(progress.percent)}%`);
+                })
+                .on('end', () => resolve())
+                .on('error', (err) => reject(err))
+                .run();
+            });
+
+            // After successful transcode, upload the new file
+            const newFile = { ...file, path: outputPath, mimetype: 'video/mp4', originalname: file.originalname.replace(ext, '.mp4') };
+            const result = await processAndStoreFile(newFile as Express.Multer.File, folder);
+
+            const updatedFilesObjects = [{
+              url: result.url,
+              name: result.fileName,
+              size: result.fileSize,
+              type: result.mimeType,
+            }];
+
+            await prisma.deliverable.update({
+              where: { id },
+              data: {
+                processingStatus: 'READY',
+                status: 'READY',
+                files: updatedFilesObjects,
+                uploadedAt: new Date()
+              }
+            });
+            console.log('[Background Transcode] Success and DB updated.');
+
+          } catch (err) {
+            console.error('[Background Transcode] Error:', err);
+            await prisma.deliverable.update({
+              where: { id },
+              data: { processingStatus: 'FAILED' }
+            }).catch(console.error);
+          } finally {
+            await fs.promises.unlink(file.path).catch(() => {});
+            await fs.promises.unlink(outputPath).catch(() => {});
+          }
+        });
+
+        // Exit the loop and controller since we sent the response
+        return;
       }
-      // --- END TRANSCODE OPTIMIZATION ---
+      // --- END BACKGROUND TRANSCODE OPTIMIZATION ---
 
       const result = await processAndStoreFile(file, folder);
       newFileObjects.push({

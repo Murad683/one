@@ -13,6 +13,7 @@ import {
   getDeliverableAcceptedFiles,
 } from '@/utils/deliverable.helpers';
 import { uploadDeliverableFile } from '@/api/deliverables.api';
+import client from '@/api/client';
 
 interface FileUploadCellProps {
   deliverable: Deliverable;
@@ -23,7 +24,7 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
   deliverable,
   onUploadSuccess,
 }) => {
-  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'processing' | 'success' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -56,27 +57,33 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
     }
 
     try {
-      let isUploadFinished = false;
       const res = await uploadDeliverableFile(deliverable.id, file, (percent) => {
-        if (!isUploadFinished) {
-          setProgress(Math.round(percent * 0.6));
-          if (percent >= 100) {
-            isUploadFinished = true;
-            intervalRef.current = setInterval(() => {
-              setProgress(p => (p < 95 ? p + 1 : p));
-            }, 2000);
-          }
-        }
+        setProgress(percent);
       });
       
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setProgress(100);
-      setUploadState('success');
-      onUploadSuccess(res.data);
+      setUploadState('processing');
       
-      setTimeout(() => {
-        setUploadState('idle');
-      }, 2500);
+      // Start polling for processing status
+      intervalRef.current = setInterval(async () => {
+        try {
+          const statusRes = await client.get(`/deliverables/${deliverable.id}/processing-status`);
+          const { processingStatus, files } = statusRes.data.data;
+          
+          if (processingStatus === 'READY') {
+            clearInterval(intervalRef.current);
+            setUploadState('success');
+            onUploadSuccess({ ...res.data, files, processingStatus });
+            setTimeout(() => setUploadState('idle'), 2500);
+          } else if (processingStatus === 'FAILED') {
+            clearInterval(intervalRef.current);
+            setUploadState('error');
+            setErrorMessage('Optimallaşdırma xətası baş verdi.');
+          }
+        } catch (err) {
+          console.error('Polling error:', err);
+        }
+      }, 5000);
+      
     } catch (err: any) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       setUploadState('error');
@@ -112,13 +119,10 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
 
   // State: Uploading
   if (uploadState === 'uploading') {
-    let text = 'Yüklənir...';
-    if (progress >= 60) text = 'Optimallaşdırılır...';
-
     return (
       <div className="flex w-full min-w-[200px] flex-col justify-center">
         <div className="flex items-center justify-between text-xs text-muted">
-          <span className="truncate">{text}</span>
+          <span className="truncate">Yüklənir...</span>
           <span>{progress}%</span>
         </div>
         <div className="my-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
@@ -126,6 +130,18 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
             className="h-full rounded-full bg-gray-900 transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
+        </div>
+      </div>
+    );
+  }
+
+  // State: Processing
+  if (uploadState === 'processing') {
+    return (
+      <div className="flex w-full min-w-[200px] flex-col justify-center">
+        <div className="flex items-center gap-2 text-xs text-muted">
+          <RefreshCw className="h-3 w-3 animate-spin" />
+          <span className="truncate">Emal edilir...</span>
         </div>
       </div>
     );

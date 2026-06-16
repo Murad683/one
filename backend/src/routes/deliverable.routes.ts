@@ -9,6 +9,7 @@ import {
   updateDeliverableSchema,
 } from '../utils/validators/deliverable.validators';
 import { uploadRateLimiter } from '../middleware/rateLimiter.middleware';
+import prisma from '../utils/prisma';
 
 const router = Router();
 
@@ -172,6 +173,46 @@ router.patch(
   uploadRateLimiter,
   ctrl.dynamicUploadMiddleware,
   ctrl.uploadDeliverableFile
+);
+
+/**
+ * @swagger
+ * /deliverables/{id}/processing-status:
+ *   get:
+ *     summary: Polls background processing status
+ *     tags: [Deliverables]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Processing status returned
+ */
+router.get(
+  '/:id/processing-status',
+  verifyTokenMiddleware,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const deliverable = await prisma.deliverable.findUnique({
+        where: { id: req.params.id },
+        select: { processingStatus: true, files: true }
+      });
+      if (!deliverable) {
+        res.status(404).json({ success: false, message: 'Not found' });
+        return;
+      }
+      res.json({ success: true, data: deliverable });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  }
 );
 
 /**
