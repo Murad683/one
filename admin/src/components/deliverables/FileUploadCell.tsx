@@ -67,7 +67,7 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
       intervalRef.current = setInterval(async () => {
         try {
           const statusRes = await client.get(`/deliverables/${deliverable.id}/processing-status`);
-          const { processingStatus, files } = statusRes.data.data;
+          const { processingStatus } = statusRes.data.data;
           
           if (processingStatus === 'READY') {
             clearInterval(intervalRef.current);
