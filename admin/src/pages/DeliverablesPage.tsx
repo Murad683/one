@@ -284,6 +284,7 @@ export const DeliverablesPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<Deliverable | null>(null);
   const [activeTab, setActiveTab] = useState<'files' | 'highlights'>('files');
@@ -384,7 +385,15 @@ export const DeliverablesPage = () => {
       const deliverableId = editing?.id || response.data.data.id;
 
       if (selectedFiles.length > 0) {
-        await uploadDeliverableFile(deliverableId, selectedFiles);
+        const formData = new FormData();
+        selectedFiles.forEach(f => formData.append('files', f));
+        await api.patch(`/deliverables/${deliverableId}/upload`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (e: any) => {
+            if (e.total) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          }
+        });
+        setUploadProgress(null);
       }
 
       setIsModalOpen(false);
@@ -667,6 +676,20 @@ export const DeliverablesPage = () => {
               }
             }}
           />
+          {uploadProgress !== null && (
+            <div className="w-full mt-2">
+              <div className="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Yüklənir...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
           <Input
             label="Tarix"
             type="date"
