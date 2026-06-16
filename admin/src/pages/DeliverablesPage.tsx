@@ -200,14 +200,29 @@ const PreviewOverlay = ({
         </div>
         <div className="flex items-center gap-3">
           {url && (
-            <a
-              href={sanitizeUrl(activeFile?.downloadUrl || url)}
-              download={activeFile?.name || 'file'}
+            <button
+              onClick={async () => {
+                try {
+                  const res = await api.get(`/deliverables/${item.id}/download-url`, {
+                    params: { blobName: activeFile?.url }
+                  });
+                  if (res.data?.downloadUrl) {
+                    const tempA = document.createElement('a');
+                    tempA.href = res.data.downloadUrl;
+                    tempA.download = activeFile?.name || 'file';
+                    document.body.appendChild(tempA);
+                    tempA.click();
+                    document.body.removeChild(tempA);
+                  }
+                } catch (err) {
+                  console.error('Download error:', err);
+                }
+              }}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-surface/10 hover:bg-surface/20 rounded-lg transition-colors backdrop-blur-md"
             >
               <Download className="h-4 w-4" />
               Yüklə
-            </a>
+            </button>
           )}
           <button
             onClick={onClose}

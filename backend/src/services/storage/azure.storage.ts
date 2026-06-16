@@ -97,7 +97,7 @@ export class AzureStorageProvider implements IStorageProvider {
     await blockBlobClient.deleteIfExists();
   }
 
-  async getSignedUrl(rawKey: string | null | undefined, expiresInSeconds: number): Promise<string> {
+  async getSignedUrl(rawKey: string | null | undefined, expiresInSeconds: number, forDownload: boolean = false): Promise<string> {
     if (!rawKey) return '';
     const keyStr = String(rawKey);
 
@@ -127,13 +127,13 @@ export class AzureStorageProvider implements IStorageProvider {
       const startsOn = new Date();
       const expiresOn = new Date(startsOn.valueOf() + expiresInSeconds * 1000);
 
-      const sasOptions = {
+      const sasOptions: any = {
         containerName,
         blobName,
         permissions: BlobSASPermissions.from({ read: true }),
         startsOn,
         expiresOn,
-        contentDisposition: 'inline',
+        contentDisposition: forDownload ? 'attachment' : 'inline',
       };
 
       const sasToken = generateBlobSASQueryParameters(

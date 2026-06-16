@@ -472,14 +472,8 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
             await new Promise<void>((resolve, reject) => {
               ffmpeg(file.path)
                 .outputOptions([
-                  '-c:v', 'libx264',
-                  '-preset', 'fast',
-                  '-crf', '23',
-                  '-maxrate', '4000k',
-                  '-bufsize', '8000k',
-                  '-vf', 'scale=-2:1080',
-                  '-c:a', 'aac',
-                  '-b:a', '192k',
+                  '-c:v', 'copy',
+                  '-c:a', 'copy',
                   '-movflags', '+faststart',
                   '-f', 'mp4'
                 ])
