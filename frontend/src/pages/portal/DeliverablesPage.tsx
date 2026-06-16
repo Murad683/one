@@ -293,8 +293,8 @@ const PreviewModal = ({
                         `/deliverables/${item.id}/download-url`,
                         { params: { blobName } }
                       ) as any;
-                      if (res.data?.downloadUrl) {
-                        window.location.href = res.data.downloadUrl;
+                      if (res.downloadUrl) {
+                        window.location.href = res.downloadUrl;
                       }
                     } catch (err) {
                       console.error('Download error:', err);
