@@ -72,7 +72,7 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
           if (processingStatus === 'READY') {
             clearInterval(intervalRef.current);
             setUploadState('success');
-            onUploadSuccess({ ...res.data, files, processingStatus });
+            onUploadSuccess(res.data);
             setTimeout(() => setUploadState('idle'), 2500);
           } else if (processingStatus === 'FAILED') {
             clearInterval(intervalRef.current);

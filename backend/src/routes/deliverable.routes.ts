@@ -200,7 +200,7 @@ router.get(
   async (req, res) => {
     try {
       const deliverable = await prisma.deliverable.findUnique({
-        where: { id: req.params.id },
+        where: { id: req.params.id as string },
         select: { processingStatus: true, files: true }
       });
       if (!deliverable) {
