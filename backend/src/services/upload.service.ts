@@ -9,9 +9,9 @@ export async function deleteFile(storageKey: string): Promise<void> {
   return storageProvider.delete(storageKey);
 }
 
-export async function getSecureDownloadUrl(storageKey: string, forDownload: boolean = false): Promise<string> {
+export async function getSecureDownloadUrl(storageKey: string): Promise<string> {
   // Returns a signed URL valid for 1 hour (3600 seconds)
-  return storageProvider.getSignedUrl(storageKey, 3600, forDownload);
+  return storageProvider.getSignedUrl(storageKey, 3600);
 }
 
 export function extractStorageKey(keyOrUrl: string | null | undefined): string {

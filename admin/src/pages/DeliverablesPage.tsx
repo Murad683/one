@@ -157,7 +157,7 @@ const PreviewOverlay = ({
   const renderMedia = () => {
     if (isVideoFile(activeFile.type, activeFile.name)) {
       return (
-        <video controls autoPlay={false} preload="metadata" crossOrigin="anonymous" className="max-h-[75vh] max-w-full shadow-2xl outline-none" src={url} key={url}>
+        <video controls autoPlay={false} className="max-h-[75vh] max-w-full shadow-2xl outline-none" src={url} key={url}>
           Brauzeriniz video formatını dəstəkləmir.
         </video>
       );
@@ -200,29 +200,14 @@ const PreviewOverlay = ({
         </div>
         <div className="flex items-center gap-3">
           {url && (
-            <button
-              onClick={async () => {
-                try {
-                  const res = await api.get(`/deliverables/${item.id}/download-url`, {
-                    params: { blobName: activeFile?.url }
-                  });
-                  if (res.data?.downloadUrl) {
-                    const tempA = document.createElement('a');
-                    tempA.href = res.data.downloadUrl;
-                    tempA.download = activeFile?.name || 'file';
-                    document.body.appendChild(tempA);
-                    tempA.click();
-                    document.body.removeChild(tempA);
-                  }
-                } catch (err) {
-                  console.error('Download error:', err);
-                }
-              }}
+            <a
+              href={sanitizeUrl(activeFile?.downloadUrl || url)}
+              download={activeFile?.name || 'file'}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-surface/10 hover:bg-surface/20 rounded-lg transition-colors backdrop-blur-md"
             >
               <Download className="h-4 w-4" />
               Yüklə
-            </button>
+            </a>
           )}
           <button
             onClick={onClose}
@@ -284,7 +269,6 @@ export const DeliverablesPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<Deliverable | null>(null);
   const [activeTab, setActiveTab] = useState<'files' | 'highlights'>('files');
@@ -358,6 +342,13 @@ export const DeliverablesPage = () => {
     setIsModalOpen(true);
   };
 
+  const uploadDeliverableFile = async (id: string, files: File[]) => {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+    await api.patch(`/deliverables/${id}/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  };
 
   const saveDeliverable = async (values: DeliverableFormValues) => {
     setIsSaving(true);
@@ -378,15 +369,7 @@ export const DeliverablesPage = () => {
       const deliverableId = editing?.id || response.data.data.id;
 
       if (selectedFiles.length > 0) {
-        const formData = new FormData();
-        selectedFiles.forEach(f => formData.append('files', f));
-        await api.patch(`/deliverables/${deliverableId}/upload`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-          onUploadProgress: (e: any) => {
-            if (e.total) setUploadProgress(Math.round((e.loaded / e.total) * 100));
-          }
-        });
-        setUploadProgress(null);
+        await uploadDeliverableFile(deliverableId, selectedFiles);
       }
 
       setIsModalOpen(false);
@@ -669,20 +652,6 @@ export const DeliverablesPage = () => {
               }
             }}
           />
-          {uploadProgress !== null && (
-            <div className="w-full mt-2">
-              <div className="flex justify-between text-xs text-gray-400 mb-1">
-                <span>Yüklənir...</span>
-                <span>{uploadProgress}%</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-            </div>
-          )}
           <Input
             label="Tarix"
             type="date"

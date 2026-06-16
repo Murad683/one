@@ -111,7 +111,7 @@ const MediaPreview = ({
   if (isVideoFile(mimeType, fileName)) {
     return (
       <div className="w-full h-full bg-black flex items-center justify-center relative">
-        <video controls autoPlay preload="metadata" crossOrigin="anonymous" className="w-full h-full object-contain" src={url}>
+        <video controls autoPlay className="w-full h-full object-contain" src={url}>
           Brauzeriniz video formatını dəstəkləmir.
         </video>
       </div>
@@ -285,27 +285,15 @@ const PreviewModal = ({
             
             <div className="flex items-center">
               {url && (
-                <button
-                  onClick={async () => {
-                    try {
-                      const blobName = activeFile?.url || url;
-                      const res = await apiClient.get(
-                        `/deliverables/${item.id}/download-url`,
-                        { params: { blobName } }
-                      ) as any;
-                      if (res.downloadUrl) {
-                        window.location.href = res.downloadUrl;
-                      }
-                    } catch (err) {
-                      console.error('Download error:', err);
-                    }
-                  }}
+                <a
+                  href={activeFile?.downloadUrl || url}
+                  download={activeFile?.name || 'file'}
                   className="p-1.5 md:mr-10 rounded-lg transition-colors hover:opacity-80 flex items-center"
                   style={{ color: 'var(--text-primary)' }}
                   title="Yüklə"
                 >
                   <Download size={20} />
-                </button>
+                </a>
               )}
             </div>
           </div>
@@ -730,4 +718,3 @@ const DeliverablesPage = () => {
 };
 
 export default DeliverablesPage;
-

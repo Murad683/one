@@ -4,6 +4,7 @@ import {
   FileArchive,
   Upload,
   RefreshCw,
+  CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
 import type { Deliverable } from '@/types';
@@ -13,7 +14,6 @@ import {
   getDeliverableAcceptedFiles,
 } from '@/utils/deliverable.helpers';
 import { uploadDeliverableFile } from '@/api/deliverables.api';
-import client from '@/api/client';
 
 interface FileUploadCellProps {
   deliverable: Deliverable;
@@ -24,13 +24,12 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
   deliverable,
   onUploadSuccess,
 }) => {
-  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'processing' | 'success' | 'error'>('idle');
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const intervalRef = useRef<any>(null);
 
   const handleUpload = async (file: File) => {
     setUploadState('uploading');
@@ -61,31 +60,13 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
         setProgress(percent);
       });
       
-      setUploadState('processing');
+      setUploadState('success');
+      onUploadSuccess(res.data);
       
-      // Start polling for processing status
-      intervalRef.current = setInterval(async () => {
-        try {
-          const statusRes = await client.get(`/deliverables/${deliverable.id}/processing-status`);
-          const { processingStatus } = statusRes.data.data;
-          
-          if (processingStatus === 'READY') {
-            clearInterval(intervalRef.current);
-            setUploadState('success');
-            onUploadSuccess(res.data);
-            setTimeout(() => setUploadState('idle'), 2500);
-          } else if (processingStatus === 'FAILED') {
-            clearInterval(intervalRef.current);
-            setUploadState('error');
-            setErrorMessage('Optimallaşdırma xətası baş verdi.');
-          }
-        } catch (err) {
-          console.error('Polling error:', err);
-        }
-      }, 5000);
-      
+      setTimeout(() => {
+        setUploadState('idle');
+      }, 2500);
     } catch (err: any) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
       setUploadState('error');
       setErrorMessage(err.response?.data?.message || 'Upload failed. Please try again.');
     }
@@ -122,7 +103,7 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
     return (
       <div className="flex w-full min-w-[200px] flex-col justify-center">
         <div className="flex items-center justify-between text-xs text-muted">
-          <span className="truncate">Yüklənir...</span>
+          <span className="truncate">Uploading...</span>
           <span>{progress}%</span>
         </div>
         <div className="my-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
@@ -135,32 +116,12 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
     );
   }
 
-  // State: Processing
-  if (uploadState === 'processing') {
-    return (
-      <div className="flex w-full min-w-[200px] flex-col justify-center">
-        <div className="flex items-center gap-2 text-xs text-muted">
-          <RefreshCw className="h-3 w-3 animate-spin" />
-          <span className="truncate">Emal edilir...</span>
-        </div>
-      </div>
-    );
-  }
-
   // State: Success
   if (uploadState === 'success') {
     return (
-      <div className="flex w-full min-w-[200px] flex-col justify-center">
-        <div className="flex items-center justify-between text-xs text-green-600 font-medium">
-          <span className="truncate">Hazırdır! ✓</span>
-          <span>100%</span>
-        </div>
-        <div className="my-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-          <div
-            className="h-full rounded-full bg-green-600 transition-all duration-300"
-            style={{ width: `100%` }}
-          />
-        </div>
+      <div className="flex items-center gap-2 py-2">
+        <CheckCircle2 className="h-5 w-5 text-green-600" />
+        <span className="text-xs font-medium text-green-600">Upload complete!</span>
       </div>
     );
   }

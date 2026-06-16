@@ -9,8 +9,6 @@ import {
   updateDeliverableSchema,
 } from '../utils/validators/deliverable.validators';
 import { uploadRateLimiter } from '../middleware/rateLimiter.middleware';
-import prisma from '../utils/prisma';
-import { getSecureDownloadUrl } from '../services/upload.service';
 
 const router = Router();
 
@@ -174,88 +172,6 @@ router.patch(
   uploadRateLimiter,
   ctrl.dynamicUploadMiddleware,
   ctrl.uploadDeliverableFile
-);
-
-/**
- * @swagger
- * /deliverables/{id}/processing-status:
- *   get:
- *     summary: Polls background processing status
- *     tags: [Deliverables]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Processing status returned
- */
-router.get(
-  '/:id/processing-status',
-  verifyTokenMiddleware,
-  isAdmin,
-  async (req, res) => {
-    try {
-      const deliverable = await prisma.deliverable.findUnique({
-        where: { id: req.params.id as string },
-        select: { processingStatus: true, files: true }
-      });
-      if (!deliverable) {
-        res.status(404).json({ success: false, message: 'Not found' });
-        return;
-      }
-      res.json({ success: true, data: deliverable });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  }
-);
-
-/**
- * @swagger
- * /deliverables/{id}/download-url:
- *   get:
- *     summary: Get a signed URL for downloading a file
- *     tags: [Deliverables]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *       - in: query
- *         name: blobName
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Download URL returned
- */
-router.get(
-  '/:id/download-url',
-  verifyTokenMiddleware,
-  async (req, res) => {
-    try {
-      const blobName = req.query.blobName as string;
-      if (!blobName) {
-        res.status(400).json({ success: false, message: 'blobName is required' });
-        return;
-      }
-      const downloadUrl = await getSecureDownloadUrl(blobName, true);
-      res.json({ success: true, downloadUrl });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ success: false, message: 'Server error' });
-    }
-  }
 );
 
 /**
