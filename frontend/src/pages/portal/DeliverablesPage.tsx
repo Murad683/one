@@ -14,7 +14,7 @@ interface Deliverable {
   status: string;
   month: number;
   year: number;
-  files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null }[];
+  files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null }[];
   notes: string | null;
   clientFeedback: string | null;
   thumbnailUrl?: string | null;
@@ -236,7 +236,7 @@ const PreviewModal = ({
         {/* LEFT COLUMN: MEDIA VIEWER */}
         <div className="flex-1 bg-black flex flex-col relative h-[50vh] md:h-full overflow-hidden">
           {activeFile ? (
-            <MediaPreview url={url} mimeType={activeFile.type} fileName={activeFile.name} />
+            <MediaPreview url={activeFile?.previewUrl || url} mimeType={activeFile.type} fileName={activeFile.name} />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-white/50 text-sm">Media tapılmadı</div>
           )}
@@ -286,7 +286,7 @@ const PreviewModal = ({
             <div className="flex items-center">
               {url && (
                 <a
-                  href={activeFile?.downloadUrl || url}
+                  href={activeFile?.downloadUrl || '#'}
                   download={activeFile?.name || 'file'}
                   className="p-1.5 md:mr-10 rounded-lg transition-colors hover:opacity-80 flex items-center"
                   style={{ color: 'var(--text-primary)' }}

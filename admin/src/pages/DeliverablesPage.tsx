@@ -42,7 +42,7 @@ interface Deliverable extends Record<string, unknown> {
   month: number;
   year: number;
   title: string;
-  files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null }[];
+  files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null }[];
   clientFeedback?: string | null;
 }
 
@@ -158,7 +158,7 @@ const PreviewOverlay = ({
   const renderMedia = () => {
     if (isVideoFile(activeFile.type, activeFile.name)) {
       return (
-        <video controls autoPlay={false} playsInline preload="metadata" className="max-h-[75vh] max-w-full shadow-2xl outline-none" src={url} key={url}>
+        <video controls autoPlay={false} playsInline preload="metadata" className="max-h-[75vh] max-w-full shadow-2xl outline-none" src={activeFile.previewUrl || url} key={url}>
           Brauzeriniz video formatını dəstəkləmir.
         </video>
       );
@@ -202,7 +202,7 @@ const PreviewOverlay = ({
         <div className="flex items-center gap-3">
           {url && (
             <a
-              href={sanitizeUrl(activeFile?.downloadUrl || url)}
+              href={sanitizeUrl(activeFile?.downloadUrl || '#')}
               download={activeFile?.name || 'file'}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-surface/10 hover:bg-surface/20 rounded-lg transition-colors backdrop-blur-md"
             >
@@ -272,6 +272,8 @@ export const DeliverablesPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading' | 'processing'>('idle');
+  const [uploadStartTime, setUploadStartTime] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<Deliverable | null>(null);
   const [activeTab, setActiveTab] = useState<'files' | 'highlights'>('files');
@@ -297,13 +299,23 @@ export const DeliverablesPage = () => {
   const fetchCategories = async () => {
     try {
       const response = await api.get<ApiEnvelope<DeliverableCategory[]>>('/deliverable-categories');
-      // Our API returns { success: true, data: [...] }, so we need response.data.data
-      setCategories(Array.isArray(response.data.data) ? response.data.data : []);
-    } catch (err) {
-      console.error('fetchCategories error:', err);
-      setCategories([]);
+      setCategories(response.data.data || []);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
     }
   };
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (uploadPhase !== 'idle' && uploadStartTime) {
+      interval = setInterval(() => {
+        setElapsedSeconds(Math.floor((Date.now() - uploadStartTime) / 1000));
+      }, 1000);
+    } else {
+      setElapsedSeconds(0);
+    }
+    return () => clearInterval(interval);
+  }, [uploadPhase, uploadStartTime]);
 
   const fetchDeliverables = async () => {
     setIsLoading(true);
@@ -349,6 +361,7 @@ export const DeliverablesPage = () => {
     setIsSaving(true);
     setUploadProgress(0);
     setUploadPhase('idle');
+    setUploadStartTime(Date.now());
     try {
       const date = new Date(values.date);
       const payload = {
@@ -374,6 +387,7 @@ export const DeliverablesPage = () => {
       }
 
       setUploadPhase('idle');
+      setUploadStartTime(null);
       setIsModalOpen(false);
       await fetchDeliverables();
     } catch (err) {
@@ -381,6 +395,7 @@ export const DeliverablesPage = () => {
     } finally {
       setIsSaving(false);
       setUploadPhase('idle');
+      setUploadStartTime(null);
     }
   };
 
@@ -682,9 +697,14 @@ export const DeliverablesPage = () => {
                   style={uploadPhase === 'uploading' ? { width: `${uploadProgress}%` } : undefined}
                 />
               </div>
-              {uploadPhase === 'processing' && (
-                <p className="text-[10px] text-faint">Server faylları emal edir, zəhmət olmasa gözləyin...</p>
-              )}
+              <div className="flex justify-between items-center mt-1">
+                {uploadPhase === 'processing' ? (
+                  <p className="text-[10px] text-faint">Server faylları emal edir (transcode), zəhmət olmasa gözləyin...</p>
+                ) : <span />}
+                <span className="text-[10px] text-faint font-mono bg-surface p-1 rounded">
+                  Keçən vaxt: {elapsedSeconds > 60 ? `${Math.floor(elapsedSeconds / 60)} d ${elapsedSeconds % 60} s` : `${elapsedSeconds} s`}
+                </span>
+              </div>
             </div>
           )}
           <div className="flex justify-end gap-3 border-t border-edge pt-4">

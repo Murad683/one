@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { processAndStoreFile, deleteFile, getSecureDownloadUrl, cleanupOrphanFiles } from '../services/upload.service';
+import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloadUrlForDownload, cleanupOrphanFiles } from '../services/upload.service';
 import { uploadSiteMediaArray } from '../middleware/upload.middleware';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
@@ -11,6 +11,22 @@ import * as os from 'os';
 import * as crypto from 'crypto';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+
+const getVideoHeight = (videoPath: string): Promise<number> => {
+  return new Promise((resolve) => {
+    ffmpeg.ffprobe(videoPath, (err, metadata) => {
+      if (err || !metadata?.streams) {
+        console.error('[Video Debug] ffprobe error:', err?.message);
+        resolve(0);
+        return;
+      }
+      const videoStream = metadata.streams.find((s: any) => s.codec_type === 'video');
+      const height = videoStream?.height || 0;
+      console.log('[Video Debug] Detected video height:', height);
+      resolve(height);
+    });
+  });
+};
 
 // No longer needed: resolveStoragePath
 
@@ -74,8 +90,11 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
         const filesWithSignedUrls = await Promise.all(
           files.map(async (f) => {
             try {
-              const downloadUrl = await getSecureDownloadUrl(f.url);
-              return { ...f, downloadUrl };
+              const downloadUrl = await getSecureDownloadUrlForDownload(f.url);
+              const previewSignedUrl = f.previewUrl
+                ? await getSecureDownloadUrl(f.previewUrl)
+                : (f.url ? await getSecureDownloadUrl(f.url) : null);
+              return { ...f, downloadUrl, previewUrl: previewSignedUrl };
             } catch {
               return { ...f, downloadUrl: null };
             }
@@ -159,8 +178,11 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
         const filesWithSignedUrls = await Promise.all(
           files.map(async (f) => {
             try {
-              const downloadUrl = await getSecureDownloadUrl(f.url);
-              return { ...f, downloadUrl };
+              const downloadUrl = await getSecureDownloadUrlForDownload(f.url);
+              const previewSignedUrl = f.previewUrl
+                ? await getSecureDownloadUrl(f.previewUrl)
+                : (f.url ? await getSecureDownloadUrl(f.url) : null);
+              return { ...f, downloadUrl, previewUrl: previewSignedUrl };
             } catch {
               return { ...f, downloadUrl: null };
             }
@@ -329,6 +351,41 @@ const generateVideoThumbnail = async (videoFilePath: string): Promise<string | n
   });
 };
 
+const generateWebPreview = async (videoFilePath: string): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const outputDir = os.tmpdir();
+    const previewFileName = `preview_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.mp4`;
+    const previewPath = path.join(outputDir, previewFileName);
+
+    console.log('[Video Debug] Starting 720p preview transcode:', videoFilePath);
+
+    ffmpeg(videoFilePath)
+      .outputOptions([
+        '-vf', 'scale=-2:720',
+        '-c:v', 'libx264',
+        '-preset', 'fast',
+        '-crf', '28',
+        '-c:a', 'aac',
+        '-b:a', '128k',
+        '-movflags', '+faststart',
+      ])
+      .on('error', (err) => {
+        console.error('[Video Debug] Preview transcode error:', err.message);
+        resolve(null);
+      })
+      .on('end', () => {
+        console.log('[Video Debug] Preview transcode finished successfully.');
+        const exists = fs.existsSync(previewPath);
+        if (exists) {
+          const size = fs.statSync(previewPath).size;
+          console.log('[Video Debug] Preview file size:', (size / 1024 / 1024).toFixed(1), 'MB');
+        }
+        resolve(exists ? previewPath : null);
+      })
+      .save(previewPath);
+  });
+};
+
 const applyVideoFaststart = async (videoFilePath: string): Promise<string | null> => {
   return new Promise((resolve) => {
     const ext = path.extname(videoFilePath) || '.mp4';
@@ -492,6 +549,42 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
         }
       }
 
+      // --- GENERATE WEB PREVIEW FOR LARGE VIDEOS ---
+      let previewUrl: string | null = null;
+      const isVideoForPreview = file.mimetype?.startsWith('video/');
+      
+      if (isVideoForPreview && file.path) {
+        const height = await getVideoHeight(file.path);
+        if (height > 720) {
+          const previewPath = await generateWebPreview(file.path);
+          if (previewPath) {
+            try {
+              const previewMulterFile: Express.Multer.File = {
+                fieldname: 'preview',
+                originalname: `preview-${file.originalname}`,
+                encoding: '7bit',
+                mimetype: 'video/mp4',
+                buffer: null as any,
+                size: fs.statSync(previewPath).size,
+                stream: null as any,
+                destination: os.tmpdir(),
+                filename: path.basename(previewPath),
+                path: previewPath,
+              };
+              const previewResult = await processAndStoreFile(previewMulterFile, 'previews');
+              previewUrl = previewResult.url;
+              console.log('[Video Debug] Preview uploaded to Azure:', previewUrl);
+            } catch (previewError) {
+              console.error('[Video Debug] Preview upload error:', previewError);
+            }
+            // Cleanup preview temp file
+            await fs.promises.unlink(previewPath).catch(() => {});
+          }
+        } else {
+          console.log('[Video Debug] Video height <=720px, skipping preview transcode.');
+        }
+      }
+
       const result = await processAndStoreFile(file, folder);
       
       // Cleanup faststart file if Azure SDK didn't already
@@ -503,6 +596,7 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
         name: result.fileName,
         size: result.fileSize,
         type: result.mimeType,
+        ...(previewUrl && { previewUrl }),
       });
     }
 

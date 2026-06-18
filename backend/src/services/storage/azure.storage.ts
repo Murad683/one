@@ -97,7 +97,7 @@ export class AzureStorageProvider implements IStorageProvider {
     await blockBlobClient.deleteIfExists();
   }
 
-  async getSignedUrl(rawKey: string | null | undefined, expiresInSeconds: number): Promise<string> {
+  async getSignedUrl(rawKey: string | null | undefined, expiresInSeconds: number, forceDisposition?: 'inline' | 'attachment'): Promise<string> {
     if (!rawKey) return '';
     const keyStr = String(rawKey);
 
@@ -133,7 +133,7 @@ export class AzureStorageProvider implements IStorageProvider {
         '.mp4', '.webm', '.ogg', '.mov', '.avi',       // video
         '.jpg', '.jpeg', '.png', '.gif', '.webp',       // image
       ];
-      const disposition = inlineExtensions.includes(ext) ? 'inline' : 'attachment';
+      const disposition = forceDisposition || (inlineExtensions.includes(ext) ? 'inline' : 'attachment');
 
       const sasOptions = {
         containerName,

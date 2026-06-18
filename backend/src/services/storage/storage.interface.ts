@@ -9,5 +9,5 @@ export interface UploadResult {
 export interface IStorageProvider {
   upload(file: Express.Multer.File, folder: string): Promise<UploadResult>;
   delete(storageKey: string): Promise<void>;
-  getSignedUrl(storageKey: string, expiresInSeconds: number): Promise<string>;
+  getSignedUrl(storageKey: string, expiresInSeconds: number, forceDisposition?: 'inline' | 'attachment'): Promise<string>;
 }

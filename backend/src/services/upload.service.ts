@@ -14,6 +14,11 @@ export async function getSecureDownloadUrl(storageKey: string): Promise<string> 
   return storageProvider.getSignedUrl(storageKey, 3600);
 }
 
+export async function getSecureDownloadUrlForDownload(storageKey: string): Promise<string> {
+  // Returns a signed URL with forced 'attachment' disposition for downloads
+  return storageProvider.getSignedUrl(storageKey, 3600, 'attachment');
+}
+
 export function extractStorageKey(keyOrUrl: string | null | undefined): string {
   if (!keyOrUrl) return '';
   const keyStr = String(keyOrUrl);
