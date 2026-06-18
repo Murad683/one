@@ -329,6 +329,30 @@ const generateVideoThumbnail = async (videoFilePath: string): Promise<string | n
   });
 };
 
+const applyVideoFaststart = async (videoFilePath: string): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const ext = path.extname(videoFilePath) || '.mp4';
+    const outputDir = os.tmpdir();
+    const faststartFileName = `faststart_${Date.now()}_${Math.random().toString(36).substring(2, 9)}${ext}`;
+    const faststartPath = path.join(outputDir, faststartFileName);
+
+    console.log('[Video Debug] Starting faststart processing:', videoFilePath);
+
+    ffmpeg(videoFilePath)
+      .outputOptions(['-c copy', '-movflags +faststart'])
+      .on('error', (err) => {
+        console.error('[Video Debug] faststart FFMPEG ERROR:', err.message);
+        resolve(null); // Graceful degradation
+      })
+      .on('end', () => {
+        console.log('[Video Debug] faststart finished successfully.');
+        const exists = fs.existsSync(faststartPath);
+        resolve(exists ? faststartPath : null);
+      })
+      .save(faststartPath);
+  });
+};
+
 // PATCH /api/v1/deliverables/:id/upload (Admin only)
 export const uploadDeliverableFile = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -443,13 +467,37 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
             await fs.promises.unlink(tempVideoPath).catch((err) => console.error('Video Cleanup Error:', err));
           }
           if (tempThumbPath) {
-            await fs.promises.unlink(tempThumbPath).catch((err) => console.error('Thumb Cleanup Error:', err));
+            await fs.promises.unlink(tempThumbPath).catch((err) => {
+              if (err.code !== 'ENOENT') console.error('Thumb Cleanup Error:', err);
+            });
           }
         }
       }
       // --- END THUMBNAIL GENERATION ---
 
+      // --- APPLY FASTSTART FOR WEB OPTIMIZATION ---
+      const isVideoFileExt = ['.mp4', '.mov', '.m4v', '.webm'].includes(path.extname(file.originalname).toLowerCase());
+      const isVideoByMimeForFaststart = file.mimetype?.startsWith('video/') || isVideoFileExt;
+      
+      let faststartTempPath: string | null = null;
+      if (isVideoByMimeForFaststart && file.path) {
+        faststartTempPath = await applyVideoFaststart(file.path);
+        if (faststartTempPath) {
+          // Delete original temp file created by multer
+          await fs.promises.unlink(file.path).catch(() => {});
+          
+          // Override file properties for processAndStoreFile
+          file.path = faststartTempPath;
+          file.size = fs.statSync(faststartTempPath).size;
+        }
+      }
+
       const result = await processAndStoreFile(file, folder);
+      
+      // Cleanup faststart file if Azure SDK didn't already
+      if (faststartTempPath) {
+        await fs.promises.unlink(faststartTempPath).catch(() => {});
+      }
       newFileObjects.push({
         url: result.url,
         name: result.fileName,
