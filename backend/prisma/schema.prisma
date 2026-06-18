@@ -111,6 +111,7 @@ model Deliverable {
   clientFeedback String?           @db.Text
   uploadedAt     DateTime?
   thumbnailUrl   String?
+  processingDuration Int?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   client         User                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -228,6 +229,7 @@ enum DeliverableStatus {
   PENDING
   PROCESSING
   READY
+  FAILED
   ARCHIVED
 }
 

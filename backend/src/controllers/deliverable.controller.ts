@@ -437,12 +437,37 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
       return;
     }
 
-    // Delete old files since this is a new upload batch replacing the old
+    // Immediately set status to PROCESSING and return 201
+    const updatedDeliverable = await prisma.deliverable.update({
+      where: { id },
+      data: {
+        status: 'PROCESSING',
+      },
+    });
+
+    sendSuccess(res, updatedDeliverable);
+
+    // Fire and forget the background task
+    processDeliverableBackground(id, deliverable, uploadedFiles).catch((err) => {
+      console.error('[Video Debug] Fatal error in background processing:', err);
+    });
+  } catch (err) {
+    console.error('uploadDeliverableFile error:', err);
+    sendError(res, 'Failed to initiate file upload', 500);
+  }
+};
+
+const processDeliverableBackground = async (
+  id: string,
+  deliverable: any,
+  uploadedFiles: Express.Multer.File[]
+) => {
+  const startTime = Date.now();
+  try {
     const oldFiles = (deliverable.files as any[]) || [];
     const oldUrls = oldFiles.map((f: any) => f.url);
     await cleanupOrphanFiles(oldUrls, []);
 
-    // Determine the folder based on deliverable category or legacy type
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     const folder = isVideo ? 'videos' : 'designs';
 
@@ -451,53 +476,28 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
 
     for (const file of uploadedFiles) {
       // --- THUMBNAIL GENERATION ---
-      // Trigger if DB says it's a video OR if the actual uploaded file is a video mimetype
       const isVideoByDb = deliverable.category?.isVideo === true || deliverable.type === 'VIDEO';
       const isVideoByMime = file.mimetype?.startsWith('video/') === true;
       const shouldGenerateThumb = (isVideoByDb || isVideoByMime) && !newThumbnailUrl && (!!file.path || !!file.buffer);
 
-      console.log('[Thumb Debug] Thumbnail condition check:', {
-        isVideoByDb,
-        isVideoByMime,
-        categoryIsVideo: deliverable.category?.isVideo,
-        deliverableType: deliverable.type,
-        fileMimetype: file.mimetype,
-        filePath: file.path,
-        hasBuffer: !!file.buffer,
-        bufferLength: file.buffer?.length,
-        alreadyHasThumb: !!newThumbnailUrl,
-        shouldGenerateThumb,
-      });
-
       if (shouldGenerateThumb) {
-        // Temp file paths — declared here so `finally` can always clean them up
         let tempVideoPath: string | undefined;
-        let tempThumbPath: string | undefined;
+        let tempThumbPath: string | undefined | null;
 
         try {
-          // Resolve the video source path on disk.
-          // If Multer used disk storage, file.path exists. Otherwise, write the buffer.
           let videoInputPath = file.path;
-
           if (!videoInputPath && file.buffer) {
-            const ext = path.extname(file.originalname) || '.mp4';
-            tempVideoPath = path.join(os.tmpdir(), `${crypto.randomUUID()}${ext}`);
-            console.log('[Thumb Debug] file.path is undefined — writing buffer to temp file:', tempVideoPath, '| buffer size:', file.buffer.length);
-            await fs.promises.writeFile(tempVideoPath, file.buffer);
+            tempVideoPath = path.join(os.tmpdir(), `temp_video_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.mp4`);
+            fs.writeFileSync(tempVideoPath, file.buffer);
             videoInputPath = tempVideoPath;
           }
 
-          console.log('--- STARTING THUMBNAIL GEN ---', { isVideoByDb, isVideoByMime, fileMimeType: file.mimetype, videoInputPath });
-
-          // Generate the thumbnail frame
-          tempThumbPath = await generateVideoThumbnail(videoInputPath!) ?? undefined;
-          console.log('[Thumb Debug] generateVideoThumbnail returned:', tempThumbPath);
+          if (videoInputPath) {
+            tempThumbPath = await generateVideoThumbnail(videoInputPath);
+          }
 
           if (tempThumbPath) {
-            console.log('[Thumb Debug] Attempting to upload thumbnail to Azure...');
-            const thumbFileBuffer = await fs.promises.readFile(tempThumbPath);
-            console.log('[Thumb Debug] Thumbnail file buffer size:', thumbFileBuffer.length);
-
+            const thumbFileBuffer = fs.readFileSync(tempThumbPath);
             const thumbMulterFile: Express.Multer.File = {
               fieldname: 'thumbnail',
               originalname: path.basename(tempThumbPath),
@@ -514,25 +514,19 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
             const thumbResult = await processAndStoreFile(thumbMulterFile, 'thumbnails');
             newThumbnailUrl = thumbResult.url;
             console.log('[Thumb Debug] Azure upload SUCCESS. thumbnailUrl:', newThumbnailUrl);
-          } else {
-            console.log('[Thumb Debug] generateVideoThumbnail returned null — no thumbnail generated.');
           }
         } catch (thumbError) {
           console.error('Azure Thumbnail Upload Error:', thumbError);
-          newThumbnailUrl = null; // Graceful degradation
+          newThumbnailUrl = null; 
         } finally {
-          // Aggressive async cleanup — never block, never throw
           if (tempVideoPath) {
-            await fs.promises.unlink(tempVideoPath).catch((err) => console.error('Video Cleanup Error:', err));
+            await fs.promises.unlink(tempVideoPath).catch(() => {});
           }
           if (tempThumbPath) {
-            await fs.promises.unlink(tempThumbPath).catch((err) => {
-              if (err.code !== 'ENOENT') console.error('Thumb Cleanup Error:', err);
-            });
+            await fs.promises.unlink(tempThumbPath).catch(() => {});
           }
         }
       }
-      // --- END THUMBNAIL GENERATION ---
 
       // --- APPLY FASTSTART FOR WEB OPTIMIZATION ---
       const isVideoFileExt = ['.mp4', '.mov', '.m4v', '.webm'].includes(path.extname(file.originalname).toLowerCase());
@@ -542,10 +536,7 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
       if (isVideoByMimeForFaststart && file.path) {
         faststartTempPath = await applyVideoFaststart(file.path);
         if (faststartTempPath) {
-          // Delete original temp file created by multer
           await fs.promises.unlink(file.path).catch(() => {});
-          
-          // Override file properties for processAndStoreFile
           file.path = faststartTempPath;
           file.size = fs.statSync(faststartTempPath).size;
         }
@@ -575,21 +566,16 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
               };
               const previewResult = await processAndStoreFile(previewMulterFile, 'previews');
               previewUrl = previewResult.url;
-              console.log('[Video Debug] Preview uploaded to Azure:', previewUrl);
             } catch (previewError) {
               console.error('[Video Debug] Preview upload error:', previewError);
             }
-            // Cleanup preview temp file
             await fs.promises.unlink(previewPath).catch(() => {});
           }
-        } else {
-          console.log('[Video Debug] Video height <=720px, skipping preview transcode.');
         }
       }
 
       const result = await processAndStoreFile(file, folder);
       
-      // Cleanup faststart file if Azure SDK didn't already
       if (faststartTempPath) {
         await fs.promises.unlink(faststartTempPath).catch(() => {});
       }
@@ -602,21 +588,30 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
       });
     }
 
-    const updated = await prisma.deliverable.update({
+    const processingDuration = Math.floor((Date.now() - startTime) / 1000);
+
+    await prisma.deliverable.update({
       where: { id },
       data: {
         files: newFileObjects,
         uploadedAt: new Date(),
         status: 'READY',
-        clientFeedback: null, // Reset feedback so client can review new version
+        processingDuration,
+        clientFeedback: null,
         ...(newThumbnailUrl !== undefined && { thumbnailUrl: newThumbnailUrl }),
       },
     });
 
-    sendSuccess(res, updated);
+    console.log(`[Video Debug] Deliverable ${id} processed successfully in ${processingDuration}s`);
+
   } catch (err) {
-    console.error('uploadDeliverableFile error:', err);
-    sendError(res, 'Failed to upload file', 500);
+    console.error(`[Video Debug] Background processing failed for ${id}:`, err);
+    await prisma.deliverable.update({
+      where: { id },
+      data: {
+        status: 'FAILED',
+      },
+    });
   }
 };
 

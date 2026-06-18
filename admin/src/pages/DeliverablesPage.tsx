@@ -16,7 +16,7 @@ import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
 import { HighlightsManager } from '../components/deliverables/HighlightsManager';
 
-type DeliverableStatus = 'PENDING' | 'PROCESSING' | 'READY' | 'ARCHIVED';
+type DeliverableStatus = 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED' | 'ARCHIVED';
 
 interface ClientUser extends Record<string, unknown> {
   id: string;
@@ -44,6 +44,7 @@ interface Deliverable extends Record<string, unknown> {
   title: string;
   files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null }[];
   clientFeedback?: string | null;
+  processingDuration?: number | null;
 }
 
 interface DeliverableFormValues {
@@ -66,6 +67,7 @@ const statusLabels: Record<DeliverableStatus, string> = {
   PENDING: 'Gözləmədə',
   PROCESSING: 'Hazırlanır',
   READY: 'Hazırdır',
+  FAILED: 'Xəta',
   ARCHIVED: 'Arxivlənib',
 };
 
@@ -73,6 +75,7 @@ const statusVariant = (status: DeliverableStatus) => {
   if (status === 'PENDING') return 'warning';
   if (status === 'PROCESSING') return 'info';
   if (status === 'READY') return 'success';
+  if (status === 'FAILED') return 'danger';
   return 'default';
 };
 
@@ -271,9 +274,7 @@ export const DeliverablesPage = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading' | 'processing'>('idle');
-  const [uploadStartTime, setUploadStartTime] = useState<number | null>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading'>('idle');
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<Deliverable | null>(null);
   const [activeTab, setActiveTab] = useState<'files' | 'highlights'>('files');
@@ -304,18 +305,6 @@ export const DeliverablesPage = () => {
       console.error('Failed to fetch categories:', error);
     }
   };
-
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (uploadPhase !== 'idle' && uploadStartTime) {
-      interval = setInterval(() => {
-        setElapsedSeconds(Math.floor((Date.now() - uploadStartTime) / 1000));
-      }, 1000);
-    } else {
-      setElapsedSeconds(0);
-    }
-    return () => clearInterval(interval);
-  }, [uploadPhase, uploadStartTime]);
 
   const fetchDeliverables = async () => {
     setIsLoading(true);
@@ -361,7 +350,6 @@ export const DeliverablesPage = () => {
     setIsSaving(true);
     setUploadProgress(0);
     setUploadPhase('idle');
-    setUploadStartTime(Date.now());
     try {
       const date = new Date(values.date);
       const payload = {
@@ -382,12 +370,10 @@ export const DeliverablesPage = () => {
         setUploadPhase('uploading');
         await uploadFilesWithProgress(deliverableId, selectedFiles, (percent) => {
           setUploadProgress(percent);
-          if (percent >= 100) setUploadPhase('processing');
         });
       }
 
       setUploadPhase('idle');
-      setUploadStartTime(null);
       setIsModalOpen(false);
       await fetchDeliverables();
     } catch (err) {
@@ -395,7 +381,6 @@ export const DeliverablesPage = () => {
     } finally {
       setIsSaving(false);
       setUploadPhase('idle');
-      setUploadStartTime(null);
     }
   };
 
@@ -468,23 +453,30 @@ export const DeliverablesPage = () => {
       header: 'Status',
       hideOnMobile: true,
       render: (deliverable) => (
-        <div className="flex items-center gap-1.5">
-          <Badge variant={statusVariant(deliverable.status)}>
-            {statusLabels[deliverable.status] || deliverable.status}
-          </Badge>
-          {deliverable.clientFeedback && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setFeedbackView(deliverable.clientFeedback!);
-              }}
-              className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-700 ring-1 ring-inset ring-sky-600/20 hover:bg-sky-100 transition"
-              title="Rəyi göstər"
-            >
-              <MessageCircle className="h-3 w-3" />
-              Rəy
-            </button>
+        <div className="flex flex-col gap-1 items-start">
+          <div className="flex items-center gap-1.5">
+            <Badge variant={statusVariant(deliverable.status)}>
+              {statusLabels[deliverable.status] || deliverable.status}
+            </Badge>
+            {deliverable.clientFeedback && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFeedbackView(deliverable.clientFeedback!);
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-700 ring-1 ring-inset ring-sky-600/20 hover:bg-sky-100 transition"
+                title="Rəyi göstər"
+              >
+                <MessageCircle className="h-3 w-3" />
+                Rəy
+              </button>
+            )}
+          </div>
+          {deliverable.processingDuration && deliverable.status === 'READY' && (
+            <span className="text-[10px] text-faint italic ml-1">
+              Emal: {Math.floor(deliverable.processingDuration / 60)}d {deliverable.processingDuration % 60}s
+            </span>
           )}
         </div>
       ),
@@ -689,22 +681,11 @@ export const DeliverablesPage = () => {
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
                 <div
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    uploadPhase === 'processing'
-                      ? 'w-full bg-amber-500 animate-pulse'
-                      : 'bg-gray-900'
-                  }`}
+                  className={`h-full rounded-full transition-all duration-300 bg-gray-900`}
                   style={uploadPhase === 'uploading' ? { width: `${uploadProgress}%` } : undefined}
                 />
               </div>
-              <div className="flex justify-between items-center mt-1">
-                {uploadPhase === 'processing' ? (
-                  <p className="text-[10px] text-faint">Server faylları emal edir (transcode), zəhmət olmasa gözləyin...</p>
-                ) : <span />}
-                <span className="text-[10px] text-faint font-mono bg-surface p-1 rounded">
-                  Keçən vaxt: {elapsedSeconds > 60 ? `${Math.floor(elapsedSeconds / 60)} d ${elapsedSeconds % 60} s` : `${elapsedSeconds} s`}
-                </span>
-              </div>
+              
             </div>
           )}
           <div className="flex justify-end gap-3 border-t border-edge pt-4">
