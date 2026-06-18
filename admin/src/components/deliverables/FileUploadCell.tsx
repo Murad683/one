@@ -56,7 +56,7 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
     }
 
     try {
-      const res = await uploadDeliverableFile(deliverable.id, file, (percent) => {
+      const res = await uploadDeliverableFile(deliverable.id, [file], (percent) => {
         setProgress(percent);
       });
       
