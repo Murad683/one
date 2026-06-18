@@ -5,7 +5,7 @@ const client = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 600000, // 10 minutes — large video uploads need time
   withCredentials: true,
 });
 

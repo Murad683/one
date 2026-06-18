@@ -6,8 +6,8 @@ import os from 'os';
 import path from 'path';
 import { fromFile } from 'file-type';
 
-// Determine the max file size from env or default to 500MB
-const MAX_FILE_SIZE_MB = parseInt(process.env.MAX_FILE_SIZE_MB || '500', 10);
+// Determine the max file size from env or default to 2GB
+const MAX_FILE_SIZE_MB = parseInt(process.env.MAX_FILE_SIZE_MB || '2048', 10);
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 

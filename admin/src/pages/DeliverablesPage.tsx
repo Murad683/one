@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { uploadDeliverableFile as uploadFilesWithProgress } from '../api/deliverables.api';
 import { Download, Edit2, FileX, MessageCircle, Play, Plus, Search, Trash2, X } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import Badge from '../components/ui/Badge';
@@ -157,7 +158,7 @@ const PreviewOverlay = ({
   const renderMedia = () => {
     if (isVideoFile(activeFile.type, activeFile.name)) {
       return (
-        <video controls autoPlay={false} className="max-h-[75vh] max-w-full shadow-2xl outline-none" src={url} key={url}>
+        <video controls autoPlay={false} playsInline preload="metadata" className="max-h-[75vh] max-w-full shadow-2xl outline-none" src={url} key={url}>
           Brauzeriniz video formatını dəstəkləmir.
         </video>
       );
@@ -269,6 +270,8 @@ export const DeliverablesPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading' | 'processing'>('idle');
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<Deliverable | null>(null);
   const [activeTab, setActiveTab] = useState<'files' | 'highlights'>('files');
@@ -342,16 +345,10 @@ export const DeliverablesPage = () => {
     setIsModalOpen(true);
   };
 
-  const uploadDeliverableFile = async (id: string, files: File[]) => {
-    const formData = new FormData();
-    files.forEach(f => formData.append('files', f));
-    await api.patch(`/deliverables/${id}/upload`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-  };
-
   const saveDeliverable = async (values: DeliverableFormValues) => {
     setIsSaving(true);
+    setUploadProgress(0);
+    setUploadPhase('idle');
     try {
       const date = new Date(values.date);
       const payload = {
@@ -369,15 +366,21 @@ export const DeliverablesPage = () => {
       const deliverableId = editing?.id || response.data.data.id;
 
       if (selectedFiles.length > 0) {
-        await uploadDeliverableFile(deliverableId, selectedFiles);
+        setUploadPhase('uploading');
+        await uploadFilesWithProgress(deliverableId, selectedFiles, (percent) => {
+          setUploadProgress(percent);
+          if (percent >= 100) setUploadPhase('processing');
+        });
       }
 
+      setUploadPhase('idle');
       setIsModalOpen(false);
       await fetchDeliverables();
     } catch (err) {
       setError(requestErrorMessage(err, 'Fayl yadda saxlanıla bilmədi.'));
     } finally {
       setIsSaving(false);
+      setUploadPhase('idle');
     }
   };
 
@@ -658,6 +661,32 @@ export const DeliverablesPage = () => {
             error={errors.date?.message}
             {...register('date', { required: 'Tarix mütləqdir' })}
           />
+          {/* Upload Progress Bar */}
+          {uploadPhase !== 'idle' && (
+            <div className="space-y-2 rounded-lg bg-surface-alt p-3 border border-edge">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-body">
+                  {uploadPhase === 'uploading' ? 'Yüklənir...' : 'Emal olunur...'}
+                </span>
+                {uploadPhase === 'uploading' && (
+                  <span className="tabular-nums text-muted">{uploadProgress}%</span>
+                )}
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <div
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    uploadPhase === 'processing'
+                      ? 'w-full bg-amber-500 animate-pulse'
+                      : 'bg-gray-900'
+                  }`}
+                  style={uploadPhase === 'uploading' ? { width: `${uploadProgress}%` } : undefined}
+                />
+              </div>
+              {uploadPhase === 'processing' && (
+                <p className="text-[10px] text-faint">Server faylları emal edir, zəhmət olmasa gözləyin...</p>
+              )}
+            </div>
+          )}
           <div className="flex justify-end gap-3 border-t border-edge pt-4">
             <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
               Ləğv Et

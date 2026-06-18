@@ -28,11 +28,11 @@ export const createDeliverable = async (data: {
 
 export const uploadDeliverableFile = async (
   id: string,
-  file: File,
+  files: File[],
   onProgress?: (percent: number) => void
 ): Promise<ApiResponse<Deliverable>> => {
   const formData = new FormData();
-  formData.append('file', file);
+  files.forEach(f => formData.append('files', f));
 
   const response = await client.patch<ApiResponse<Deliverable>>(
     `/deliverables/${id}/upload`,
@@ -41,6 +41,7 @@ export const uploadDeliverableFile = async (
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 600000, // 10 minutes — large video uploads
       onUploadProgress: (event) => {
         if (event.total) {
           onProgress?.(Math.round((event.loaded * 100) / event.total));

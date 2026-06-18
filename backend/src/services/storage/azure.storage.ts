@@ -127,13 +127,21 @@ export class AzureStorageProvider implements IStorageProvider {
       const startsOn = new Date();
       const expiresOn = new Date(startsOn.valueOf() + expiresInSeconds * 1000);
 
+      // Use 'inline' for video/image so browsers can play/display them directly
+      const ext = path.extname(blobName).toLowerCase();
+      const inlineExtensions = [
+        '.mp4', '.webm', '.ogg', '.mov', '.avi',       // video
+        '.jpg', '.jpeg', '.png', '.gif', '.webp',       // image
+      ];
+      const disposition = inlineExtensions.includes(ext) ? 'inline' : 'attachment';
+
       const sasOptions = {
         containerName,
         blobName,
         permissions: BlobSASPermissions.from({ read: true }),
         startsOn,
         expiresOn,
-        contentDisposition: 'attachment',
+        contentDisposition: disposition,
       };
 
       const sasToken = generateBlobSASQueryParameters(
