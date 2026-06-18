@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { getSecureDownloadUrl } from '../services/upload.service';
+import { getSecureDownloadUrl, getSecureDownloadUrlForDownload } from '../services/upload.service';
 
 // ─── GET /api/v1/dashboard/overview ────────────
 export const getOverview = async (req: Request, res: Response): Promise<void> => {
@@ -62,22 +62,25 @@ export const getDeliverables = async (req: Request, res: Response): Promise<void
       orderBy: { createdAt: 'desc' },
     });
 
-    // Sign URLs in the new files JSON array
-    const serialized = await Promise.all(
-      deliverables.map(async (d) => {
-        const files = (d.files as any[]) || [];
-        const filesWithSignedUrls = await Promise.all(
-          files.map(async (f) => {
-            try {
-              const downloadUrl = await getSecureDownloadUrl(f.url);
-              return { ...f, downloadUrl };
-            } catch {
-              return { ...f, downloadUrl: null };
-            }
-          })
-        );
-
-        let signedThumbnailUrl = d.thumbnailUrl;
+      // Sign URLs in the new files JSON array
+      const serialized = await Promise.all(
+        deliverables.map(async (d) => {
+          const files = (d.files as any[]) || [];
+          const filesWithSignedUrls = await Promise.all(
+            files.map(async (f) => {
+              try {
+                const downloadUrl = await getSecureDownloadUrlForDownload(f.url);
+                const previewSignedUrl = f.previewUrl
+                  ? await getSecureDownloadUrl(f.previewUrl)
+                  : (f.url ? await getSecureDownloadUrl(f.url) : null);
+                return { ...f, downloadUrl, previewUrl: previewSignedUrl };
+              } catch {
+                return { ...f, downloadUrl: null };
+              }
+            })
+          );
+  
+          let signedThumbnailUrl = d.thumbnailUrl;
         if (signedThumbnailUrl && typeof signedThumbnailUrl === 'string') {
           try {
             signedThumbnailUrl = await getSecureDownloadUrl(signedThumbnailUrl);

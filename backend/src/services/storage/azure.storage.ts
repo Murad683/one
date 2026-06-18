@@ -133,7 +133,11 @@ export class AzureStorageProvider implements IStorageProvider {
         '.mp4', '.webm', '.ogg', '.mov', '.avi',       // video
         '.jpg', '.jpeg', '.png', '.gif', '.webp',       // image
       ];
-      const disposition = forceDisposition || (inlineExtensions.includes(ext) ? 'inline' : 'attachment');
+      const dispositionHeader = forceDisposition 
+        ? `${forceDisposition}; filename="${encodeURIComponent(path.basename(blobName))}"` 
+        : (inlineExtensions.includes(ext) 
+            ? `inline; filename="${encodeURIComponent(path.basename(blobName))}"` 
+            : `attachment; filename="${encodeURIComponent(path.basename(blobName))}"`);
 
       const sasOptions = {
         containerName,
@@ -141,7 +145,7 @@ export class AzureStorageProvider implements IStorageProvider {
         permissions: BlobSASPermissions.from({ read: true }),
         startsOn,
         expiresOn,
-        contentDisposition: disposition,
+        contentDisposition: dispositionHeader,
       };
 
       const sasToken = generateBlobSASQueryParameters(
