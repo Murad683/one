@@ -6,11 +6,13 @@ import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloa
 import { uploadSiteMediaArray } from '../middleware/upload.middleware';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
+const ffprobeInstaller = require('@ffprobe-installer/ffprobe');
 import * as fs from 'fs';
 import * as os from 'os';
 import * as crypto from 'crypto';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
 const getVideoHeight = (videoPath: string): Promise<number> => {
   return new Promise((resolve) => {
