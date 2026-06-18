@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const BACKEND = import.meta.env.VITE_API_BASE_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1`;
+
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: BACKEND,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -48,7 +50,7 @@ client.interceptors.response.use(
         
         // Use a fresh axios instance to avoid interceptor loops
         const res = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
+          `${BACKEND}/auth/refresh`,
           { refreshToken },
           {
             withCredentials: true,
