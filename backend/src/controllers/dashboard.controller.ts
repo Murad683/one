@@ -56,11 +56,22 @@ export const getDeliverables = async (req: Request, res: Response): Promise<void
   try {
     const userId = req.user!.id;
 
-    const deliverables = await prisma.deliverable.findMany({
-      where: { clientId: userId, status: 'READY' },
-      include: { category: true },
-      orderBy: { createdAt: 'desc' },
-    });
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit as string) || 6);
+    const skip = (page - 1) * limit;
+
+    const [deliverables, total] = await Promise.all([
+      prisma.deliverable.findMany({
+        where: { clientId: userId, status: 'READY' },
+        include: { category: true },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.deliverable.count({
+        where: { clientId: userId, status: 'READY' },
+      })
+    ]);
 
       // Sign URLs in the new files JSON array
       const serialized = await Promise.all(
@@ -97,7 +108,8 @@ export const getDeliverables = async (req: Request, res: Response): Promise<void
       })
     );
 
-    sendSuccess(res, serialized);
+    const hasMore = skip + limit < total;
+    sendSuccess(res, serialized, 200, { total, page, limit, hasMore });
   } catch (err) {
     console.error('getDeliverables error:', err);
     sendError(res, 'Təslim edilənləri yükləmək mümkün olmadı', 500);

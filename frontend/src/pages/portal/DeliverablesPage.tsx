@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cinematicEasing } from '../../utils/animations';
 import { apiClient } from '../../api/client';
@@ -378,16 +378,49 @@ const DeliverablesPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<Deliverable | null>(null);
 
-  const fetchItems = useCallback(() => {
-    (apiClient.get('/dashboard/deliverables') as Promise<{ data: Deliverable[] }>)
-      .then((res) => setItems(res.data))
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [totalPosts, setTotalPosts] = useState(0);
+
+  const fetchItems = useCallback((currentPage: number) => {
+    if (currentPage === 1) setLoading(true);
+    else setLoadingMore(true);
+
+    (apiClient.get(`/dashboard/deliverables?page=${currentPage}&limit=6`) as Promise<{ data: Deliverable[], meta?: { total: number, hasMore: boolean } }>)
+      .then((res) => {
+        setItems(prev => currentPage === 1 ? res.data : [...prev, ...res.data]);
+        if (res.meta) {
+          setHasMore(res.meta.hasMore);
+          setTotalPosts(res.meta.total);
+        } else {
+          setHasMore(false);
+          setTotalPosts(res.data.length);
+        }
+      })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setLoadingMore(false);
+      });
   }, []);
 
   useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+    fetchItems(page);
+  }, [page, fetchItems]);
+
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const lastElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (loading || loadingMore) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prev => prev + 1);
+      }
+    });
+    if (node) observerRef.current.observe(node);
+  }, [loading, loadingMore, hasMore]);
 
   const handleFeedbackSent = (id: string, fullFeedback: string) => {
     setItems((prev) =>
@@ -406,9 +439,7 @@ const DeliverablesPage = () => {
   const igProfilePic = sanitizeUrl(user?.igProfilePic || null);
   const igHighlights: { title: string; imageUrl: string }[] = Array.isArray(user?.igHighlights) ? user.igHighlights : [];
 
-  // Count only READY items as "posts"
-  const actualPostCount = items.filter((d) => d.status === 'READY').length;
-  const displayPostCount = igPostsCount !== '0' ? igPostsCount : String(actualPostCount);
+  const displayPostCount = igPostsCount !== '0' ? igPostsCount : String(totalPosts);
 
   return (
     <div className="pb-28 lg:pb-12 min-h-screen font-sans" style={{ backgroundColor: 'var(--ig-bg)', color: 'var(--ig-text)' }}>
@@ -701,6 +732,15 @@ const DeliverablesPage = () => {
             })}
           </div>
         )}
+        
+        {loadingMore && (
+          <div className="flex justify-center items-center py-6">
+            <div className="w-6 h-6 border-2 border-[var(--ig-text-secondary)] border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+        
+        {/* Sentinel element for infinite scrolling */}
+        <div ref={lastElementRef} className="h-10 w-full" />
       </div>
 
       {/* Preview Modal — only rendered when a row is selected */}
