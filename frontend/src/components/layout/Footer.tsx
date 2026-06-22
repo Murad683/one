@@ -100,7 +100,15 @@ export default function Footer() {
                     color: 'var(--text-faint)',
                   }}
                 >
-                  <img src={getSocialIcon(label)} alt={label} className="w-4 h-4 object-contain brightness-0 invert opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <img
+                    src={getSocialIcon(label)}
+                    alt={label}
+                    className="w-4 h-4 object-contain transition-opacity group-hover:opacity-100"
+                    style={{
+                      filter: 'brightness(0) invert(var(--icon-invert, 1))',
+                      opacity: 0.7,
+                    }}
+                  />
                 </a>
               ))}
             </div>

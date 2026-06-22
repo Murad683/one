@@ -91,6 +91,7 @@
   --accent-text: #A3E635;
   --accent-on-accent: #000000;
   --bg-image: url('/dark-back.jpg');
+  --icon-invert: 1;
   
   /* Instagram Profile Variables (Dark) */
   --ig-bg: #000000;
@@ -133,6 +134,7 @@
   --accent-text: #65A30D;
   --accent-on-accent: #000000;
   --bg-image: url('/light-back.jpg');
+  --icon-invert: 0;
 
   /* Instagram Profile Variables (Light) */
   --ig-bg: #FAFAFA;
