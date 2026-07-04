@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import ScrollToTop from './components/utils/ScrollToTop';
 import { ProtectedRoute } from './components/utils/ProtectedRoute';
+import { useSiteSettings } from './hooks/useSiteData';
 
 // Lazy Loaded Pages — Main Website
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -23,16 +24,23 @@ const BillingPage = lazy(() => import('./pages/portal/BillingPage'));
 const SupportPage = lazy(() => import('./pages/portal/SupportPage'));
 
 // Premium Loading Component
-const PageLoader = () => (
-  <div className="h-screen w-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
-    <div className="animate-pulse flex flex-col items-center">
-      <span className="font-heading text-3xl font-bold tracking-tighter" style={{ color: 'var(--text-primary)' }}>
-        ONE<span style={{ color: 'var(--accent-text)' }}>.</span>
-      </span>
-      <div className="mt-4 w-12 h-[1px] bg-gradient-to-r from-transparent via-accent to-transparent" />
+const PageLoader = () => {
+  const { data: settings } = useSiteSettings();
+  
+  return (
+    <div className="h-screen w-full flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="animate-pulse flex flex-col items-center">
+        <img
+          src={settings?.navbarLogoUrl || '/logo.jpg'}
+          alt="Logo"
+          className="h-10 md:h-12 w-auto object-contain rounded-sm"
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
+        <div className="mt-4 w-12 h-[1px] bg-gradient-to-r from-transparent via-accent to-transparent" />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 function AnimatedRoutes() {
   const location = useLocation();
 

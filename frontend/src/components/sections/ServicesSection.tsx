@@ -30,7 +30,7 @@ const ServiceCard = ({ service }: { service: any }) => {
         scale: 1.01,
         boxShadow: '0 0 30px var(--glow-accent-subtle)',
       }}
-      className="relative md:backdrop-blur-md rounded-2xl p-8 cursor-default overflow-hidden group transition-colors duration-300"
+      className="relative liquid-glass rounded-2xl p-8 cursor-default overflow-hidden group transition-colors duration-300"
       style={{
         backgroundColor: 'var(--card-bg)',
         borderWidth: '1px',

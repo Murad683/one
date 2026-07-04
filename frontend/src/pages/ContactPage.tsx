@@ -89,7 +89,11 @@ const ContactPage = () => {
               {contactItems.map((item, idx) => (
                 <div key={idx} className="flex items-start gap-4">
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 premium-glass"
+                    className="w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0"
+                    style={{
+                      backgroundColor: 'var(--card-bg)',
+                      borderColor: 'var(--card-border)',
+                    }}
                   >
                     <item.icon size={16} style={{ color: 'var(--accent-text)' }} />
                   </div>
@@ -200,8 +204,8 @@ const ContactPage = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-4 font-semibold text-sm mt-2 disabled:opacity-50 flex items-center justify-center gap-2 premium-glass-btn"
-                style={{ color: 'var(--text-primary)' }}
+                className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200 mt-2 disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ color: 'var(--accent-on-accent)' }}
               >
                 {isSubmitting ? "Göndərilir..." : "Göndər"}
               </button>
