@@ -216,7 +216,7 @@
 /* Mobile optimizations for performance */
 @media (max-width: 768px) {
   .liquid-glass, .liquid-glass-btn {
-    -webkit-backdrop-filter: blur(1.5px) saturate(120%);
-    backdrop-filter: blur(1.5px) saturate(120%);
+    -webkit-backdrop-filter: url(#glass-distortion) blur(1.5px) saturate(120%);
+    backdrop-filter: url(#glass-distortion) blur(1.5px) saturate(120%);
   }
 }
