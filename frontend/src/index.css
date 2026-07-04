@@ -245,12 +245,18 @@
   }
 }
 
-/* Safari Fallback (does not support SVG filter inside backdrop-filter) */
-@supports not (backdrop-filter: url(#test)) {
-  .liquid-glass, .liquid-glass-btn {
-    -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
-    backdrop-filter: blur(12px) saturate(160%) !important;
-    background-color: var(--glass-bg-fallback, rgba(20,20,20,0.35)) !important;
-    border: 1px solid rgba(255,255,255,0.18) !important;
-  }
+/* Safari JS Fallback (WebKit does not support SVG backdrop-filter and fails with var() in backdrop-filter) */
+.is-webkit-fallback .liquid-glass,
+.is-webkit-fallback .liquid-glass-btn {
+  -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
+  backdrop-filter: blur(12px) saturate(160%) !important;
+  background-color: rgba(20, 20, 20, 0.35) !important; /* SABIT dəyər, var() YOX */
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
+.light.is-webkit-fallback .liquid-glass,
+.light.is-webkit-fallback .liquid-glass-btn,
+[data-theme="light"].is-webkit-fallback .liquid-glass,
+[data-theme="light"].is-webkit-fallback .liquid-glass-btn {
+  background-color: rgba(255, 255, 255, 0.5) !important; /* SABIT dəyər */
 }

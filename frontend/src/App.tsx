@@ -8,6 +8,12 @@ import ScrollToTop from './components/utils/ScrollToTop';
 import { ProtectedRoute } from './components/utils/ProtectedRoute';
 import { useSiteSettings } from './hooks/useSiteData';
 
+const isWebKit = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) 
+  || (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+if (isWebKit) {
+  document.documentElement.classList.add('is-webkit-fallback');
+}
+
 // Lazy Loaded Pages — Main Website
 const HomePage = lazy(() => import('./pages/HomePage'));
 const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
