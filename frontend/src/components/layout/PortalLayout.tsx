@@ -27,7 +27,7 @@ const PortalLayout = () => {
       <main className="flex-1 overflow-y-auto no-scrollbar pb-20 lg:pb-0">
         {/* Mobile Header */}
         <header
-          className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-5 py-3.5 border-b backdrop-blur-md"
+          className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-5 py-3.5 border-b liquid-glass"
           style={{
             backgroundColor: 'var(--glass-bg)',
             borderColor: 'var(--glass-border)',
@@ -73,7 +73,7 @@ const PortalLayout = () => {
 
         {/* Mobile Bottom Nav */}
         <nav
-          className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex justify-around py-2.5 border-t backdrop-blur-md"
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex justify-around py-2.5 border-t liquid-glass"
           style={{
             backgroundColor: 'var(--glass-bg)',
             borderColor: 'var(--glass-border)',

@@ -195,7 +195,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.4, ease: cinematicEasing }}
-            className="backdrop-blur-2xl border rounded-2xl sm:rounded-3xl max-w-lg w-full p-0 relative overflow-hidden h-auto max-h-[85vh] sm:max-h-[90vh] flex flex-col shadow-2xl overscroll-contain"
+            className="liquid-glass border rounded-2xl sm:rounded-3xl max-w-lg w-full p-0 relative overflow-hidden h-auto max-h-[85vh] sm:max-h-[90vh] flex flex-col shadow-2xl overscroll-contain"
             style={{
               backgroundColor: 'var(--modal-bg)',
               borderColor: 'var(--card-border)',
@@ -205,7 +205,7 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="absolute top-5 right-5 z-50 p-2 rounded-full backdrop-blur-md border transition-all cursor-pointer hover:bg-white/10"
+              className="absolute top-5 right-5 z-50 p-2 rounded-full liquid-glass-btn border transition-all cursor-pointer hover:bg-white/10"
               style={{
                 color: 'var(--text-primary)',
                 backgroundColor: 'rgba(0,0,0,0.2)',

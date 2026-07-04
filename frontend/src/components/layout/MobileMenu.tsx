@@ -82,7 +82,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, logoUrl }) => 
             initial="closed"
             animate="open"
             exit="closed"
-            className="fixed top-0 right-0 h-screen w-[85%] max-w-[400px] z-[120] flex flex-col p-10 border-l backdrop-blur-xl"
+            className="fixed top-0 right-0 h-screen w-[85%] max-w-[400px] z-[120] flex flex-col p-10 border-l liquid-glass"
             style={{
               backgroundColor: 'var(--modal-bg)',
               borderColor: 'var(--card-border)',

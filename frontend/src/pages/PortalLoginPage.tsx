@@ -54,7 +54,7 @@ const PortalLoginPage = () => {
 
         <motion.div
           variants={cockpitItem}
-          className="backdrop-blur-md border rounded-3xl p-8 shadow-2xl"
+          className="liquid-glass border rounded-3xl p-8 shadow-2xl"
           style={{
             backgroundColor: 'var(--card-bg)',
             borderColor: 'var(--card-border)',

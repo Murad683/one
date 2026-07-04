@@ -21,7 +21,7 @@ const PortalSidebar = () => {
 
   return (
     <aside
-      className="hidden lg:flex flex-col w-64 shrink-0 border-r backdrop-blur-sm transition-colors duration-300"
+      className="hidden lg:flex flex-col w-64 shrink-0 border-r liquid-glass transition-colors duration-300"
       style={{
         backgroundColor: 'var(--glass-bg)',
         borderColor: 'var(--glass-border)',

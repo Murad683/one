@@ -87,7 +87,7 @@ const AboutPage = () => {
               <motion.div
                 key={member.id || idx}
                 whileHover={{ y: -4 }}
-                className="w-full sm:w-48 backdrop-blur-md border rounded-2xl p-6 text-center transition-colors cursor-default"
+                className="w-full sm:w-48 liquid-glass border rounded-2xl p-6 text-center transition-colors cursor-default"
                 style={{
                   backgroundColor: 'var(--card-bg)',
                   borderColor: 'var(--card-border)',

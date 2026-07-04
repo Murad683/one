@@ -219,7 +219,7 @@ const PreviewModal = ({
         {/* Mobile close button overlay */}
         <button
           onClick={onClose}
-          className="md:hidden absolute top-4 right-4 z-50 p-2 rounded-full backdrop-blur-md bg-black/40 text-white border border-white/10"
+          className="md:hidden absolute top-4 right-4 z-50 p-2 rounded-full liquid-glass-btn bg-black/40 text-white border border-white/10"
         >
           <X size={20} />
         </button>
@@ -227,7 +227,7 @@ const PreviewModal = ({
         {/* Desktop close button */}
         <button
           onClick={onClose}
-          className="hidden md:flex absolute top-4 right-4 z-50 p-2 rounded-full backdrop-blur-md transition-all cursor-pointer hover:bg-white/10"
+          className="hidden md:flex absolute top-4 right-4 z-50 p-2 rounded-full liquid-glass-btn transition-all cursor-pointer hover:bg-white/10"
           style={{ color: 'var(--text-primary)', backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)', borderWidth: '1px' }}
         >
           <X size={20} />
