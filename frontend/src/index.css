@@ -165,6 +165,27 @@
     overflow-x: hidden !important;
     scroll-behavior: smooth;
     width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(163, 230, 53, 0.3) transparent;
+  }
+
+  /* Premium Minimalist Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(163, 230, 53, 0.3); /* Accent color but very subtle */
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(163, 230, 53, 0.6);
   }
 
   h1,
