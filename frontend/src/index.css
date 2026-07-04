@@ -235,16 +235,4 @@
   background-color: var(--glass-bg);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-button);
-}
-
-/* Mobile optimizations for performance */
-@media (max-width: 768px) {
-  .liquid-glass {
-    -webkit-backdrop-filter: blur(12px) saturate(160%);
-    backdrop-filter: blur(12px) saturate(160%);
-  }
-  .liquid-glass-btn {
-    -webkit-backdrop-filter: blur(10px) saturate(160%);
-    backdrop-filter: blur(10px) saturate(160%);
-  }
 }
