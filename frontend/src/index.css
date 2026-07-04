@@ -155,14 +155,12 @@
     color: var(--text-primary);
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden !important;
     position: relative;
     width: 100%;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   html {
-    overflow-x: hidden !important;
     scroll-behavior: smooth;
     width: 100%;
     scrollbar-width: thin;
@@ -226,12 +224,16 @@
   backdrop-filter: url(#glass-distortion) blur(2px) saturate(160%);
   background-color: var(--glass-bg);
   box-shadow: var(--shadow-navbar);
+  transform: translateZ(0);
+  will-change: transform, backdrop-filter;
 }
 
 .liquid-glass-btn {
   -webkit-backdrop-filter: blur(2px) saturate(160%);
   backdrop-filter: url(#glass-distortion) blur(2px) saturate(160%);
   box-shadow: var(--shadow-button);
+  transform: translateZ(0);
+  will-change: transform, backdrop-filter;
 }
 
 /* Mobile optimizations for performance */
