@@ -248,8 +248,8 @@
 /* Safari JS Fallback (WebKit does not support SVG backdrop-filter and fails with var() in backdrop-filter) */
 .is-webkit-fallback .liquid-glass,
 .is-webkit-fallback .liquid-glass-btn {
-  -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
-  backdrop-filter: blur(12px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(160%) !important;
+  backdrop-filter: blur(8px) saturate(160%) !important;
   background-color: rgba(20, 20, 20, 0.35) !important; /* SABIT dəyər, var() YOX */
   border: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
