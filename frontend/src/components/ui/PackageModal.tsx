@@ -61,11 +61,7 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.4, ease: cinematicEasing }}
-            className="backdrop-blur-2xl border rounded-2xl sm:rounded-3xl max-w-xl w-full p-0 relative overflow-hidden h-auto max-h-[85vh] sm:max-h-[90vh] flex flex-col shadow-2xl overscroll-contain"
-            style={{
-              backgroundColor: 'var(--modal-bg)',
-              borderColor: 'var(--card-border)',
-            }}
+            className="max-w-xl w-full p-0 relative overflow-hidden h-auto max-h-[85vh] sm:max-h-[90vh] flex flex-col shadow-2xl overscroll-contain premium-glass premium-glass-card"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -82,11 +78,7 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
 
             <div className="overflow-y-auto no-scrollbar p-8 sm:p-10 overscroll-contain">
               <div
-                className="relative w-full aspect-video rounded-xl overflow-hidden border mb-8 group"
-                style={{
-                  backgroundColor: 'var(--card-bg)',
-                  borderColor: 'var(--card-border)',
-                }}
+                className="relative w-full aspect-video rounded-xl overflow-hidden mb-8 group premium-glass"
               >
                 {!pkg.videoSrc || pkg.videoSrc.includes('.mp4') ? (
                   <>
@@ -166,8 +158,8 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
 
                 <button 
                   onClick={() => window.location.href = '/elaqe'}
-                  className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200" 
-                  style={{ color: 'var(--accent-on-accent)' }}
+                  className="w-full py-4 font-semibold text-sm premium-glass-btn" 
+                  style={{ color: 'var(--text-primary)' }}
                 >
                   {pkg.buttonText || "Planı Seç"}
                 </button>

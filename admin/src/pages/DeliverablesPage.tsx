@@ -17,6 +17,12 @@ import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
 import { HighlightsManager } from '../components/deliverables/HighlightsManager';
 import { DIRECT_UPLOAD_THRESHOLD_BYTES } from '../constants';
 
+const isStalePending = (deliverable: Partial<Deliverable>) => {
+  if (deliverable.status !== 'PENDING' || !deliverable.createdAt) return false;
+  const createdTime = new Date(deliverable.createdAt).getTime();
+  return Date.now() - createdTime > 2 * 60 * 60 * 1000;
+};
+
 type DeliverableStatus = 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED' | 'ARCHIVED';
 
 interface ClientUser extends Record<string, unknown> {
@@ -46,6 +52,7 @@ interface Deliverable extends Record<string, unknown> {
   files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null }[];
   clientFeedback?: string | null;
   processingDuration?: number | null;
+  createdAt?: string;
 }
 
 interface DeliverableFormValues {
@@ -462,12 +469,20 @@ export const DeliverablesPage = () => {
       key: 'status',
       header: 'Status',
       hideOnMobile: true,
-      render: (deliverable) => (
+      render: (deliverable) => {
+        const isStale = isStalePending(deliverable);
+        
+        return (
         <div className="flex flex-col gap-1 items-start">
           <div className="flex items-center gap-1.5">
             <Badge variant={statusVariant(deliverable.status)}>
               {statusLabels[deliverable.status] || deliverable.status}
             </Badge>
+            {isStale && (
+              <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-sm" title="2 saatdan çoxdur gözləmədədir">
+                Gözləmədə qalıb
+              </span>
+            )}
             {deliverable.clientFeedback && (
               <button
                 type="button"
@@ -489,7 +504,7 @@ export const DeliverablesPage = () => {
             </span>
           )}
         </div>
-      ),
+      )},
     },
     {
       key: 'month',
@@ -623,7 +638,13 @@ export const DeliverablesPage = () => {
         />
       </div>
       {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-      <Table columns={columns} data={deliverables} isLoading={isLoading} emptyMessage="Fayl tapılmadı." />
+      <Table 
+        columns={columns} 
+        data={deliverables} 
+        isLoading={isLoading} 
+        emptyMessage="Fayl tapılmadı." 
+        rowClassName={(row) => isStalePending(row) ? 'bg-red-50/50 hover:bg-red-50' : ''}
+      />
 
       {/* ── Create / Edit Modal ── */}
       <Modal

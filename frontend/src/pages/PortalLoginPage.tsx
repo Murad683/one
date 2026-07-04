@@ -54,11 +54,7 @@ const PortalLoginPage = () => {
 
         <motion.div
           variants={cockpitItem}
-          className="backdrop-blur-md border rounded-3xl p-8 shadow-2xl"
-          style={{
-            backgroundColor: 'var(--card-bg)',
-            borderColor: 'var(--card-border)',
-          }}
+          className="p-8 shadow-2xl premium-glass premium-glass-card"
         >
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -118,8 +114,8 @@ const PortalLoginPage = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200 flex items-center justify-center gap-2 group mt-4 disabled:opacity-70"
-              style={{ color: 'var(--accent-on-accent)' }}
+              className="w-full py-4 font-semibold text-sm flex items-center justify-center gap-2 group mt-4 disabled:opacity-70 premium-glass-btn"
+              style={{ color: 'var(--text-primary)' }}
             >
               {isSubmitting ? (
                 <>

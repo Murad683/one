@@ -173,6 +173,50 @@
   }
 }
 
+/* ─── Premium Liquid Glass Effect ─────────────────── */
+.premium-glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 8px 32px rgba(0, 0, 0, 0.2);
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.premium-glass:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.05) 100%);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.45), 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.premium-glass-pill {
+  border-radius: 9999px; /* Pill-shaped for Navbars/Buttons */
+}
+
+.premium-glass-card {
+  border-radius: 24px; /* Appropriate radius for cards */
+}
+
+/* Specific subtle button variant */
+.premium-glass-btn {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.03) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4), 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.premium-glass-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.08) 100%);
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.6), 0 8px 24px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.premium-glass-btn:active:not(:disabled) {
+  transform: translateY(0px) scale(0.98);
+}
+
 /* ─── No Scrollbar Utility ─────────────────── */
 .no-scrollbar {
   -ms-overflow-style: none;

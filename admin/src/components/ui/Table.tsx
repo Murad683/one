@@ -12,6 +12,7 @@ interface TableProps<T extends object> {
   data: T[];
   isLoading?: boolean;
   emptyMessage?: string;
+  rowClassName?: (row: T) => string;
 }
 
 export const Table = <T extends object>({
@@ -19,6 +20,7 @@ export const Table = <T extends object>({
   data,
   isLoading = false,
   emptyMessage = 'No records found.',
+  rowClassName,
 }: TableProps<T>) => (
   <div className="overflow-hidden rounded-xl border border-edge bg-surface">
     <div className="overflow-x-auto scrollbar-minimal">
@@ -65,7 +67,7 @@ export const Table = <T extends object>({
           )}
           {!isLoading &&
             data.map((row, rowIndex) => (
-              <tr key={String((row as any).id ?? rowIndex)} className="hover:bg-surface-hover transition-colors">
+              <tr key={String((row as any).id ?? rowIndex)} className={`hover:bg-surface-hover transition-colors ${rowClassName ? rowClassName(row) : ''}`}>
                 {columns.map((column) => (
                   <td
                     key={String(column.key)}

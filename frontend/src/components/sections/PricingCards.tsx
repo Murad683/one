@@ -36,15 +36,10 @@ const PricingCard = ({ pkg, openModal }: { pkg: any, openModal: (pkg: any) => vo
         boxShadow: '0 0 40px var(--glow-accent-subtle)',
       }}
       onClick={() => openModal(pkg)}
-      className={`md:backdrop-blur-md rounded-3xl p-8 flex flex-col cursor-pointer border transition-colors duration-300 relative overflow-hidden h-full ${
+      className={`p-8 flex flex-col cursor-pointer premium-glass premium-glass-card relative overflow-hidden h-full ${
         pkg.isPopular ? 'pt-10' : ''
       }`}
-      style={{
-        backgroundColor: 'var(--card-bg)',
-        borderColor: pkg.isPopular ? 'var(--accent-text)' : 'var(--card-border)',
-        borderTopColor: pkg.isPopular ? 'var(--accent-text)' : 'var(--card-border-top)',
-        borderWidth: pkg.isPopular ? '1.5px' : '1px',
-      }}
+      style={pkg.isPopular ? { borderColor: 'var(--accent-text)', borderWidth: '1.5px' } : {}}
     >
       <div
         className="pointer-events-none absolute -inset-px rounded-3xl transition-opacity duration-300 z-0"
@@ -113,12 +108,12 @@ const PricingCard = ({ pkg, openModal }: { pkg: any, openModal: (pkg: any) => vo
             openModal(pkg);
           }}
           className={pkg.isPopular
-            ? "w-full py-3 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200"
-            : "w-full py-3 border text-sm rounded-full transition-all duration-200 hover:opacity-80"
+            ? "w-full py-3 font-semibold text-sm premium-glass-btn"
+            : "w-full py-3 text-sm premium-glass-btn"
           }
           style={pkg.isPopular
-            ? { color: 'var(--accent-on-accent)' }
-            : { borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }
+            ? { color: 'var(--text-primary)' }
+            : { color: 'var(--text-secondary)' }
           }
         >
           {pkg.buttonText || "Planı Seç"}

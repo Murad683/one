@@ -37,12 +37,7 @@ const PortfolioCard: React.FC<PortfolioCardProps> = ({ project, onClick }) => {
 
   return (
     <motion.div
-      className="relative overflow-hidden rounded-2xl aspect-video cursor-pointer group border transition-colors duration-300 will-change-transform"
-      style={{
-        backgroundColor: 'var(--card-bg)',
-        borderColor: 'var(--card-border)',
-        borderTopColor: 'var(--card-border-top)',
-      }}
+      className="relative overflow-hidden aspect-video cursor-pointer group will-change-transform premium-glass premium-glass-card"
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3, ease: cinematicEasing }}
       onMouseEnter={handleMouseEnter}
