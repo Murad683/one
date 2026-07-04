@@ -123,7 +123,7 @@ const HeroSection = () => {
             to={settings.heroCtaUrl || "/paketler"}
             className="inline-flex items-center gap-2 px-7 py-3.5 md:px-10 md:py-5 border liquid-glass-btn font-semibold text-sm md:text-base rounded-full transition-all duration-200 hover:scale-[1.02] hover:bg-white/5"
             style={{ 
-              color: 'var(--text-primary)',
+              color: 'var(--accent-text)',
               borderColor: 'var(--border-default)'
             }}
           >
