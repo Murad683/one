@@ -113,11 +113,16 @@ const PricingCard = ({ pkg, openModal }: { pkg: any, openModal: (pkg: any) => vo
             openModal(pkg);
           }}
           className={pkg.isPopular
-            ? "w-full py-3 bg-accent/80 liquid-glass-btn font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200"
+            ? "w-full py-3 liquid-glass-btn font-semibold text-sm rounded-full transition-all duration-200 hover:bg-[rgba(163,230,53,0.25)]"
             : "w-full py-3 border liquid-glass-btn text-sm rounded-full transition-all duration-200 hover:opacity-80"
           }
           style={pkg.isPopular
-            ? { color: 'var(--accent-on-accent)' }
+            ? { 
+                backgroundColor: 'var(--glow-accent)',
+                color: 'var(--accent-text)',
+                borderColor: 'rgba(163, 230, 53, 0.3)',
+                borderWidth: '1px'
+              }
             : { borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }
           }
         >

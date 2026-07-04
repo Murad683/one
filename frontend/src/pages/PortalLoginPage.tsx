@@ -118,8 +118,13 @@ const PortalLoginPage = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-4 bg-accent font-semibold text-sm rounded-full hover:bg-accent/90 transition-all duration-200 flex items-center justify-center gap-2 group mt-4 disabled:opacity-70"
-              style={{ color: 'var(--accent-on-accent)' }}
+              className="w-full py-4 liquid-glass-btn font-semibold text-sm rounded-full transition-all duration-200 flex items-center justify-center gap-2 group mt-4 disabled:opacity-70 hover:bg-[rgba(163,230,53,0.25)]"
+              style={{ 
+                backgroundColor: 'var(--glow-accent)',
+                color: 'var(--accent-text)',
+                borderColor: 'rgba(163, 230, 53, 0.3)',
+                borderWidth: '1px'
+              }}
             >
               {isSubmitting ? (
                 <>
