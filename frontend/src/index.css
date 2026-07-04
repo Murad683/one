@@ -240,4 +240,13 @@
     -webkit-backdrop-filter: url(#glass-distortion) blur(1.5px) saturate(120%);
     backdrop-filter: url(#glass-distortion) blur(1.5px) saturate(120%);
   }
+}
+
+/* iOS Safari Fallback (Apple WebKit bug: no SVG support in backdrop-filter) */
+@supports (-webkit-touch-callout: none) {
+  .liquid-glass, .liquid-glass-btn {
+    -webkit-backdrop-filter: blur(10px) saturate(180%) !important;
+    backdrop-filter: blur(10px) saturate(180%) !important;
+    background-color: rgba(255, 255, 255, 0.03);
+  }
 }
