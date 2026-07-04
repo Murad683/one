@@ -35,4 +35,20 @@ export class LocalStorageProvider implements IStorageProvider {
     const folder = path.basename(path.dirname(storageKey));
     return `/uploads/${folder}/${filename}`;
   }
+  async getPresignedUploadUrl(folder: string, fileName: string, mimeType: string): Promise<{ uploadUrl: string; storageKey: string }> {
+    throw new Error('Direct upload is not supported for local storage.');
+  }
+
+  async getBlobProperties(storageKey: string): Promise<{ exists: boolean; contentLength?: number }> {
+    const fsSync = require('fs');
+    const exists = fsSync.existsSync(storageKey);
+    if (!exists) return { exists: false };
+    const stat = fsSync.statSync(storageKey);
+    return { exists: true, contentLength: stat.size };
+  }
+
+  async downloadToFile(storageKey: string, localPath: string): Promise<void> {
+    const fsSync = require('fs');
+    fsSync.copyFileSync(storageKey, localPath);
+  }
 }

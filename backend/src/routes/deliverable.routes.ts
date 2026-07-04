@@ -174,6 +174,20 @@ router.patch(
   ctrl.uploadDeliverableFile
 );
 
+router.post(
+  '/:id/initiate-upload',
+  verifyTokenMiddleware,
+  isAdmin,
+  ctrl.initiateDirectUpload
+);
+
+router.post(
+  '/:id/finalize-upload',
+  verifyTokenMiddleware,
+  isAdmin,
+  ctrl.finalizeDirectUpload
+);
+
 /**
  * @swagger
  * /deliverables/{id}/status:

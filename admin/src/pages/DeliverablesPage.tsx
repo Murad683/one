@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { uploadDeliverableFile as uploadFilesWithProgress } from '../api/deliverables.api';
+import { uploadDeliverableFile as uploadFilesWithProgress, directUploadDeliverableFile } from '../api/deliverables.api';
 import { Download, Edit2, FileX, MessageCircle, Play, Plus, Search, Trash2, X } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import Badge from '../components/ui/Badge';
@@ -15,6 +15,7 @@ import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
 import { HighlightsManager } from '../components/deliverables/HighlightsManager';
+import { DIRECT_UPLOAD_THRESHOLD_BYTES } from '../constants';
 
 type DeliverableStatus = 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED' | 'ARCHIVED';
 
@@ -368,9 +369,18 @@ export const DeliverablesPage = () => {
 
       if (selectedFiles.length > 0) {
         setUploadPhase('uploading');
-        await uploadFilesWithProgress(deliverableId, selectedFiles, (percent) => {
-          setUploadProgress(percent);
-        });
+        const isLargeVideo = selectedFiles.some(f => 
+          f.type.startsWith('video/') && f.size > DIRECT_UPLOAD_THRESHOLD_BYTES
+        );
+        if (isLargeVideo) {
+          await directUploadDeliverableFile(deliverableId, selectedFiles, (percent) => {
+            setUploadProgress(percent);
+          });
+        } else {
+          await uploadFilesWithProgress(deliverableId, selectedFiles, (percent) => {
+            setUploadProgress(percent);
+          });
+        }
       }
 
       setUploadPhase('idle');

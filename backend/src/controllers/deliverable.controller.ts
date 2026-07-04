@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloadUrlForDownload, cleanupOrphanFiles } from '../services/upload.service';
+import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloadUrlForDownload, cleanupOrphanFiles, getPresignedUploadUrl, getBlobProperties, downloadBlobToFile } from '../services/upload.service';
 import { uploadSiteMediaArray } from '../middleware/upload.middleware';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
@@ -10,7 +10,7 @@ const ffprobeInstaller = require('@ffprobe-installer/ffprobe');
 import * as fs from 'fs';
 import * as os from 'os';
 import * as crypto from 'crypto';
-
+import { SAS_UPLOAD_EXPIRY_SECONDS, FILE_SIZE_TOLERANCE_PERCENT, MAX_UPLOAD_SIZE_BYTES } from '../config/upload.constants';
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
@@ -365,7 +365,7 @@ const generateWebPreview = async (videoFilePath: string): Promise<string | null>
       .outputOptions([
         '-vf', 'scale=-2:720',
         '-c:v', 'libx264',
-        '-preset', 'fast',
+        '-preset', 'ultrafast',
         '-crf', '28',
         '-c:a', 'aac',
         '-b:a', '128k',
@@ -612,6 +612,246 @@ const processDeliverableBackground = async (
         status: 'FAILED',
       },
     });
+  }
+};
+
+// POST /api/v1/deliverables/:id/initiate-upload
+export const initiateDirectUpload = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const { fileName, fileSize, mimeType } = req.body;
+
+    // Validate file size
+    if (fileSize && fileSize > MAX_UPLOAD_SIZE_BYTES) {
+      sendError(res, `File size exceeds maximum limit of ${Math.round(MAX_UPLOAD_SIZE_BYTES / (1024 * 1024 * 1024))}GB`, 400);
+      return;
+    }
+
+    const deliverable = await prisma.deliverable.findUnique({
+      where: { id },
+      include: { category: true },
+    });
+
+    if (!deliverable) { sendError(res, 'Deliverable not found', 404); return; }
+
+    const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
+    const folder = isVideo ? 'videos' : 'designs';
+
+    const { uploadUrl, storageKey } = await getPresignedUploadUrl(
+      folder, fileName, mimeType, SAS_UPLOAD_EXPIRY_SECONDS
+    );
+
+    sendSuccess(res, { uploadUrl, storageKey, folder });
+  } catch (err) {
+    console.error('initiateDirectUpload error:', err);
+    sendError(res, 'Failed to initiate upload', 500);
+  }
+};
+
+// POST /api/v1/deliverables/:id/finalize-upload
+export const finalizeDirectUpload = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const { files } = req.body;
+    // files: [{ storageKey, fileName, fileSize, mimeType }]
+
+    const deliverable = await prisma.deliverable.findUnique({
+      where: { id },
+      include: { category: true },
+    });
+
+    if (!deliverable) { sendError(res, 'Deliverable not found', 404); return; }
+
+    // Paralel blob doğrulaması — bütün fayllar eyni anda yoxlanır
+    const verifications = await Promise.all(
+      files.map(async (f: any) => {
+        const props = await getBlobProperties(f.storageKey);
+        return { ...f, blobExists: props.exists, blobSize: props.contentLength };
+      })
+    );
+
+    // Mövcudluq yoxlaması
+    const missing = verifications.filter((v: any) => !v.blobExists);
+    if (missing.length > 0) {
+      sendError(res, `Blob(s) not found in storage: ${missing.map((m: any) => m.storageKey).join(', ')}`, 400);
+      return;
+    }
+
+    // Fayl ölçüsü uyğunsuzluğu yoxlaması
+    const sizeMismatches = verifications.filter((v: any) => {
+      if (!v.blobSize || !v.fileSize) return false;
+      const diff = Math.abs(v.blobSize - v.fileSize) / v.fileSize * 100;
+      return diff > FILE_SIZE_TOLERANCE_PERCENT;
+    });
+
+    if (sizeMismatches.length > 0) {
+      await prisma.deliverable.update({
+        where: { id },
+        data: { status: 'FAILED' },
+      });
+      sendError(res, 'File size mismatch detected. Upload may be corrupted.', 400);
+      return;
+    }
+
+    // PROCESSING statusuna keçir və dərhal cavab qaytar
+    await prisma.deliverable.update({
+      where: { id },
+      data: { status: 'PROCESSING' },
+    });
+
+    sendSuccess(res, { message: 'Processing started' });
+
+    // Arxa planda emal başla (fire and forget)
+    processDirectUploadBackground(id, deliverable, verifications).catch((err) => {
+      console.error('[Direct Upload] Fatal error in background processing:', err);
+    });
+  } catch (err) {
+    console.error('finalizeDirectUpload error:', err);
+    sendError(res, 'Failed to finalize upload', 500);
+  }
+};
+
+const processDirectUploadBackground = async (
+  id: string,
+  deliverable: any,
+  files: Array<{ storageKey: string; fileName: string; fileSize: number; mimeType: string }>
+) => {
+  const startTime = Date.now();
+  const tempFilesToCleanup: string[] = [];
+
+  try {
+
+    const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
+    const folder = isVideo ? 'videos' : 'designs';
+    const newFileObjects = [];
+    let newThumbnailUrl: string | null = null;
+
+    for (const file of files) {
+      // Unique temp path: deliverableId + uuid
+      const tempExt = path.extname(file.fileName) || '.mp4';
+      const tempFileName = `direct_${id}_${crypto.randomUUID()}${tempExt}`;
+      const tempFilePath = path.join(os.tmpdir(), tempFileName);
+      tempFilesToCleanup.push(tempFilePath);
+
+      // Azure-dan temp faylına endir
+      await downloadBlobToFile(file.storageKey, tempFilePath);
+
+      // --- THUMBNAIL ---
+      const isVideoFile = file.mimeType?.startsWith('video/');
+      if (isVideoFile && !newThumbnailUrl) {
+        const tempThumbPath = await generateVideoThumbnail(tempFilePath);
+        if (tempThumbPath) {
+          tempFilesToCleanup.push(tempThumbPath);
+          const thumbFileBuffer = fs.readFileSync(tempThumbPath);
+          const thumbMulterFile: Express.Multer.File = {
+            fieldname: 'thumbnail',
+            originalname: path.basename(tempThumbPath),
+            encoding: '7bit',
+            mimetype: 'image/jpeg',
+            buffer: thumbFileBuffer,
+            size: thumbFileBuffer.length,
+            stream: null as any,
+            destination: os.tmpdir(),
+            filename: path.basename(tempThumbPath),
+            path: tempThumbPath,
+          };
+          const thumbResult = await processAndStoreFile(thumbMulterFile, 'thumbnails');
+          newThumbnailUrl = thumbResult.url;
+        }
+      }
+
+      // --- FASTSTART ---
+      let currentFilePath = tempFilePath;
+      if (isVideoFile) {
+        const faststartPath = await applyVideoFaststart(tempFilePath);
+        if (faststartPath) {
+          tempFilesToCleanup.push(faststartPath);
+          currentFilePath = faststartPath;
+        }
+      }
+
+      // --- 720p PREVIEW ---
+      let previewUrl: string | null = null;
+      if (isVideoFile) {
+        const height = await getVideoHeight(currentFilePath);
+        if (height > 720) {
+          const previewPath = await generateWebPreview(currentFilePath);
+          if (previewPath) {
+            tempFilesToCleanup.push(previewPath);
+            const previewMulterFile: Express.Multer.File = {
+              fieldname: 'preview',
+              originalname: `preview-${file.fileName}`,
+              encoding: '7bit',
+              mimetype: 'video/mp4',
+              buffer: null as any,
+              size: fs.statSync(previewPath).size,
+              stream: null as any,
+              destination: os.tmpdir(),
+              filename: path.basename(previewPath),
+              path: previewPath,
+            };
+            const previewResult = await processAndStoreFile(previewMulterFile, 'previews');
+            previewUrl = previewResult.url;
+          }
+        }
+      }
+
+      // Orijinal faylı Azure-a yüklə (faststart tətbiq edilmiş versiya)
+      const uploadMulterFile: Express.Multer.File = {
+        fieldname: 'file',
+        originalname: file.fileName,
+        encoding: '7bit',
+        mimetype: file.mimeType,
+        buffer: null as any,
+        size: fs.statSync(currentFilePath).size,
+        stream: null as any,
+        destination: os.tmpdir(),
+        filename: path.basename(currentFilePath),
+        path: currentFilePath,
+      };
+      const result = await processAndStoreFile(uploadMulterFile, folder);
+
+      newFileObjects.push({
+        url: result.url,
+        name: result.fileName,
+        size: result.fileSize,
+        type: result.mimeType,
+        ...(previewUrl && { previewUrl }),
+      });
+    }
+
+    const processingDuration = Math.floor((Date.now() - startTime) / 1000);
+
+    // Bütün yeni fayllar uğurla yükləndikdən sonra köhnə faylları silirik
+    const oldFiles = (deliverable.files as any[]) || [];
+    const oldUrls = oldFiles.map((f: any) => f.url);
+    await cleanupOrphanFiles(oldUrls, []);
+
+    await prisma.deliverable.update({
+      where: { id },
+      data: {
+        files: newFileObjects,
+        uploadedAt: new Date(),
+        status: 'READY',
+        processingDuration,
+        clientFeedback: null,
+        ...(newThumbnailUrl !== undefined && { thumbnailUrl: newThumbnailUrl }),
+      },
+    });
+
+    console.log(`[Direct Upload] Deliverable ${id} processed successfully in ${processingDuration}s`);
+
+  } catch (err) {
+    console.error(`[Direct Upload] Background processing failed for ${id}:`, err);
+    await prisma.deliverable.update({
+      where: { id },
+      data: { status: 'FAILED' },
+    });
+  } finally {
+    // Bütün temp faylları sil — hətta FFmpeg xəta versə belə
+    for (const tempFile of tempFilesToCleanup) {
+      await fs.promises.unlink(tempFile).catch(() => {});
+    }
   }
 };
 

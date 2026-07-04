@@ -51,3 +51,15 @@ export async function cleanupOrphanFiles(oldUrls: string[], newUrls: string[]): 
     }
   }
 }
+
+export async function getPresignedUploadUrl(folder: string, fileName: string, mimeType: string, expiresInSeconds?: number) {
+  return storageProvider.getPresignedUploadUrl(folder, fileName, mimeType, expiresInSeconds);
+}
+
+export async function getBlobProperties(storageKey: string) {
+  return storageProvider.getBlobProperties(storageKey);
+}
+
+export async function downloadBlobToFile(storageKey: string, localPath: string) {
+  return storageProvider.downloadToFile(storageKey, localPath);
+}

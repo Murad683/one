@@ -159,4 +159,59 @@ export class AzureStorageProvider implements IStorageProvider {
       return keyStr;
     }
   }
+  async getPresignedUploadUrl(
+    folder: string,
+    fileName: string,
+    mimeType: string,
+    expiresInSeconds = 7200
+  ): Promise<{ uploadUrl: string; storageKey: string }> {
+    const containerName = folder.toLowerCase();
+    const containerClient = this.blobServiceClient.getContainerClient(containerName);
+    await containerClient.createIfNotExists();
+
+    const uniqueName = `${uuidv4()}-${Date.now()}${path.extname(fileName)}`;
+    const blockBlobClient = containerClient.getBlockBlobClient(uniqueName);
+
+    const startsOn = new Date();
+    const expiresOn = new Date(startsOn.valueOf() + expiresInSeconds * 1000);
+
+    const sasToken = generateBlobSASQueryParameters(
+      {
+        containerName,
+        blobName: uniqueName,
+        permissions: BlobSASPermissions.from({ write: true, create: true }),
+        startsOn,
+        expiresOn,
+        contentType: mimeType,
+      },
+      this.blobServiceClient.credential as any
+    ).toString();
+
+    return {
+      uploadUrl: `${blockBlobClient.url}?${sasToken}`,
+      storageKey: `${containerName}/${uniqueName}`,
+    };
+  }
+
+  async getBlobProperties(storageKey: string): Promise<{ exists: boolean; contentLength?: number }> {
+    const [containerName, ...blobParts] = storageKey.split('/');
+    const blobName = blobParts.join('/');
+    const containerClient = this.blobServiceClient.getContainerClient(containerName);
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    const doesExist = await blockBlobClient.exists();
+    if (!doesExist) return { exists: false };
+
+    const props = await blockBlobClient.getProperties();
+    return { exists: true, contentLength: props.contentLength };
+  }
+
+  async downloadToFile(storageKey: string, localPath: string): Promise<void> {
+    const [containerName, ...blobParts] = storageKey.split('/');
+    const blobName = blobParts.join('/');
+    const containerClient = this.blobServiceClient.getContainerClient(containerName);
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    await blockBlobClient.downloadToFile(localPath);
+  }
 }

@@ -13,7 +13,8 @@ import {
   formatFileSize,
   getDeliverableAcceptedFiles,
 } from '@/utils/deliverable.helpers';
-import { uploadDeliverableFile } from '@/api/deliverables.api';
+import { uploadDeliverableFile, directUploadDeliverableFile } from '@/api/deliverables.api';
+import { DIRECT_UPLOAD_THRESHOLD_BYTES } from '@/constants';
 
 interface FileUploadCellProps {
   deliverable: Deliverable;
@@ -36,8 +37,8 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
     setProgress(0);
     setErrorMessage(null);
 
-    // Client-side validation: Max Size 500MB
-    const maxSizeBytes = 500 * 1024 * 1024;
+    // Client-side validation: Max Size 10GB
+    const maxSizeBytes = 10 * 1024 * 1024 * 1024; // 10GB
     if (file.size > maxSizeBytes) {
       setUploadState('error');
       setErrorMessage(`File size exceeds the maximum limit of ${formatFileSize(maxSizeBytes)}.`);
@@ -56,9 +57,17 @@ const FileUploadCell: React.FC<FileUploadCellProps> = ({
     }
 
     try {
-      const res = await uploadDeliverableFile(deliverable.id, [file], (percent) => {
-        setProgress(percent);
-      });
+      const isLargeVideo = file.type.startsWith('video/') && file.size > DIRECT_UPLOAD_THRESHOLD_BYTES;
+      let res;
+      if (isLargeVideo) {
+        res = await directUploadDeliverableFile(deliverable.id, [file], (percent) => {
+          setProgress(percent);
+        });
+      } else {
+        res = await uploadDeliverableFile(deliverable.id, [file], (percent) => {
+          setProgress(percent);
+        });
+      }
       
       setUploadState('success');
       onUploadSuccess(res.data);

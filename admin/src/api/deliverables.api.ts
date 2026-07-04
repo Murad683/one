@@ -65,3 +65,53 @@ export const updateDeliverableStatus = async (
 export const deleteDeliverable = async (id: string): Promise<void> => {
   await client.delete(`/deliverables/${id}`);
 };
+
+import axios from 'axios';
+
+export const directUploadDeliverableFile = async (
+  id: string,
+  files: File[],
+  onProgress?: (percent: number) => void
+): Promise<any> => {
+  const uploadedFiles: { storageKey: string; fileName: string; fileSize: number; mimeType: string }[] = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+
+    // Step 1: Get SAS URL from backend
+    const initRes = await client.post(`/deliverables/${id}/initiate-upload`, {
+      fileName: file.name,
+      fileSize: file.size,
+      mimeType: file.type,
+    });
+    const { uploadUrl, storageKey } = initRes.data.data;
+
+    // Step 2: Upload directly to Azure (no auth headers needed)
+    await axios.put(uploadUrl, file, {
+      headers: {
+        'Content-Type': file.type,
+        'x-ms-blob-type': 'BlockBlob',
+      },
+      onUploadProgress: (event) => {
+        if (event.total) {
+          const fileProgress = Math.round((event.loaded * 100) / event.total);
+          const overallProgress = Math.round(((i * 100) + fileProgress) / files.length);
+          onProgress?.(overallProgress);
+        }
+      },
+    });
+
+    uploadedFiles.push({
+      storageKey,
+      fileName: file.name,
+      fileSize: file.size,
+      mimeType: file.type,
+    });
+  }
+
+  // Step 3: Tell backend all files are uploaded, start processing
+  const response = await client.post(`/deliverables/${id}/finalize-upload`, {
+    files: uploadedFiles,
+  });
+  return response.data;
+};

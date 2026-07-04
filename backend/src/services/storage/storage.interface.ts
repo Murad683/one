@@ -10,4 +10,7 @@ export interface IStorageProvider {
   upload(file: Express.Multer.File, folder: string): Promise<UploadResult>;
   delete(storageKey: string): Promise<void>;
   getSignedUrl(storageKey: string, expiresInSeconds: number, forceDisposition?: 'inline' | 'attachment'): Promise<string>;
+  getPresignedUploadUrl(folder: string, fileName: string, mimeType: string, expiresInSeconds?: number): Promise<{ uploadUrl: string; storageKey: string }>;
+  getBlobProperties(storageKey: string): Promise<{ exists: boolean; contentLength?: number }>;
+  downloadToFile(storageKey: string, localPath: string): Promise<void>;
 }
