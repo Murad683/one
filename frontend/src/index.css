@@ -74,7 +74,7 @@
   --text-ghost: rgba(255, 255, 255, 0.20);
   --border-subtle: rgba(255, 255, 255, 0.05);
   --border-default: rgba(255, 255, 255, 0.10);
-  --glass-bg: rgba(20, 20, 20, 0.45);
+  --glass-bg: rgba(20, 20, 20, 0.15);
   --glass-border: rgba(255, 255, 255, 0.15);
   --card-bg: rgba(255, 255, 255, 0.03);
   --card-border: rgba(255, 255, 255, 0.05);
@@ -118,7 +118,7 @@
   --text-ghost: rgba(0, 0, 0, 0.15);
   --border-subtle: rgba(0, 0, 0, 0.06);
   --border-default: rgba(0, 0, 0, 0.10);
-  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-bg: rgba(255, 255, 255, 0.35);
   --glass-border: rgba(255, 255, 255, 0.4);
   --card-bg: rgba(255, 255, 255, 0.40);
   --card-border: rgba(0, 0, 0, 0.06);
@@ -201,22 +201,22 @@
 
 /* ─── Premium Liquid Glass Utility ────────── */
 .liquid-glass {
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
   background-color: var(--glass-bg);
   box-shadow: var(--shadow-navbar);
 }
 
 .liquid-glass-btn {
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
   box-shadow: var(--shadow-button);
 }
 
 /* Mobile optimizations for performance */
 @media (max-width: 768px) {
   .liquid-glass, .liquid-glass-btn {
-    -webkit-backdrop-filter: blur(12px) saturate(140%);
-    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+    backdrop-filter: blur(8px) saturate(120%);
   }
 }

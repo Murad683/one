@@ -121,8 +121,13 @@ const HeroSection = () => {
         <motion.div variants={cockpitItem}>
           <Link
             to={settings.heroCtaUrl || "/paketler"}
-            className="inline-flex items-center gap-2 px-7 py-3.5 md:px-10 md:py-5 bg-accent/80 liquid-glass-btn font-semibold text-sm md:text-base rounded-full hover:bg-accent/90 transition-all duration-200 hover:scale-[1.02]"
-            style={{ color: 'var(--accent-on-accent)' }}
+            className="inline-flex items-center gap-2 px-7 py-3.5 md:px-10 md:py-5 liquid-glass-btn font-semibold text-sm md:text-base rounded-full hover:bg-[rgba(163,230,53,0.25)] transition-all duration-200 hover:scale-[1.02]"
+            style={{ 
+              backgroundColor: 'var(--glow-accent)',
+              color: 'var(--accent-text)',
+              borderColor: 'rgba(163, 230, 53, 0.3)',
+              borderWidth: '1px'
+            }}
           >
             {settings.heroCtaText || "Xidmətlərimizə Bax →"}
           </Link>
