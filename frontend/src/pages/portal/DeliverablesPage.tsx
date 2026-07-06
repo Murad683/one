@@ -326,28 +326,6 @@ const PreviewModal = ({
               {activeIndex + 1}/{item.files.length}
             </div>
           )}
-
-          {/* Navigation Arrows */}
-          {item.files && item.files.length > 1 && (
-            <>
-              {activeIndex > 0 && (
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev - 1); }}
-                  className="absolute left-2 md:left-4 z-20 p-1.5 md:p-2 rounded-full bg-white/80 text-black hover:bg-white shadow-md transition-all opacity-80 hover:opacity-100"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-              )}
-              {activeIndex < item.files.length - 1 && (
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev + 1); }}
-                  className="absolute right-2 md:right-4 z-20 p-1.5 md:p-2 rounded-full bg-white/80 text-black hover:bg-white shadow-md transition-all opacity-80 hover:opacity-100"
-                >
-                  <ChevronRight size={20} />
-                </button>
-              )}
-            </>
-          )}
         </div>
 
         {/* --- RIGHT: SIDEBAR (Desktop) / BOTTOM (Mobile) --- */}
