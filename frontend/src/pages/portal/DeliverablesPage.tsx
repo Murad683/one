@@ -162,6 +162,35 @@ const PreviewModal = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [showCommentsMobile, setShowCommentsMobile] = useState(false);
 
+  // Swipe states
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  // Minimum swipe distance
+  const minSwipeDistance = 50;
+
+  const onTouchStartHandler = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMoveHandler = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEndHandler = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    if (isLeftSwipe && item.files && activeIndex < item.files.length - 1) {
+      setActiveIndex(prev => prev + 1);
+    }
+    if (isRightSwipe && activeIndex > 0) {
+      setActiveIndex(prev => prev - 1);
+    }
+  };
+
   const activeFile = item.files?.[activeIndex];
   const url = getFileUrl(activeFile);
 
@@ -192,15 +221,53 @@ const PreviewModal = ({
       }
     };
     window.addEventListener('keydown', handleEscape);
-    document.body.classList.add('lock-scroll');
+    
+    // Body scroll lock with scroll position preservation
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+
     return () => {
       window.removeEventListener('keydown', handleEscape);
-      document.body.classList.remove('lock-scroll');
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      window.scrollTo(0, scrollY);
     };
   }, [onClose, showCommentsMobile]);
 
   const igUsername = user?.igUsername || 'username';
   const igProfilePic = sanitizeUrl(user?.igProfilePic || null);
+
+  const Header = ({ className = '' }) => (
+    <div className={`flex items-center justify-between px-4 py-3 border-b shrink-0 ${className}`} style={{ borderColor: 'var(--ig-border)' }}>
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center p-[2px]">
+          <div className="w-full h-full rounded-full border-2 border-transparent overflow-hidden relative" style={{ backgroundColor: 'var(--ig-bg)' }}>
+            {igProfilePic ? (
+              <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover absolute inset-0 rounded-full" style={{ border: '2px solid var(--ig-bg)' }} />
+            ) : (
+              <span className="text-white text-[10px] font-bold z-10">{user?.name?.charAt(0) || 'U'}</span>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-semibold leading-none">{igUsername}</span>
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-blue-500" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7L6 12.6l1.5-1.5 2.6 2.6 6.4-6.4 1.5 1.5-8.1 7.9z"/></svg>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <button className="p-1 hover:opacity-70 transition-opacity">
+           <MoreHorizontal size={20} />
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -221,14 +288,28 @@ const PreviewModal = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Desktop close button outside inside media container logic */}
-        
-        {/* --- LEFT: MEDIA AREA (Desktop) / TOP (Mobile) --- */}
-        <div className="flex-1 bg-black relative flex items-center justify-center aspect-[4/5] md:aspect-auto h-auto md:h-full overflow-hidden shrink-0">
-          {/* Close button inside media top-right */}
+        {/* Mobile Header (Rendered above media) */}
+        <Header className="md:hidden" />
+
+        {/* --- LEFT: MEDIA AREA (Desktop) / MIDDLE (Mobile) --- */}
+        <div 
+          className="flex-1 bg-black relative flex items-center justify-center aspect-[4/5] md:aspect-auto h-auto md:h-full overflow-hidden shrink-0"
+          onTouchStart={onTouchStartHandler}
+          onTouchMove={onTouchMoveHandler}
+          onTouchEnd={onTouchEndHandler}
+        >
+          {/* Close button inside media top-right for mobile */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+            className="md:hidden absolute top-4 right-4 z-50 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+          >
+            <X size={20} />
+          </button>
+          
+          {/* Close button for desktop (outside media, on the modal container) */}
+          <button
+            onClick={onClose}
+            className="hidden md:flex absolute top-4 right-4 z-50 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
           >
             <X size={20} />
           </button>
@@ -241,7 +322,7 @@ const PreviewModal = ({
 
           {/* 1/X Pagination Badge */}
           {item.files && item.files.length > 1 && (
-            <div className="absolute top-4 right-16 bg-black/60 text-white text-[11px] font-semibold px-2 py-1 rounded-full backdrop-blur-sm z-10 pointer-events-none">
+            <div className="absolute top-4 right-16 md:right-16 bg-black/60 text-white text-[11px] font-semibold px-2 py-1 rounded-full backdrop-blur-sm z-10 pointer-events-none">
               {activeIndex + 1}/{item.files.length}
             </div>
           )}
@@ -271,34 +352,11 @@ const PreviewModal = ({
 
         {/* --- RIGHT: SIDEBAR (Desktop) / BOTTOM (Mobile) --- */}
         <div className="w-full md:w-[350px] lg:w-[400px] flex flex-col h-auto md:h-full border-l-0 md:border-l shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center p-[2px]">
-                <div className="w-full h-full rounded-full border-2 border-transparent overflow-hidden relative" style={{ backgroundColor: 'var(--ig-bg)' }}>
-                  {igProfilePic ? (
-                    <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover absolute inset-0 rounded-full" style={{ border: '2px solid var(--ig-bg)' }} />
-                  ) : (
-                    <span className="text-white text-[10px] font-bold z-10">{user?.name?.charAt(0) || 'U'}</span>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-semibold leading-none">{igUsername}</span>
-                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-blue-500" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7L6 12.6l1.5-1.5 2.6 2.6 6.4-6.4 1.5 1.5-8.1 7.9z"/></svg>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <button className="p-1 hover:opacity-70 transition-opacity">
-                 <MoreHorizontal size={20} />
-              </button>
-            </div>
-          </div>
+          {/* Desktop Header */}
+          <Header className="hidden md:flex" />
 
           {/* Desktop Comments / Mobile Caption (Scrollable Area) */}
-          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar hidden md:block">
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar no-scrollbar hidden md:block">
             {/* Caption in Comments Thread */}
             <div className="flex gap-3 mb-6">
                <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden flex items-center justify-center border" style={{ borderColor: 'var(--ig-border)', backgroundColor: 'var(--ig-bg)' }}>
@@ -309,8 +367,8 @@ const PreviewModal = ({
                    <span className="font-semibold mr-2">one_agency</span>
                    {item.notes || 'Yeni material çatdırıldı!'}
                  </p>
-                 <p className="text-[11px] mt-2" style={{ color: 'var(--ig-text-secondary)' }}>
-                   Status: {statusConfig[item.status]?.label} • {item.month}/{item.year}
+                 <p className="text-[11px] mt-2 uppercase tracking-wide" style={{ color: 'var(--ig-text-secondary)' }}>
+                   {statusConfig[item.status]?.label} • {item.month}/{item.year}
                  </p>
                </div>
             </div>
@@ -341,7 +399,7 @@ const PreviewModal = ({
                <div className="flex items-center gap-4">
                  <button className="hover:opacity-60 transition-opacity"><Heart size={24} strokeWidth={1.5} /></button>
                  {/* Open mobile comments on small screens */}
-                 <button className="hover:opacity-60 transition-opacity" onClick={() => setShowCommentsMobile(true)}><MessageCircle size={24} strokeWidth={1.5} /></button>
+                 <button className="hover:opacity-60 transition-opacity md:pointer-events-none" onClick={() => setShowCommentsMobile(true)}><MessageCircle size={24} strokeWidth={1.5} /></button>
                  <button className="hover:opacity-60 transition-opacity"><Send size={24} strokeWidth={1.5} /></button>
                </div>
                
@@ -364,10 +422,15 @@ const PreviewModal = ({
              </div>
 
              {/* Mobile Caption Preview */}
-             <div className="md:hidden px-3 text-sm flex flex-col gap-1">
-               <div>
-                 <span className="font-semibold mr-2">one_agency</span>
-                 <span>{item.notes || 'Yeni material çatdırıldı!'}</span>
+             <div className="md:hidden px-3 text-sm flex flex-col gap-1 mt-1">
+               <div className="flex gap-2 items-start">
+                 <div className="w-5 h-5 shrink-0 rounded-full overflow-hidden border mt-0.5" style={{ borderColor: 'var(--ig-border)', backgroundColor: 'var(--ig-bg)' }}>
+                   <span className="text-[7px] font-bold w-full h-full flex items-center justify-center" style={{ color: 'var(--ig-text)' }}>ONE</span>
+                 </div>
+                 <div className="flex-1 leading-snug">
+                   <span className="font-semibold mr-2">one_agency</span>
+                   <span>{item.notes || 'Yeni material çatdırıldı!'}</span>
+                 </div>
                </div>
                <div className="mt-1 cursor-pointer" onClick={() => setShowCommentsMobile(true)}>
                  <span className="text-sm" style={{ color: 'var(--ig-text-secondary)' }}>
@@ -378,6 +441,7 @@ const PreviewModal = ({
 
              <div className="px-3 text-[10px] uppercase tracking-wide mt-2" style={{ color: 'var(--ig-text-secondary)' }}>
                {statusConfig[item.status]?.label} • {item.month}/{item.year}
+               <span className="ml-2 normal-case font-semibold cursor-pointer" style={{ color: 'var(--ig-text)' }}>See translation</span>
              </div>
 
              {/* Desktop Input */}
@@ -388,7 +452,7 @@ const PreviewModal = ({
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Rəy yazın..."
+                    placeholder="Add a comment..."
                     disabled={isSending}
                     className="flex-1 bg-transparent text-sm focus:outline-none"
                     style={{ color: 'var(--ig-text)' }}
@@ -404,7 +468,7 @@ const PreviewModal = ({
                     disabled={isSending || !newMessage.trim()}
                     className="text-sm font-semibold transition-opacity disabled:opacity-40 text-blue-500"
                   >
-                    {isSending ? '...' : 'Göndər'}
+                    {isSending ? '...' : 'Post'}
                   </button>
                 </div>
              </div>
@@ -427,11 +491,11 @@ const PreviewModal = ({
               >
                 <div className="flex items-center justify-between px-4 py-3 border-b shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
                   <div className="w-8" />
-                  <h3 className="text-sm font-semibold">Rəylər</h3>
+                  <h3 className="text-sm font-semibold">Comments</h3>
                   <button onClick={() => setShowCommentsMobile(false)} className="p-1 hover:opacity-70"><X size={20} /></button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar no-scrollbar">
                   <div className="flex gap-3 mb-6">
                      <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden flex items-center justify-center border" style={{ borderColor: 'var(--ig-border)', backgroundColor: 'var(--ig-bg)' }}>
                        <span className="text-[10px] font-bold" style={{ color: 'var(--ig-text)' }}>ONE</span>
@@ -473,7 +537,7 @@ const PreviewModal = ({
                        type="text"
                        value={newMessage}
                        onChange={(e) => setNewMessage(e.target.value)}
-                       placeholder="Rəy yazın..."
+                       placeholder="Add a comment..."
                        disabled={isSending}
                        className="flex-1 bg-transparent text-sm focus:outline-none"
                        style={{ color: 'var(--ig-text)' }}
@@ -489,7 +553,7 @@ const PreviewModal = ({
                        disabled={isSending || !newMessage.trim()}
                        className="text-sm font-semibold transition-opacity disabled:opacity-40 text-blue-500"
                      >
-                       {isSending ? '...' : 'Göndər'}
+                       {isSending ? '...' : 'Post'}
                      </button>
                    </div>
                 </div>
