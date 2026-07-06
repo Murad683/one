@@ -366,18 +366,10 @@ const PreviewModal = ({
           onTouchMove={onTouchMoveHandler}
           onTouchEnd={onTouchEndHandler}
         >
-          {/* Close button inside media top-right for mobile */}
+          {/* Close button */}
           <button
             onClick={onClose}
-            className="md:hidden absolute top-3 left-3 z-50 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
-          >
-            <X size={20} />
-          </button>
-          
-          {/* Close button for desktop (outside media, on the modal container) */}
-          <button
-            onClick={onClose}
-            className="hidden md:flex absolute top-4 right-4 z-50 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+            className="absolute top-3 left-3 md:top-4 md:left-4 z-50 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
           >
             <X size={20} />
           </button>
