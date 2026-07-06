@@ -326,6 +326,8 @@ const PreviewModal = ({
               {activeIndex + 1}/{item.files.length}
             </div>
           )}
+
+
         </div>
 
         {/* --- RIGHT: SIDEBAR (Desktop) / BOTTOM (Mobile) --- */}

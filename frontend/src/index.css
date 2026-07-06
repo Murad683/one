@@ -151,6 +151,15 @@
   --ig-empty-bg: #EFEFEF;
 }
 
+/* Hide scrollbar site-wide */
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 @layer base {
   body {
     background: var(--bg-primary);
@@ -227,14 +236,16 @@
   -webkit-backdrop-filter: blur(2px) saturate(160%);
   backdrop-filter: url(#glass-distortion) blur(2px) saturate(160%);
   background-color: var(--glass-bg);
-  box-shadow: var(--shadow-navbar);
+  box-shadow: var(--shadow-navbar), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
 }
 
 .liquid-glass-btn {
   -webkit-backdrop-filter: blur(2px) saturate(160%);
   backdrop-filter: url(#glass-distortion) blur(2px) saturate(160%);
   background-color: var(--glass-bg);
-  box-shadow: var(--shadow-button);
+  box-shadow: var(--shadow-button), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
 }
 
 /* Mobile optimizations for performance */
