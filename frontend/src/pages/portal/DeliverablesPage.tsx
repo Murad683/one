@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cinematicEasing } from '../../utils/animations';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Bookmark, MoreHorizontal } from 'lucide-react';
+import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Bookmark, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Deliverable {
   id: string;
@@ -364,6 +364,28 @@ const PreviewModal = ({
             </div>
           )}
 
+          {/* Desktop Navigation Arrows */}
+          {item.files && item.files.length > 1 && (
+            <>
+              {activeIndex > 0 && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev - 1); }}
+                  className="hidden md:flex absolute left-4 z-50 p-2 rounded-full bg-white text-black shadow-sm opacity-80 hover:opacity-100 transition-opacity"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+              )}
+              {activeIndex < item.files.length - 1 && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev + 1); }}
+                  className="hidden md:flex absolute right-4 z-50 p-2 rounded-full bg-white text-black shadow-sm opacity-80 hover:opacity-100 transition-opacity"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              )}
+            </>
+          )}
+
 
         </div>
 
@@ -372,22 +394,8 @@ const PreviewModal = ({
           {/* Desktop Header */}
           <Header className="hidden md:flex" />
 
-          {/* Desktop Comments / Mobile Caption (Scrollable Area) */}
+          {/* Desktop Comments (Scrollable Area) */}
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar no-scrollbar hidden md:block">
-            {/* Caption in Comments Thread */}
-            <div className="flex mb-4">
-               <div className="flex-1">
-                 <p className="text-sm leading-snug">
-                   <span className="font-semibold mr-1">one_agency</span>
-                   <span>{item.notes || 'Yeni material çatdırıldı!'}</span>
-                 </p>
-                 <div className="text-[11px] mt-1" style={{ color: 'var(--ig-text-secondary)' }}>
-                   <span className="uppercase tracking-wide">{statusConfig[item.status]?.label} • {item.month}/{item.year}</span>
-                   <span className="ml-1 cursor-pointer font-normal"> • See translation</span>
-                 </div>
-               </div>
-            </div>
-
             {/* Client Comments */}
             {feedbackHistory && (
               <div className="flex gap-3">
@@ -410,6 +418,15 @@ const PreviewModal = ({
 
           {/* Actions & Footer */}
           <div className="flex flex-col pb-3 pt-2 md:border-t shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
+             {/* Dots if multiple files */}
+             {item.files && item.files.length > 1 && (
+               <div className="flex justify-center mb-2 gap-1.5">
+                 {item.files.map((_, idx) => (
+                   <div key={idx} className={`rounded-full transition-colors flex-shrink-0 ${idx === activeIndex ? 'w-2 h-2 bg-blue-500' : 'w-1.5 h-1.5 bg-gray-400'}`} />
+                 ))}
+               </div>
+             )}
+
              <div className="flex items-center justify-between px-4 mb-2">
                <div className="flex items-center gap-4">
                  <button className="hover:opacity-60 transition-opacity"><Heart size={24} strokeWidth={1.5} /></button>
@@ -427,22 +444,13 @@ const PreviewModal = ({
                </button>
              </div>
 
-             {/* Dots if multiple files */}
-             {item.files && item.files.length > 1 && (
-               <div className="flex justify-center mb-2 gap-1.5">
-                 {item.files.map((_, idx) => (
-                   <div key={idx} className={`rounded-full transition-colors flex-shrink-0 ${idx === activeIndex ? 'w-2 h-2 bg-blue-500' : 'w-1.5 h-1.5 bg-gray-400'}`} />
-                 ))}
-               </div>
-             )}
-
-             {/* Mobile Caption Preview */}
-             <div className="md:hidden px-4 text-sm flex flex-col gap-1 mt-1">
+             {/* Caption Preview */}
+             <div className="px-4 text-sm flex flex-col gap-1 mt-1">
                <div className="leading-snug">
                  <span className="font-semibold mr-1">one_agency</span>
                  <span>{item.notes || 'Yeni material çatdırıldı!'}</span>
                </div>
-               <div className="cursor-pointer" onClick={() => setShowCommentsMobile(true)}>
+               <div className="md:hidden cursor-pointer" onClick={() => setShowCommentsMobile(true)}>
                  <span style={{ color: 'var(--ig-text-secondary)' }}>
                    {feedbackHistory ? 'Rəylərə bax' : 'Rəy yaz...'}
                  </span>
