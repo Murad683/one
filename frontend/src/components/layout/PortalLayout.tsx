@@ -33,12 +33,23 @@ const PortalLayout = () => {
             borderColor: 'var(--glass-border)',
           }}
         >
-          <Link
-            to="/"
-            className="font-heading text-lg font-bold tracking-tighter"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            ONE<span style={{ color: 'var(--accent-text)' }}>.</span>
+          <Link to="/" className="flex items-center">
+            <img
+              src={settings?.navbarLogoUrl || '/logo.jpg'}
+              alt="Logo"
+              className="h-7 w-auto object-contain rounded-sm"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const parent = e.currentTarget.parentElement;
+                if (parent) {
+                  const fallback = document.createElement('span');
+                  fallback.className = 'font-heading text-lg font-bold tracking-tighter';
+                  fallback.innerHTML = 'ONE<span style="color: var(--accent-text)">.</span>';
+                  fallback.style.color = 'var(--text-primary)';
+                  parent.appendChild(fallback);
+                }
+              }}
+            />
           </Link>
 
           <div className="flex items-center gap-4">

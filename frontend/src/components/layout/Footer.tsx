@@ -53,10 +53,11 @@ export default function Footer() {
           <div className="max-w-xs">
             <Link to="/">
               <img
-                src={settings?.footerLogoUrl || '/logo.jpg'}
-                alt="Agency Logo"
-                className="h-8 w-auto object-contain mb-5"
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                src={settings?.navbarLogoUrl || '/logo.jpg'}
+                alt="Logo"
+                className="h-8 md:h-10 w-auto object-contain rounded-sm"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'; }}
               />
             </Link>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--text-faint)' }}>
