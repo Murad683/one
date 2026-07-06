@@ -245,19 +245,19 @@ const PreviewModal = ({
   const Header = ({ className = '' }) => (
     <div className={`flex items-center justify-between px-4 py-3 border-b shrink-0 ${className}`} style={{ borderColor: 'var(--ig-border)' }}>
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center p-[2px]">
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center p-[2px]">
           <div className="w-full h-full rounded-full border-2 border-transparent overflow-hidden relative" style={{ backgroundColor: 'var(--ig-bg)' }}>
             {igProfilePic ? (
               <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover absolute inset-0 rounded-full" style={{ border: '2px solid var(--ig-bg)' }} />
             ) : (
-              <span className="text-white text-[10px] font-bold z-10">{user?.name?.charAt(0) || 'U'}</span>
+              <span className="text-white text-[12px] font-bold z-10">{user?.name?.charAt(0) || 'U'}</span>
             )}
           </div>
         </div>
         <div className="flex flex-col">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center">
             <span className="text-sm font-semibold leading-none">{igUsername}</span>
-            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-blue-500" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7L6 12.6l1.5-1.5 2.6 2.6 6.4-6.4 1.5 1.5-8.1 7.9z"/></svg>
+            <svg viewBox="0 0 24 24" className="w-4 h-4 ml-1 text-blue-500" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7L6 12.6l1.5-1.5 2.6 2.6 6.4-6.4 1.5 1.5-8.1 7.9z"/></svg>
           </div>
         </div>
       </div>
@@ -301,7 +301,7 @@ const PreviewModal = ({
           {/* Close button inside media top-right for mobile */}
           <button
             onClick={onClose}
-            className="md:hidden absolute top-4 right-4 z-50 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+            className="md:hidden absolute top-3 left-3 z-50 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
           >
             <X size={20} />
           </button>
@@ -322,7 +322,7 @@ const PreviewModal = ({
 
           {/* 1/X Pagination Badge */}
           {item.files && item.files.length > 1 && (
-            <div className="absolute top-4 right-16 md:right-16 bg-black/60 text-white text-[11px] font-semibold px-2 py-1 rounded-full backdrop-blur-sm z-10 pointer-events-none">
+            <div className="absolute top-3 right-3 bg-black/60 text-white text-[13px] font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm z-10 pointer-events-none">
               {activeIndex + 1}/{item.files.length}
             </div>
           )}
@@ -380,15 +380,6 @@ const PreviewModal = ({
                  <button className="hover:opacity-60 transition-opacity md:pointer-events-none" onClick={() => setShowCommentsMobile(true)}><MessageCircle size={24} strokeWidth={1.5} /></button>
                  <button className="hover:opacity-60 transition-opacity"><Send size={24} strokeWidth={1.5} /></button>
                </div>
-               
-               {/* Dots if multiple files */}
-               {item.files && item.files.length > 1 ? (
-                 <div className="flex items-center gap-1">
-                   {item.files.map((_, idx) => (
-                     <div key={idx} className={`w-1.5 h-1.5 rounded-full transition-colors ${idx === activeIndex ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
-                   ))}
-                 </div>
-               ) : <div/>}
 
                <button className="hover:opacity-60 transition-opacity">
                  {activeFile?.downloadUrl ? (
@@ -398,6 +389,15 @@ const PreviewModal = ({
                  )}
                </button>
              </div>
+
+             {/* Dots if multiple files */}
+             {item.files && item.files.length > 1 && (
+               <div className="flex justify-center mb-2 gap-1.5">
+                 {item.files.map((_, idx) => (
+                   <div key={idx} className={`rounded-full transition-colors flex-shrink-0 ${idx === activeIndex ? 'w-2 h-2 bg-blue-500' : 'w-1.5 h-1.5 bg-gray-400'}`} />
+                 ))}
+               </div>
+             )}
 
              {/* Mobile Caption Preview */}
              <div className="md:hidden px-4 text-sm flex flex-col gap-1 mt-1">
@@ -412,7 +412,7 @@ const PreviewModal = ({
                </div>
              </div>
 
-             <div className="px-4 text-[11px] mt-1" style={{ color: 'var(--ig-text-secondary)' }}>
+             <div className="px-4 text-[12px] mt-1" style={{ color: 'var(--ig-text-secondary)' }}>
                <span className="uppercase tracking-wide">{statusConfig[item.status]?.label} • {item.month}/{item.year}</span>
                <span className="ml-1 cursor-pointer font-normal"> • See translation</span>
              </div>
