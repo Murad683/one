@@ -339,7 +339,7 @@ const PreviewModal = ({
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        animate={{ opacity: containerAspectRatio ? 1 : 0, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3, ease: cinematicEasing }}
         className="relative w-full h-full md:h-auto overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
