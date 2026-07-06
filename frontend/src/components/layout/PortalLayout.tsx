@@ -21,7 +21,7 @@ const PortalLayout = () => {
   const { data: settings } = useSiteSettings();
 
   return (
-    <div className="flex min-h-screen transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <div className="portal-theme flex min-h-screen transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Desktop Sidebar */}
       <PortalSidebar />
 

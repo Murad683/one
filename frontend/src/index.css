@@ -275,4 +275,31 @@
   backdrop-filter: blur(4px) saturate(160%) !important;
   background-color: rgba(255, 255, 255, 0.25) !important; /* SABIT dəyər */
   border: 1px solid rgba(255, 255, 255, 0.4) !important; /* SABIT dəyər, light border */
+}
+
+/* ─── Portal Instagram Theme Mapping ────────── */
+.portal-theme {
+  --bg-primary: var(--ig-bg);
+  --bg-secondary: var(--ig-bg);
+  --bg-elevated: var(--ig-btn-gray-bg);
+  --bg-elevated-hover: var(--ig-btn-gray-hover);
+  --text-primary: var(--ig-text);
+  --text-secondary: var(--ig-text-secondary);
+  --text-muted: var(--ig-text-secondary);
+  --text-faint: var(--ig-text-secondary);
+  --text-ghost: var(--ig-text-secondary);
+  --border-subtle: var(--ig-border);
+  --border-default: var(--ig-border);
+  --glass-bg: var(--ig-bg);
+  --glass-border: var(--ig-border);
+  --card-bg: var(--ig-bg);
+  --card-border: var(--ig-border);
+  --card-border-top: var(--ig-border);
+  --input-bg: var(--ig-bg);
+  --input-border: var(--ig-border);
+  --modal-bg: var(--ig-bg);
+  
+  /* Use Instagram blue as accent inside portal */
+  --accent-text: #0095F6;
+  --glow-accent-subtle: rgba(0, 149, 246, 0.1);
 }
