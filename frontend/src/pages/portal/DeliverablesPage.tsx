@@ -111,7 +111,7 @@ const MediaPreview = ({
   if (isVideoFile(mimeType, fileName)) {
     return (
       <div className="w-full h-full bg-black flex items-center justify-center relative">
-        <video controls autoPlay playsInline preload="metadata" className="w-full h-full object-contain" src={url}>
+        <video controls autoPlay playsInline preload="metadata" className="w-full h-full object-cover" src={url}>
           Brauzeriniz video formatını dəstəkləmir.
         </video>
       </div>
@@ -124,7 +124,7 @@ const MediaPreview = ({
         <img
           src={url}
           alt="Önizləmə"
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
         />
       </div>
     );
@@ -161,6 +161,38 @@ const PreviewModal = ({
   const [error, setError] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const [showCommentsMobile, setShowCommentsMobile] = useState(false);
+  const [containerAspectRatio, setContainerAspectRatio] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!item.files || item.files.length === 0) return;
+    const firstFile = item.files[0];
+    const url = getFileUrl(firstFile);
+    if (!url) return;
+    
+    let isCancelled = false;
+    
+    const setRatio = (ratio: number) => {
+      if (isCancelled) return;
+      const clamped = Math.max(0.8, Math.min(1.91, ratio));
+      setContainerAspectRatio(clamped);
+    };
+
+    if (isImageFile(firstFile.type, firstFile.name)) {
+      const img = new Image();
+      img.onload = () => setRatio(img.naturalWidth / img.naturalHeight);
+      img.onerror = () => setRatio(1);
+      img.src = url;
+    } else if (isVideoFile(firstFile.type, firstFile.name)) {
+      const video = document.createElement('video');
+      video.onloadedmetadata = () => setRatio(video.videoWidth / video.videoHeight);
+      video.onerror = () => setRatio(1);
+      video.src = url;
+    } else {
+      setRatio(1);
+    }
+    
+    return () => { isCancelled = true; };
+  }, [item.files]);
 
   // Swipe states
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -280,7 +312,7 @@ const PreviewModal = ({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3, ease: cinematicEasing }}
-        className="relative w-full max-w-[470px] md:max-w-[1000px] lg:max-w-[1200px] h-full md:h-[85vh] overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
+        className="relative w-full max-w-[470px] md:max-w-[1000px] lg:max-w-[1200px] h-full md:h-auto max-h-[100vh] md:max-h-[95vh] overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
         style={{
           backgroundColor: 'var(--ig-bg)',
           color: 'var(--ig-text)',
@@ -293,7 +325,8 @@ const PreviewModal = ({
 
         {/* --- LEFT: MEDIA AREA (Desktop) / MIDDLE (Mobile) --- */}
         <div 
-          className="flex-1 bg-black relative flex items-center justify-center aspect-[4/5] md:aspect-auto h-auto md:h-full overflow-hidden shrink-0"
+          className="flex-1 bg-black relative flex items-center justify-center h-auto md:h-full overflow-hidden shrink-0"
+          style={containerAspectRatio ? { aspectRatio: containerAspectRatio } : {}}
           onTouchStart={onTouchStartHandler}
           onTouchMove={onTouchMoveHandler}
           onTouchEnd={onTouchEndHandler}
