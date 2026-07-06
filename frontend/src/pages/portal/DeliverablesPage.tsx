@@ -162,6 +162,7 @@ const PreviewModal = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [showCommentsMobile, setShowCommentsMobile] = useState(false);
   const [containerAspectRatio, setContainerAspectRatio] = useState<number | null>(null);
+  const [modalStyle, setModalStyle] = useState({});
 
   useEffect(() => {
     if (!item.files || item.files.length === 0) return;
@@ -175,6 +176,35 @@ const PreviewModal = ({
       if (isCancelled) return;
       const clamped = Math.max(0.8, Math.min(1.91, ratio));
       setContainerAspectRatio(clamped);
+      
+      const updateSize = () => {
+        const isDesktop = window.innerWidth >= 768;
+        if (isDesktop) {
+          const sidebarW = window.innerWidth >= 1024 ? 400 : 350;
+          const maxH = window.innerHeight * 0.9;
+          const maxMediaW = window.innerWidth * 0.9 - sidebarW;
+          
+          let mediaH = maxH;
+          let mediaW = mediaH * clamped;
+          
+          if (mediaW > maxMediaW) {
+            mediaW = maxMediaW;
+            mediaH = mediaW / clamped;
+          }
+          
+          setModalStyle({
+            height: `${mediaH}px`,
+            width: `${mediaW + sidebarW}px`,
+            maxWidth: '100%'
+          });
+        } else {
+          setModalStyle({});
+        }
+      };
+      
+      updateSize();
+      window.addEventListener('resize', updateSize);
+      return () => window.removeEventListener('resize', updateSize);
     };
 
     if (isImageFile(firstFile.type, firstFile.name)) {
@@ -312,8 +342,9 @@ const PreviewModal = ({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3, ease: cinematicEasing }}
-        className="relative w-full max-w-[470px] md:max-w-[1000px] lg:max-w-[1200px] h-full md:h-auto max-h-[100vh] md:max-h-[95vh] overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
+        className="relative w-full h-full md:h-auto overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
         style={{
+          ...modalStyle,
           backgroundColor: 'var(--ig-bg)',
           color: 'var(--ig-text)',
           borderColor: 'var(--ig-border)'
@@ -395,7 +426,7 @@ const PreviewModal = ({
           <Header className="hidden md:flex" />
 
           {/* Desktop Comments (Scrollable Area) */}
-          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar no-scrollbar hidden md:block">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 custom-scrollbar no-scrollbar hidden md:block">
             {/* Client Comments */}
             {feedbackHistory && (
               <div className="flex gap-3">
