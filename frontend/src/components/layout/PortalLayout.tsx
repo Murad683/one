@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useSiteSettings } from '../../hooks/useSiteData';
 import PortalSidebar from './PortalSidebar';
 import { LayoutDashboard, FolderOpen, CreditCard, MessageCircle, LogOut, Sun, Moon } from 'lucide-react';
 import ProfileSettingsModal from '../ui/ProfileSettingsModal';
@@ -17,6 +18,7 @@ const PortalLayout = () => {
   const { user, logout } = useAuth();
   const { toggleTheme, isDark } = useTheme(); // Corrected: theme is not used
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const { data: settings } = useSiteSettings();
 
   return (
     <div className="flex min-h-screen transition-colors duration-300" style={{ backgroundColor: 'var(--bg-primary)' }}>
