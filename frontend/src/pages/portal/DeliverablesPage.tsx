@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cinematicEasing } from '../../utils/animations';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Bookmark, MoreHorizontal } from 'lucide-react';
+import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Bookmark, MoreHorizontal, ChevronLeft, ChevronRight, Play, Download } from 'lucide-react';
 
 interface Deliverable {
   id: string;
@@ -160,7 +160,7 @@ const PreviewModal = ({
   const [feedbackHistory, setFeedbackHistory] = useState(item.clientFeedback || '');
   const [error, setError] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
-  const [showComments, setShowComments] = useState(false);
+  const [showCommentsMobile, setShowCommentsMobile] = useState(false);
 
   const activeFile = item.files?.[activeIndex];
   const url = getFileUrl(activeFile);
@@ -187,7 +187,7 @@ const PreviewModal = ({
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (showComments) setShowComments(false);
+        if (showCommentsMobile) setShowCommentsMobile(false);
         else onClose();
       }
     };
@@ -197,7 +197,7 @@ const PreviewModal = ({
       window.removeEventListener('keydown', handleEscape);
       document.body.classList.remove('lock-scroll');
     };
-  }, [onClose, showComments]);
+  }, [onClose, showCommentsMobile]);
 
   const igUsername = user?.igUsername || 'username';
   const igProfilePic = sanitizeUrl(user?.igProfilePic || null);
@@ -206,14 +206,14 @@ const PreviewModal = ({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-8 backdrop-blur-sm"
       style={{ backgroundColor: 'var(--modal-backdrop)' }}
-      onClick={() => { if (!showComments) onClose(); }}
+      onClick={() => { if (!showCommentsMobile) onClose(); }}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3, ease: cinematicEasing }}
-        className="relative w-full max-w-[470px] h-full md:h-auto md:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-xl border-x-0 md:border-x md:border-y"
+        className="relative w-full max-w-[470px] md:max-w-[1000px] lg:max-w-[1200px] h-full md:h-[85vh] overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
         style={{
           backgroundColor: 'var(--ig-bg)',
           color: 'var(--ig-text)',
@@ -221,42 +221,18 @@ const PreviewModal = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Desktop close button outside */}
-        <button
-          onClick={onClose}
-          className="hidden md:flex absolute -right-12 top-0 z-50 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-        >
-          <X size={24} />
-        </button>
+        {/* Desktop close button outside inside media container logic */}
+        
+        {/* --- LEFT: MEDIA AREA (Desktop) / TOP (Mobile) --- */}
+        <div className="flex-1 bg-black relative flex items-center justify-center aspect-[4/5] md:aspect-auto h-auto md:h-full overflow-hidden shrink-0">
+          {/* Close button inside media top-right */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+          >
+            <X size={20} />
+          </button>
 
-        {/* 1. Header */}
-        <div className="flex items-center justify-between px-3 py-3 border-b shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center p-[2px]">
-              <div className="w-full h-full rounded-full border-2 border-transparent overflow-hidden relative" style={{ backgroundColor: 'var(--ig-bg)' }}>
-                {igProfilePic ? (
-                  <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover absolute inset-0 rounded-full" style={{ border: '2px solid var(--ig-bg)' }} />
-                ) : (
-                  <span className="text-white text-[10px] font-bold z-10">{user?.name?.charAt(0) || 'U'}</span>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1">
-                <span className="text-sm font-semibold leading-none">{igUsername}</span>
-                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-blue-500" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7L6 12.6l1.5-1.5 2.6 2.6 6.4-6.4 1.5 1.5-8.1 7.9z"/></svg>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center">
-            <button className="p-1 hover:opacity-70 transition-opacity">
-               <MoreHorizontal size={20} />
-            </button>
-          </div>
-        </div>
-
-        {/* 2. Media Area */}
-        <div className="w-full relative flex items-center justify-center bg-black aspect-[4/5] overflow-hidden shrink-0">
           {activeFile ? (
             <MediaPreview url={activeFile?.previewUrl || url} mimeType={activeFile.type} fileName={activeFile.name} />
           ) : (
@@ -265,155 +241,262 @@ const PreviewModal = ({
 
           {/* 1/X Pagination Badge */}
           {item.files && item.files.length > 1 && (
-            <div className="absolute top-3 right-3 bg-black/60 text-white text-[11px] font-semibold px-2 py-1 rounded-full backdrop-blur-sm z-10 pointer-events-none">
+            <div className="absolute top-4 right-16 bg-black/60 text-white text-[11px] font-semibold px-2 py-1 rounded-full backdrop-blur-sm z-10 pointer-events-none">
               {activeIndex + 1}/{item.files.length}
             </div>
           )}
 
-          {/* Next/Prev invisible click areas */}
+          {/* Navigation Arrows */}
           {item.files && item.files.length > 1 && (
             <>
-              <div className="absolute inset-y-0 left-0 w-1/2 cursor-pointer z-0" onClick={() => setActiveIndex(prev => Math.max(0, prev - 1))} />
-              <div className="absolute inset-y-0 right-0 w-1/2 cursor-pointer z-0" onClick={() => setActiveIndex(prev => Math.min(item.files.length - 1, prev + 1))} />
+              {activeIndex > 0 && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev - 1); }}
+                  className="absolute left-2 md:left-4 z-20 p-1.5 md:p-2 rounded-full bg-white/80 text-black hover:bg-white shadow-md transition-all opacity-80 hover:opacity-100"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+              )}
+              {activeIndex < item.files.length - 1 && (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => prev + 1); }}
+                  className="absolute right-2 md:right-4 z-20 p-1.5 md:p-2 rounded-full bg-white/80 text-black hover:bg-white shadow-md transition-all opacity-80 hover:opacity-100"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              )}
             </>
           )}
         </div>
 
-        {/* Actions bar below media */}
-        <div className="flex flex-col pb-3 pt-2 shrink-0">
-           <div className="flex items-center justify-between px-3 mb-2">
-             <div className="flex items-center gap-4">
-               <button className="hover:opacity-60 transition-opacity"><Heart size={24} strokeWidth={1.5} /></button>
-               <button className="hover:opacity-60 transition-opacity" onClick={() => setShowComments(true)}><MessageCircle size={24} strokeWidth={1.5} /></button>
-               <button className="hover:opacity-60 transition-opacity"><Send size={24} strokeWidth={1.5} /></button>
-             </div>
-             
-             {/* Dots if multiple files */}
-             {item.files && item.files.length > 1 ? (
-               <div className="flex items-center gap-1">
-                 {item.files.map((_, idx) => (
-                   <div key={idx} className={`w-1.5 h-1.5 rounded-full transition-colors ${idx === activeIndex ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
-                 ))}
-               </div>
-             ) : <div/>}
-
-             <button className="hover:opacity-60 transition-opacity">
-               {activeFile?.downloadUrl ? (
-                 <a href={activeFile.downloadUrl} download={activeFile.name} title="Yüklə"><Bookmark size={24} strokeWidth={1.5} /></a>
-               ) : (
-                 <Bookmark size={24} strokeWidth={1.5} />
-               )}
-             </button>
-           </div>
-
-           {/* Caption & Status */}
-           <div className="px-3 text-sm flex flex-col gap-1">
-             <div>
-               <span className="font-semibold mr-2">one_agency</span>
-               <span>{item.notes || 'Yeni material çatdırıldı!'}</span>
-             </div>
-           </div>
-
-           {/* View Comments Link */}
-           <div className="px-3 mt-2 cursor-pointer mb-1" onClick={() => setShowComments(true)}>
-             <span className="text-sm" style={{ color: 'var(--ig-text-secondary)' }}>
-               {feedbackHistory ? 'Rəylərə bax' : 'Rəy yaz...'}
-             </span>
-           </div>
-
-           <div className="px-3 text-[10px] uppercase tracking-wide" style={{ color: 'var(--ig-text-secondary)' }}>
-             {statusConfig[item.status]?.label} • {item.month}/{item.year}
-           </div>
-        </div>
-
-        {/* Mobile bottom padding filler just in case */}
-        <div className="md:hidden pb-[env(safe-area-inset-bottom)]" />
-
-        {/* Comments Modal (Bottom Sheet style) */}
-        <AnimatePresence>
-          {showComments && (
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="absolute inset-x-0 bottom-0 top-12 md:top-0 z-50 flex flex-col rounded-t-xl md:rounded-none shadow-[0_-10px_40px_rgba(0,0,0,0.1)]"
-              style={{ backgroundColor: 'var(--ig-bg)' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between px-4 py-3 border-b shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
-                <div className="w-8" />
-                <h3 className="text-sm font-semibold">Rəylər</h3>
-                <button onClick={() => setShowComments(false)} className="p-1 hover:opacity-70"><X size={20} /></button>
+        {/* --- RIGHT: SIDEBAR (Desktop) / BOTTOM (Mobile) --- */}
+        <div className="w-full md:w-[350px] lg:w-[400px] flex flex-col h-auto md:h-full border-l-0 md:border-l shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center p-[2px]">
+                <div className="w-full h-full rounded-full border-2 border-transparent overflow-hidden relative" style={{ backgroundColor: 'var(--ig-bg)' }}>
+                  {igProfilePic ? (
+                    <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover absolute inset-0 rounded-full" style={{ border: '2px solid var(--ig-bg)' }} />
+                  ) : (
+                    <span className="text-white text-[10px] font-bold z-10">{user?.name?.charAt(0) || 'U'}</span>
+                  )}
+                </div>
               </div>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-semibold leading-none">{igUsername}</span>
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-blue-500" fill="currentColor"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7L6 12.6l1.5-1.5 2.6 2.6 6.4-6.4 1.5 1.5-8.1 7.9z"/></svg>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <button className="p-1 hover:opacity-70 transition-opacity">
+                 <MoreHorizontal size={20} />
+              </button>
+            </div>
+          </div>
 
-              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                {/* Caption again in comments */}
-                <div className="flex gap-3 mb-6">
-                   <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden flex items-center justify-center border" style={{ borderColor: 'var(--ig-border)', backgroundColor: 'var(--ig-bg)' }}>
-                     <span className="text-[10px] font-bold" style={{ color: 'var(--ig-text)' }}>ONE</span>
-                   </div>
-                   <div className="flex-1">
-                     <p className="text-sm">
-                       <span className="font-semibold mr-2">one_agency</span>
-                       {item.notes || 'Yeni material çatdırıldı!'}
-                     </p>
-                   </div>
+          {/* Desktop Comments / Mobile Caption (Scrollable Area) */}
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar hidden md:block">
+            {/* Caption in Comments Thread */}
+            <div className="flex gap-3 mb-6">
+               <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden flex items-center justify-center border" style={{ borderColor: 'var(--ig-border)', backgroundColor: 'var(--ig-bg)' }}>
+                 <span className="text-[10px] font-bold" style={{ color: 'var(--ig-text)' }}>ONE</span>
+               </div>
+               <div className="flex-1">
+                 <p className="text-sm">
+                   <span className="font-semibold mr-2">one_agency</span>
+                   {item.notes || 'Yeni material çatdırıldı!'}
+                 </p>
+                 <p className="text-[11px] mt-2" style={{ color: 'var(--ig-text-secondary)' }}>
+                   Status: {statusConfig[item.status]?.label} • {item.month}/{item.year}
+                 </p>
+               </div>
+            </div>
+
+            {/* Client Comments */}
+            {feedbackHistory && (
+              <div className="flex gap-3">
+                 <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center">
+                   {igProfilePic ? (
+                     <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover" />
+                   ) : (
+                     <span className="text-white text-xs font-bold">{user?.name?.charAt(0) || 'U'}</span>
+                   )}
+                 </div>
+                 <div className="flex-1">
+                   <p className="text-sm whitespace-pre-wrap">
+                     <span className="font-semibold mr-2">{igUsername}</span>
+                     {feedbackHistory}
+                   </p>
+                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Actions & Footer */}
+          <div className="flex flex-col pb-3 pt-2 md:border-t shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
+             <div className="flex items-center justify-between px-3 mb-2">
+               <div className="flex items-center gap-4">
+                 <button className="hover:opacity-60 transition-opacity"><Heart size={24} strokeWidth={1.5} /></button>
+                 {/* Open mobile comments on small screens */}
+                 <button className="hover:opacity-60 transition-opacity" onClick={() => setShowCommentsMobile(true)}><MessageCircle size={24} strokeWidth={1.5} /></button>
+                 <button className="hover:opacity-60 transition-opacity"><Send size={24} strokeWidth={1.5} /></button>
+               </div>
+               
+               {/* Dots if multiple files */}
+               {item.files && item.files.length > 1 ? (
+                 <div className="flex items-center gap-1">
+                   {item.files.map((_, idx) => (
+                     <div key={idx} className={`w-1.5 h-1.5 rounded-full transition-colors ${idx === activeIndex ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                   ))}
+                 </div>
+               ) : <div/>}
+
+               <button className="hover:opacity-60 transition-opacity">
+                 {activeFile?.downloadUrl ? (
+                   <a href={activeFile.downloadUrl} download={activeFile.name} title="Yüklə"><Bookmark size={24} strokeWidth={1.5} /></a>
+                 ) : (
+                   <Bookmark size={24} strokeWidth={1.5} />
+                 )}
+               </button>
+             </div>
+
+             {/* Mobile Caption Preview */}
+             <div className="md:hidden px-3 text-sm flex flex-col gap-1">
+               <div>
+                 <span className="font-semibold mr-2">one_agency</span>
+                 <span>{item.notes || 'Yeni material çatdırıldı!'}</span>
+               </div>
+               <div className="mt-1 cursor-pointer" onClick={() => setShowCommentsMobile(true)}>
+                 <span className="text-sm" style={{ color: 'var(--ig-text-secondary)' }}>
+                   {feedbackHistory ? 'Rəylərə bax' : 'Rəy yaz...'}
+                 </span>
+               </div>
+             </div>
+
+             <div className="px-3 text-[10px] uppercase tracking-wide mt-2" style={{ color: 'var(--ig-text-secondary)' }}>
+               {statusConfig[item.status]?.label} • {item.month}/{item.year}
+             </div>
+
+             {/* Desktop Input */}
+             <div className="hidden md:flex border-t mt-3 p-3 shrink-0 flex-col" style={{ borderColor: 'var(--ig-border)' }}>
+                {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Rəy yazın..."
+                    disabled={isSending}
+                    className="flex-1 bg-transparent text-sm focus:outline-none"
+                    style={{ color: 'var(--ig-text)' }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSendFeedback();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleSendFeedback}
+                    disabled={isSending || !newMessage.trim()}
+                    className="text-sm font-semibold transition-opacity disabled:opacity-40 text-blue-500"
+                  >
+                    {isSending ? '...' : 'Göndər'}
+                  </button>
+                </div>
+             </div>
+          </div>
+
+          {/* Mobile bottom padding filler just in case */}
+          <div className="md:hidden pb-[env(safe-area-inset-bottom)]" />
+
+          {/* Mobile Comments Bottom Sheet */}
+          <AnimatePresence>
+            {showCommentsMobile && (
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="md:hidden fixed inset-x-0 bottom-0 top-12 z-50 flex flex-col rounded-t-xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)]"
+                style={{ backgroundColor: 'var(--ig-bg)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-4 py-3 border-b shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
+                  <div className="w-8" />
+                  <h3 className="text-sm font-semibold">Rəylər</h3>
+                  <button onClick={() => setShowCommentsMobile(false)} className="p-1 hover:opacity-70"><X size={20} /></button>
                 </div>
 
-                {/* Client Comments */}
-                {feedbackHistory && (
-                  <div className="flex gap-3">
-                     <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center">
-                       {igProfilePic ? (
-                         <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover" />
-                       ) : (
-                         <span className="text-white text-xs font-bold">{user?.name?.charAt(0) || 'U'}</span>
-                       )}
+                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                  <div className="flex gap-3 mb-6">
+                     <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden flex items-center justify-center border" style={{ borderColor: 'var(--ig-border)', backgroundColor: 'var(--ig-bg)' }}>
+                       <span className="text-[10px] font-bold" style={{ color: 'var(--ig-text)' }}>ONE</span>
                      </div>
                      <div className="flex-1">
-                       <p className="text-sm whitespace-pre-wrap">
-                         <span className="font-semibold mr-2">{igUsername}</span>
-                         {feedbackHistory}
+                       <p className="text-sm">
+                         <span className="font-semibold mr-2">one_agency</span>
+                         {item.notes || 'Yeni material çatdırıldı!'}
                        </p>
                      </div>
                   </div>
-                )}
-              </div>
 
-              <div className="border-t p-3 shrink-0 flex flex-col mb-[env(safe-area-inset-bottom)]" style={{ borderColor: 'var(--ig-border)' }}>
-                 {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
-                 <div className="flex items-center gap-3">
-                   <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--ig-btn-gray-bg)' }}>
-                     {igProfilePic ? <img src={resolveFileUrl(igProfilePic)} alt="avatar" className="w-full h-full object-cover" /> : null}
+                  {feedbackHistory && (
+                    <div className="flex gap-3">
+                       <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center">
+                         {igProfilePic ? (
+                           <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover" />
+                         ) : (
+                           <span className="text-white text-xs font-bold">{user?.name?.charAt(0) || 'U'}</span>
+                         )}
+                       </div>
+                       <div className="flex-1">
+                         <p className="text-sm whitespace-pre-wrap">
+                           <span className="font-semibold mr-2">{igUsername}</span>
+                           {feedbackHistory}
+                         </p>
+                       </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t p-3 shrink-0 flex flex-col mb-[env(safe-area-inset-bottom)]" style={{ borderColor: 'var(--ig-border)' }}>
+                   {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+                   <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--ig-btn-gray-bg)' }}>
+                       {igProfilePic ? <img src={resolveFileUrl(igProfilePic)} alt="avatar" className="w-full h-full object-cover" /> : null}
+                     </div>
+                     <input
+                       type="text"
+                       value={newMessage}
+                       onChange={(e) => setNewMessage(e.target.value)}
+                       placeholder="Rəy yazın..."
+                       disabled={isSending}
+                       className="flex-1 bg-transparent text-sm focus:outline-none"
+                       style={{ color: 'var(--ig-text)' }}
+                       onKeyDown={(e) => {
+                         if (e.key === 'Enter') {
+                           e.preventDefault();
+                           handleSendFeedback();
+                         }
+                       }}
+                     />
+                     <button
+                       onClick={handleSendFeedback}
+                       disabled={isSending || !newMessage.trim()}
+                       className="text-sm font-semibold transition-opacity disabled:opacity-40 text-blue-500"
+                     >
+                       {isSending ? '...' : 'Göndər'}
+                     </button>
                    </div>
-                   <input
-                     type="text"
-                     value={newMessage}
-                     onChange={(e) => setNewMessage(e.target.value)}
-                     placeholder="Rəy yazın..."
-                     disabled={isSending}
-                     className="flex-1 bg-transparent text-sm focus:outline-none"
-                     style={{ color: 'var(--ig-text)' }}
-                     onKeyDown={(e) => {
-                       if (e.key === 'Enter') {
-                         e.preventDefault();
-                         handleSendFeedback();
-                       }
-                     }}
-                   />
-                   <button
-                     onClick={handleSendFeedback}
-                     disabled={isSending || !newMessage.trim()}
-                     className="text-sm font-semibold transition-opacity disabled:opacity-40 text-blue-500"
-                   >
-                     {isSending ? '...' : 'Göndər'}
-                   </button>
-                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </motion.div>
     </div>
   );

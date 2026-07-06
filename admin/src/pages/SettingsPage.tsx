@@ -429,7 +429,6 @@ const ContactCard = ({ settings, onSave, setSuccess }: any) => {
 
 const LogosCard = ({ settings, onUpload, setSuccess }: any) => {
   const [isUploadingNavbar, setIsUploadingNavbar] = useState(false);
-  const [isUploadingFooter, setIsUploadingFooter] = useState(false);
 
   const handleNavbarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -443,17 +442,7 @@ const LogosCard = ({ settings, onUpload, setSuccess }: any) => {
     }
   };
 
-  const handleFooterUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingFooter(true);
-    try {
-      await onUpload(file, 'footerLogoUrl');
-      setSuccess('Footer logosu uğurla yükləndi.');
-    } finally {
-      setIsUploadingFooter(false);
-    }
-  };
+
 
   return (
     <div className="rounded-2xl border border-edge bg-surface shadow-sm overflow-hidden flex flex-col">
@@ -465,9 +454,9 @@ const LogosCard = ({ settings, onUpload, setSuccess }: any) => {
       </div>
       <div className="p-6">
         <div className="grid gap-6 sm:grid-cols-2">
-          {/* Navbar Logo */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-body">Navbar Logosu</label>
+          {/* Site Logo */}
+          <div className="space-y-2 col-span-2 md:col-span-1">
+            <label className="text-sm font-medium text-body">Sayt Logosu</label>
             <div className="flex items-center gap-4">
               <div className="relative flex h-24 w-full items-center justify-center rounded-xl border-2 border-dashed border-edge bg-surface-alt transition hover:bg-surface-hover">
                 <input type="file" accept="image/*" onChange={handleNavbarUpload} className="absolute inset-0 cursor-pointer opacity-0" disabled={isUploadingNavbar} />
@@ -483,24 +472,7 @@ const LogosCard = ({ settings, onUpload, setSuccess }: any) => {
               )}
             </div>
           </div>
-          {/* Footer Logo */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-body">Footer Logosu</label>
-            <div className="flex items-center gap-4">
-              <div className="relative flex h-24 w-full items-center justify-center rounded-xl border-2 border-dashed border-edge bg-surface-alt transition hover:bg-surface-hover">
-                <input type="file" accept="image/*" onChange={handleFooterUpload} className="absolute inset-0 cursor-pointer opacity-0" disabled={isUploadingFooter} />
-                <div className="flex flex-col items-center gap-1 text-faint">
-                  <Upload className={`h-5 w-5 ${isUploadingFooter ? 'animate-bounce' : ''}`} />
-                  <span className="text-[10px] font-medium uppercase tracking-wider">Yüklə</span>
-                </div>
-              </div>
-              {settings?.footerLogoUrl && (
-                <div className="h-24 w-28 shrink-0 overflow-hidden rounded-xl border border-edge shadow-inner bg-surface-hover flex items-center justify-center p-2">
-                  <img src={assetUrl(settings.footerLogoUrl)} alt="Footer Logo" className="max-h-full max-w-full object-contain" />
-                </div>
-              )}
-            </div>
-          </div>
+
         </div>
         <p className="mt-4 text-[10px] text-faint font-medium uppercase tracking-wider italic">Qeyd: Logoları yüklədikdən sonra saytda avtomatik yenilənəcək.</p>
       </div>
