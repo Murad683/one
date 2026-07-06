@@ -178,7 +178,7 @@ const PreviewModal = ({
     };
 
     if (isImageFile(firstFile.type, firstFile.name)) {
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => setRatio(img.naturalWidth / img.naturalHeight);
       img.onerror = () => setRatio(1);
       img.src = url;
