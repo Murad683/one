@@ -338,18 +338,16 @@ const PreviewModal = ({
           {/* Desktop Comments / Mobile Caption (Scrollable Area) */}
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar no-scrollbar hidden md:block">
             {/* Caption in Comments Thread */}
-            <div className="flex gap-3 mb-6">
-               <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden flex items-center justify-center border" style={{ borderColor: 'var(--ig-border)', backgroundColor: 'var(--ig-bg)' }}>
-                 <span className="text-[10px] font-bold" style={{ color: 'var(--ig-text)' }}>ONE</span>
-               </div>
+            <div className="flex mb-4">
                <div className="flex-1">
-                 <p className="text-sm">
-                   <span className="font-semibold mr-2">one_agency</span>
-                   {item.notes || 'Yeni material çatdırıldı!'}
+                 <p className="text-sm leading-snug">
+                   <span className="font-semibold mr-1">one_agency</span>
+                   <span>{item.notes || 'Yeni material çatdırıldı!'}</span>
                  </p>
-                 <p className="text-[11px] mt-2 uppercase tracking-wide" style={{ color: 'var(--ig-text-secondary)' }}>
-                   {statusConfig[item.status]?.label} • {item.month}/{item.year}
-                 </p>
+                 <div className="text-[11px] mt-1" style={{ color: 'var(--ig-text-secondary)' }}>
+                   <span className="uppercase tracking-wide">{statusConfig[item.status]?.label} • {item.month}/{item.year}</span>
+                   <span className="ml-1 cursor-pointer font-normal"> • See translation</span>
+                 </div>
                </div>
             </div>
 
@@ -375,7 +373,7 @@ const PreviewModal = ({
 
           {/* Actions & Footer */}
           <div className="flex flex-col pb-3 pt-2 md:border-t shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
-             <div className="flex items-center justify-between px-3 mb-2">
+             <div className="flex items-center justify-between px-4 mb-2">
                <div className="flex items-center gap-4">
                  <button className="hover:opacity-60 transition-opacity"><Heart size={24} strokeWidth={1.5} /></button>
                  {/* Open mobile comments on small screens */}
@@ -402,30 +400,25 @@ const PreviewModal = ({
              </div>
 
              {/* Mobile Caption Preview */}
-             <div className="md:hidden px-3 text-sm flex flex-col gap-1 mt-1">
-               <div className="flex gap-2 items-start">
-                 <div className="w-5 h-5 shrink-0 rounded-full overflow-hidden border mt-0.5" style={{ borderColor: 'var(--ig-border)', backgroundColor: 'var(--ig-bg)' }}>
-                   <span className="text-[7px] font-bold w-full h-full flex items-center justify-center" style={{ color: 'var(--ig-text)' }}>ONE</span>
-                 </div>
-                 <div className="flex-1 leading-snug">
-                   <span className="font-semibold mr-2">one_agency</span>
-                   <span>{item.notes || 'Yeni material çatdırıldı!'}</span>
-                 </div>
+             <div className="md:hidden px-4 text-sm flex flex-col gap-1 mt-1">
+               <div className="leading-snug">
+                 <span className="font-semibold mr-1">one_agency</span>
+                 <span>{item.notes || 'Yeni material çatdırıldı!'}</span>
                </div>
-               <div className="mt-1 cursor-pointer" onClick={() => setShowCommentsMobile(true)}>
-                 <span className="text-sm" style={{ color: 'var(--ig-text-secondary)' }}>
+               <div className="cursor-pointer" onClick={() => setShowCommentsMobile(true)}>
+                 <span style={{ color: 'var(--ig-text-secondary)' }}>
                    {feedbackHistory ? 'Rəylərə bax' : 'Rəy yaz...'}
                  </span>
                </div>
              </div>
 
-             <div className="px-3 text-[10px] uppercase tracking-wide mt-2" style={{ color: 'var(--ig-text-secondary)' }}>
-               {statusConfig[item.status]?.label} • {item.month}/{item.year}
-               <span className="ml-2 normal-case font-semibold cursor-pointer" style={{ color: 'var(--ig-text)' }}>See translation</span>
+             <div className="px-4 text-[11px] mt-1" style={{ color: 'var(--ig-text-secondary)' }}>
+               <span className="uppercase tracking-wide">{statusConfig[item.status]?.label} • {item.month}/{item.year}</span>
+               <span className="ml-1 cursor-pointer font-normal"> • See translation</span>
              </div>
 
              {/* Desktop Input */}
-             <div className="hidden md:flex border-t mt-3 p-3 shrink-0 flex-col" style={{ borderColor: 'var(--ig-border)' }}>
+             <div className="hidden md:flex border-t mt-3 p-4 shrink-0 flex-col" style={{ borderColor: 'var(--ig-border)' }}>
                 {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
                 <div className="flex items-center gap-3">
                   <input
@@ -476,10 +469,7 @@ const PreviewModal = ({
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar no-scrollbar">
-                  <div className="flex gap-3 mb-6">
-                     <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden flex items-center justify-center border" style={{ borderColor: 'var(--ig-border)', backgroundColor: 'var(--ig-bg)' }}>
-                       <span className="text-[10px] font-bold" style={{ color: 'var(--ig-text)' }}>ONE</span>
-                     </div>
+                  <div className="flex mb-6">
                      <div className="flex-1">
                        <p className="text-sm">
                          <span className="font-semibold mr-2">one_agency</span>
