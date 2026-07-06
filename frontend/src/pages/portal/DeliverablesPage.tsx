@@ -110,8 +110,8 @@ const MediaPreview = ({
 
   if (isVideoFile(mimeType, fileName)) {
     return (
-      <div className="w-full h-full bg-black flex items-center justify-center relative">
-        <video controls autoPlay playsInline preload="metadata" className="w-full h-full object-cover" src={url}>
+      <div className="w-full h-full flex items-center justify-center relative" style={{ backgroundColor: 'var(--ig-bg)' }}>
+        <video controls autoPlay playsInline preload="metadata" className="w-full h-full object-contain" src={url}>
           Brauzeriniz video formatını dəstəkləmir.
         </video>
       </div>
@@ -120,11 +120,11 @@ const MediaPreview = ({
 
   if (isImageFile(mimeType, fileName)) {
     return (
-      <div className="w-full h-full bg-black flex items-center justify-center relative">
+      <div className="w-full h-full flex items-center justify-center relative" style={{ backgroundColor: 'var(--ig-bg)' }}>
         <img
           src={url}
           alt="Önizləmə"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
       </div>
     );
@@ -325,8 +325,12 @@ const PreviewModal = ({
 
         {/* --- LEFT: MEDIA AREA (Desktop) / MIDDLE (Mobile) --- */}
         <div 
-          className="flex-1 bg-black relative flex items-center justify-center h-auto md:h-full overflow-hidden shrink-0"
-          style={containerAspectRatio ? { aspectRatio: containerAspectRatio } : {}}
+          className="flex-1 relative flex items-center justify-center h-auto md:h-full overflow-hidden shrink-0 border-b md:border-b-0 md:border-r"
+          style={{ 
+            backgroundColor: 'var(--ig-bg)',
+            borderColor: 'var(--ig-border)',
+            ...(containerAspectRatio ? { aspectRatio: containerAspectRatio } : {}) 
+          }}
           onTouchStart={onTouchStartHandler}
           onTouchMove={onTouchMoveHandler}
           onTouchEnd={onTouchEndHandler}
