@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cinematicEasing } from '../../utils/animations';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Bookmark, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Bookmark, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Deliverable {
   id: string;
@@ -324,8 +324,9 @@ const PreviewModal = ({
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <button className="p-1 hover:opacity-70 transition-opacity">
-           <MoreHorizontal size={20} />
+        {/* Mobile close button instead of 3 dots */}
+        <button onClick={onClose} className="p-2 -mr-2 hover:opacity-70 transition-opacity md:hidden">
+           <X size={22} />
         </button>
       </div>
     </div>
@@ -339,7 +340,7 @@ const PreviewModal = ({
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: containerAspectRatio ? 1 : 0, scale: 1 }}
+        animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3, ease: cinematicEasing }}
         className="relative w-full h-full md:h-auto overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
@@ -366,18 +367,27 @@ const PreviewModal = ({
           onTouchMove={onTouchMoveHandler}
           onTouchEnd={onTouchEndHandler}
         >
-          {/* Close button */}
+          {/* Desktop Close button */}
           <button
             onClick={onClose}
-            className="absolute top-3 left-3 md:top-4 md:left-4 z-50 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+            className="hidden md:flex absolute top-4 left-4 z-50 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
           >
             <X size={20} />
           </button>
 
-          {activeFile ? (
-            <MediaPreview url={activeFile?.previewUrl || url} mimeType={activeFile.type} fileName={activeFile.name} />
+          {!containerAspectRatio ? (
+            <div className="w-full h-full min-h-[50vh] md:min-h-[500px] flex flex-col items-center justify-center bg-black/95">
+              <Loader2 className="w-8 h-8 text-white/80 animate-spin mb-4" />
+              <span className="text-white/60 text-sm font-medium tracking-wide">Yüklənir...</span>
+            </div>
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-white/50 text-sm">Media tapılmadı</div>
+            <>
+              {activeFile ? (
+                <MediaPreview url={activeFile?.previewUrl || url} mimeType={activeFile.type} fileName={activeFile.name} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white/50 text-sm">Media tapılmadı</div>
+              )}
+            </>
           )}
 
           {/* 1/X Pagination Badge */}
