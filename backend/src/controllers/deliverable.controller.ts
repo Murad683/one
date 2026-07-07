@@ -365,7 +365,7 @@ const generateWebPreview = async (videoFilePath: string): Promise<string | null>
       .outputOptions([
         '-vf', 'scale=-2:720',
         '-c:v', 'libx264',
-        '-preset', 'ultrafast',
+        '-preset', 'fast',
         '-crf', '28',
         '-c:a', 'aac',
         '-b:a', '128k',
