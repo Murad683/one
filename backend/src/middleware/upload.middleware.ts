@@ -188,6 +188,53 @@ export const uploadSiteMediaArray = wrapMulterArray(
   10
 );
 
+export const wrapMulterFields = (
+  multerInstance: multer.Multer,
+  fields: multer.Field[]
+) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    multerInstance.fields(fields)(req, res, async (err: any) => {
+      if (err) {
+        if (err instanceof multer.MulterError) {
+          return sendError(res, err.message, 400);
+        }
+        return sendError(res, 'An unknown error occurred during upload', 500);
+      }
+      const filesMap = req.files as Record<string, Express.Multer.File[]> | undefined;
+      if (filesMap) {
+        for (const fieldFiles of Object.values(filesMap)) {
+          for (const file of fieldFiles) {
+            try {
+              await validateFile(file);
+            } catch (validationError: any) {
+              // Cleanup all uploaded files on validation failure
+              for (const ff of Object.values(filesMap)) {
+                for (const f of ff) {
+                  await fs.promises.unlink(f.path).catch(() => {});
+                }
+              }
+              return sendError(res, validationError.message || 'Invalid file in upload', 400);
+            }
+          }
+        }
+      }
+      next();
+    });
+  };
+};
+
+export const uploadSiteMediaWithThumbnail = wrapMulterFields(
+  multer({
+    storage,
+    fileFilter: siteMediaFilter,
+    limits: { fileSize: MAX_FILE_SIZE_BYTES },
+  }),
+  [
+    { name: 'files', maxCount: 10 },
+    { name: 'thumbnail', maxCount: 1 },
+  ]
+);
+
 const pdfFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
   if (file.mimetype === 'application/pdf') {
     cb(null, true);

@@ -29,10 +29,14 @@ export const createDeliverable = async (data: {
 export const uploadDeliverableFile = async (
   id: string,
   files: File[],
-  onProgress?: (percent: number) => void
+  onProgress?: (percent: number) => void,
+  thumbnail?: File | null
 ): Promise<ApiResponse<Deliverable>> => {
   const formData = new FormData();
   files.forEach(f => formData.append('files', f));
+  if (thumbnail) {
+    formData.append('thumbnail', thumbnail);
+  }
 
   const response = await client.patch<ApiResponse<Deliverable>>(
     `/deliverables/${id}/upload`,
@@ -71,9 +75,29 @@ import axios from 'axios';
 export const directUploadDeliverableFile = async (
   id: string,
   files: File[],
-  onProgress?: (percent: number) => void
+  onProgress?: (percent: number) => void,
+  thumbnail?: File | null
 ): Promise<any> => {
   const uploadedFiles: { storageKey: string; fileName: string; fileSize: number; mimeType: string }[] = [];
+  let thumbnailStorageKey: string | null = null;
+
+  // Upload custom thumbnail first if provided
+  if (thumbnail) {
+    const thumbInitRes = await client.post(`/deliverables/${id}/initiate-upload`, {
+      fileName: thumbnail.name,
+      fileSize: thumbnail.size,
+      mimeType: thumbnail.type,
+    });
+    const { uploadUrl: thumbUploadUrl, storageKey: thumbKey } = thumbInitRes.data.data;
+
+    await axios.put(thumbUploadUrl, thumbnail, {
+      headers: {
+        'Content-Type': thumbnail.type,
+        'x-ms-blob-type': 'BlockBlob',
+      },
+    });
+    thumbnailStorageKey = thumbKey;
+  }
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
@@ -112,6 +136,7 @@ export const directUploadDeliverableFile = async (
   // Step 3: Tell backend all files are uploaded, start processing
   const response = await client.post(`/deliverables/${id}/finalize-upload`, {
     files: uploadedFiles,
+    ...(thumbnailStorageKey && { thumbnailStorageKey }),
   });
   return response.data;
 };

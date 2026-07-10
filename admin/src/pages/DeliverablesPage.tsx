@@ -280,6 +280,7 @@ export const DeliverablesPage = () => {
   const [deleting, setDeleting] = useState<Deliverable | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading'>('idle');
@@ -287,9 +288,21 @@ export const DeliverablesPage = () => {
   const [previewItem, setPreviewItem] = useState<Deliverable | null>(null);
   const [activeTab, setActiveTab] = useState<'files' | 'highlights'>('files');
 
-  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<DeliverableFormValues>({
+  const { register, handleSubmit, reset, control, watch, formState: { errors } } = useForm<DeliverableFormValues>({
     defaultValues,
   });
+
+  const watchedCategoryId = watch('categoryId');
+  const isSelectedCategoryVideo = useMemo(() => {
+    if (!watchedCategoryId) return false;
+    const cat = categories.find(c => c.id === watchedCategoryId);
+    return cat?.isVideo ?? false;
+  }, [watchedCategoryId, categories]);
+
+  const thumbnailPreview = useMemo(() => {
+    if (!selectedThumbnail) return null;
+    return URL.createObjectURL(selectedThumbnail);
+  }, [selectedThumbnail]);
 
   const clientOptions = useMemo(
     () => clients.map((client) => ({ 
@@ -341,6 +354,7 @@ export const DeliverablesPage = () => {
   const openModal = (deliverable?: Deliverable) => {
     setEditing(deliverable || null);
     setSelectedFiles([]);
+    setSelectedThumbnail(null);
     reset(
       deliverable
         ? {
@@ -382,11 +396,11 @@ export const DeliverablesPage = () => {
         if (isLargeVideo) {
           await directUploadDeliverableFile(deliverableId, selectedFiles, (percent) => {
             setUploadProgress(percent);
-          });
+          }, selectedThumbnail);
         } else {
           await uploadFilesWithProgress(deliverableId, selectedFiles, (percent) => {
             setUploadProgress(percent);
-          });
+          }, selectedThumbnail);
         }
       }
 
@@ -699,6 +713,42 @@ export const DeliverablesPage = () => {
             error={errors.date?.message}
             {...register('date', { required: 'Tarix mütləqdir' })}
           />
+          {/* Thumbnail Upload - only for video categories */}
+          {isSelectedCategoryVideo && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-body">
+                Kover şəkli (isteğe bağlı)
+              </label>
+              <Input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] || null;
+                  setSelectedThumbnail(file);
+                }}
+              />
+              {thumbnailPreview && (
+                <div className="relative mt-2 inline-block">
+                  <img
+                    src={thumbnailPreview}
+                    alt="Kover önizləməsi"
+                    className="h-28 w-auto rounded-lg border border-edge object-cover shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSelectedThumbnail(null)}
+                    className="absolute -top-2 -right-2 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-md"
+                    aria-label="Koveri sil"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+              <p className="text-xs text-muted">
+                Əgər yüklənməsə, videonun içindən avtomatik çəkiləcək.
+              </p>
+            </div>
+          )}
           {/* Upload Progress Bar */}
           {uploadPhase !== 'idle' && (
             <div className="space-y-2 rounded-lg bg-surface-alt p-3 border border-edge">

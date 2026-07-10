@@ -3,7 +3,7 @@ import path from 'path';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloadUrlForDownload, cleanupOrphanFiles, getPresignedUploadUrl, getBlobProperties, downloadBlobToFile } from '../services/upload.service';
-import { uploadSiteMediaArray } from '../middleware/upload.middleware';
+import { uploadSiteMediaWithThumbnail } from '../middleware/upload.middleware';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 const ffprobeInstaller = require('@ffprobe-installer/ffprobe');
@@ -60,8 +60,8 @@ export const dynamicUploadMiddleware = async (
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     req.uploadSubfolder = isVideo ? 'videos' : 'designs';
     
-    // Use the universal media filter that accepts both video and image formats, for arrays
-    uploadSiteMediaArray(req, res, next);
+    // Use the universal media filter that accepts both video and image formats + optional thumbnail
+    uploadSiteMediaWithThumbnail(req, res, next);
   } catch (err) {
     console.error('Dynamic upload middleware error:', err);
     sendError(res, 'Failed to determine upload type', 500);
@@ -431,7 +431,10 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
       return;
     }
 
-    const uploadedFiles = req.files as Express.Multer.File[];
+    const filesMap = req.files as Record<string, Express.Multer.File[]> | undefined;
+    const uploadedFiles = filesMap?.['files'] || [];
+    const customThumbnailFile = filesMap?.['thumbnail']?.[0] || null;
+
     if (!uploadedFiles || uploadedFiles.length === 0) {
       sendError(res, 'No files uploaded', 400);
       return;
@@ -448,7 +451,7 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
     sendSuccess(res, updatedDeliverable);
 
     // Fire and forget the background task
-    processDeliverableBackground(id, deliverable, uploadedFiles).catch((err) => {
+    processDeliverableBackground(id, deliverable, uploadedFiles, customThumbnailFile).catch((err) => {
       console.error('[Video Debug] Fatal error in background processing:', err);
     });
   } catch (err) {
@@ -460,7 +463,8 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
 const processDeliverableBackground = async (
   id: string,
   deliverable: any,
-  uploadedFiles: Express.Multer.File[]
+  uploadedFiles: Express.Multer.File[],
+  customThumbnailFile?: Express.Multer.File | null
 ) => {
   const startTime = Date.now();
   try {
@@ -474,11 +478,27 @@ const processDeliverableBackground = async (
     const newFileObjects = [];
     let newThumbnailUrl: string | null = null;
 
+    // --- CUSTOM THUMBNAIL UPLOAD (priority over auto-generation) ---
+    if (customThumbnailFile) {
+      try {
+        const thumbResult = await processAndStoreFile(customThumbnailFile, 'thumbnails');
+        newThumbnailUrl = thumbResult.url;
+        console.log('[Thumb Debug] Custom thumbnail uploaded. thumbnailUrl:', newThumbnailUrl);
+      } catch (thumbError) {
+        console.error('[Thumb Debug] Custom thumbnail upload error:', thumbError);
+        newThumbnailUrl = null;
+      } finally {
+        if (customThumbnailFile.path) {
+          await fs.promises.unlink(customThumbnailFile.path).catch(() => {});
+        }
+      }
+    }
+
     for (const file of uploadedFiles) {
-      // --- THUMBNAIL GENERATION ---
+      // --- AUTO THUMBNAIL GENERATION (only if no custom thumbnail) ---
       const isVideoByDb = deliverable.category?.isVideo === true || deliverable.type === 'VIDEO';
       const isVideoByMime = file.mimetype?.startsWith('video/') === true;
-      const shouldGenerateThumb = (isVideoByDb || isVideoByMime) && !newThumbnailUrl && (!!file.path || !!file.buffer);
+      const shouldGenerateThumb = !newThumbnailUrl && (isVideoByDb || isVideoByMime) && (!!file.path || !!file.buffer);
 
       if (shouldGenerateThumb) {
         let tempVideoPath: string | undefined;
@@ -513,7 +533,7 @@ const processDeliverableBackground = async (
 
             const thumbResult = await processAndStoreFile(thumbMulterFile, 'thumbnails');
             newThumbnailUrl = thumbResult.url;
-            console.log('[Thumb Debug] Azure upload SUCCESS. thumbnailUrl:', newThumbnailUrl);
+            console.log('[Thumb Debug] Auto-generated thumbnail. thumbnailUrl:', newThumbnailUrl);
           }
         } catch (thumbError) {
           console.error('Azure Thumbnail Upload Error:', thumbError);
@@ -652,8 +672,9 @@ export const initiateDirectUpload = async (req: Request, res: Response): Promise
 export const finalizeDirectUpload = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const { files } = req.body;
+    const { files, thumbnailStorageKey } = req.body;
     // files: [{ storageKey, fileName, fileSize, mimeType }]
+    // thumbnailStorageKey: optional string — storageKey for custom thumbnail uploaded via direct upload
 
     const deliverable = await prisma.deliverable.findUnique({
       where: { id },
@@ -702,7 +723,7 @@ export const finalizeDirectUpload = async (req: Request, res: Response): Promise
     sendSuccess(res, { message: 'Processing started' });
 
     // Arxa planda emal başla (fire and forget)
-    processDirectUploadBackground(id, deliverable, verifications).catch((err) => {
+    processDirectUploadBackground(id, deliverable, verifications, thumbnailStorageKey || null).catch((err) => {
       console.error('[Direct Upload] Fatal error in background processing:', err);
     });
   } catch (err) {
@@ -714,7 +735,8 @@ export const finalizeDirectUpload = async (req: Request, res: Response): Promise
 const processDirectUploadBackground = async (
   id: string,
   deliverable: any,
-  files: Array<{ storageKey: string; fileName: string; fileSize: number; mimeType: string }>
+  files: Array<{ storageKey: string; fileName: string; fileSize: number; mimeType: string }>,
+  customThumbnailStorageKey?: string | null
 ) => {
   const startTime = Date.now();
   const tempFilesToCleanup: string[] = [];
@@ -725,6 +747,12 @@ const processDirectUploadBackground = async (
     const folder = isVideo ? 'videos' : 'designs';
     const newFileObjects = [];
     let newThumbnailUrl: string | null = null;
+
+    // --- CUSTOM THUMBNAIL (uploaded via direct upload) ---
+    if (customThumbnailStorageKey) {
+      newThumbnailUrl = customThumbnailStorageKey;
+      console.log('[Direct Upload] Using custom thumbnail storageKey:', customThumbnailStorageKey);
+    }
 
     for (const file of files) {
       // Unique temp path: deliverableId + uuid
@@ -738,7 +766,7 @@ const processDirectUploadBackground = async (
 
       // --- THUMBNAIL ---
       const isVideoFile = file.mimeType?.startsWith('video/');
-      if (isVideoFile && !newThumbnailUrl) {
+      if (isVideoFile && !newThumbnailUrl && !customThumbnailStorageKey) {
         const tempThumbPath = await generateVideoThumbnail(tempFilePath);
         if (tempThumbPath) {
           tempFilesToCleanup.push(tempThumbPath);
