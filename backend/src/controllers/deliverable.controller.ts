@@ -469,13 +469,17 @@ const processDeliverableBackground = async (
   const startTime = Date.now();
   try {
     const oldFiles = (deliverable.files as any[]) || [];
-    const oldUrls = oldFiles.map((f: any) => f.url);
-    await cleanupOrphanFiles(oldUrls, []);
+    const isUpdatingVideo = uploadedFiles.length > 0;
+
+    if (isUpdatingVideo) {
+      const oldUrls = oldFiles.map((f: any) => f.url);
+      await cleanupOrphanFiles(oldUrls, []);
+    }
 
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     const folder = isVideo ? 'videos' : 'designs';
 
-    const newFileObjects = [];
+    const newFileObjects: any[] = isUpdatingVideo ? [] : [...oldFiles];
     let newThumbnailUrl: string | null = null;
 
     // --- CUSTOM THUMBNAIL UPLOAD (priority over auto-generation) ---
