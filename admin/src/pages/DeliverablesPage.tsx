@@ -388,7 +388,7 @@ export const DeliverablesPage = () => {
 
       const deliverableId = editing?.id || response.data.data.id;
 
-      if (selectedFiles.length > 0) {
+      if (selectedFiles.length > 0 || selectedThumbnail) {
         setUploadPhase('uploading');
         const isLargeVideo = selectedFiles.some(f =>
           f.type.startsWith('video/') && f.size > DIRECT_UPLOAD_THRESHOLD_BYTES

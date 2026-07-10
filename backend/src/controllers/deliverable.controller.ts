@@ -498,7 +498,8 @@ const processDeliverableBackground = async (
       // --- AUTO THUMBNAIL GENERATION (only if no custom thumbnail) ---
       const isVideoByDb = deliverable.category?.isVideo === true || deliverable.type === 'VIDEO';
       const isVideoByMime = file.mimetype?.startsWith('video/') === true;
-      const shouldGenerateThumb = !newThumbnailUrl && (isVideoByDb || isVideoByMime) && (!!file.path || !!file.buffer);
+      const hasExistingThumbnail = !!deliverable.thumbnailUrl;
+      const shouldGenerateThumb = !newThumbnailUrl && !hasExistingThumbnail && (isVideoByDb || isVideoByMime) && (!!file.path || !!file.buffer);
 
       if (shouldGenerateThumb) {
         let tempVideoPath: string | undefined;
