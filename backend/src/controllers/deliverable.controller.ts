@@ -435,8 +435,8 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
     const uploadedFiles = filesMap?.['files'] || [];
     const customThumbnailFile = filesMap?.['thumbnail']?.[0] || null;
 
-    if (!uploadedFiles || uploadedFiles.length === 0) {
-      sendError(res, 'No files uploaded', 400);
+    if ((!uploadedFiles || uploadedFiles.length === 0) && !customThumbnailFile) {
+      sendError(res, 'No files or thumbnail uploaded', 400);
       return;
     }
 
