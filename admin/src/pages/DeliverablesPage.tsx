@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { uploadDeliverableFile as uploadFilesWithProgress, directUploadDeliverableFile } from '../api/deliverables.api';
-import { Download, Edit2, FileX, MessageCircle, Play, Plus, Search, Trash2, X } from 'lucide-react';
+import { Download, Edit2, FileX, Image, MessageCircle, Play, Plus, Search, Trash2, Video, X } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -50,6 +50,7 @@ interface Deliverable extends Record<string, unknown> {
   year: number;
   title: string;
   files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null }[];
+  thumbnailUrl?: string | null;
   clientFeedback?: string | null;
   processingDuration?: number | null;
   createdAt?: string;
@@ -122,7 +123,7 @@ const resolveFileUrl = (fileUrl: string | null | undefined): string => {
   const url = sanitizeUrl(fileUrl);
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  
+
   let normalized = url.replace(/\\/g, '/');
   if (normalized.startsWith('uploads/')) {
     normalized = normalized.replace('uploads/', '');
@@ -244,9 +245,8 @@ const PreviewOverlay = ({
               <button
                 key={f.url}
                 onClick={() => setActiveIndex(idx)}
-                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                  idx === activeIndex ? 'border-accent shadow-[0_0_15px_rgba(var(--accent-rgb),0.5)]' : 'border-transparent opacity-50 hover:opacity-100'
-                }`}
+                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${idx === activeIndex ? 'border-accent shadow-[0_0_15px_rgba(var(--accent-rgb),0.5)]' : 'border-transparent opacity-50 hover:opacity-100'
+                  }`}
               >
                 {isImageFile(f.type, f.name) ? (
                   <img src={sanitizeUrl(f.downloadUrl || resolveFileUrl(f.url))} className="w-full h-full object-cover" alt={f.name} />
@@ -305,10 +305,10 @@ export const DeliverablesPage = () => {
   }, [selectedThumbnail]);
 
   const clientOptions = useMemo(
-    () => clients.map((client) => ({ 
-      value: client.id, 
+    () => clients.map((client) => ({
+      value: client.id,
       label: client.name,
-      subLabel: client.email 
+      subLabel: client.email
     })),
     [clients],
   );
@@ -358,11 +358,11 @@ export const DeliverablesPage = () => {
     reset(
       deliverable
         ? {
-            title: deliverable.title,
-            clientId: deliverable.clientId,
-            categoryId: deliverable.categoryId || '',
-            date: `${deliverable.year}-${String(deliverable.month).padStart(2, '0')}-01`,
-          }
+          title: deliverable.title,
+          clientId: deliverable.clientId,
+          categoryId: deliverable.categoryId || '',
+          date: `${deliverable.year}-${String(deliverable.month).padStart(2, '0')}-01`,
+        }
         : defaultValues,
     );
     setIsModalOpen(true);
@@ -390,7 +390,7 @@ export const DeliverablesPage = () => {
 
       if (selectedFiles.length > 0) {
         setUploadPhase('uploading');
-        const isLargeVideo = selectedFiles.some(f => 
+        const isLargeVideo = selectedFiles.some(f =>
           f.type.startsWith('video/') && f.size > DIRECT_UPLOAD_THRESHOLD_BYTES
         );
         if (isLargeVideo) {
@@ -417,7 +417,7 @@ export const DeliverablesPage = () => {
 
   const addCategory = async () => {
     if (!newCategory.trim()) return;
-    await api.post('/deliverable-categories', { 
+    await api.post('/deliverable-categories', {
       name: newCategory.trim(),
       isVideo: isNewCategoryVideo
     });
@@ -459,8 +459,8 @@ export const DeliverablesPage = () => {
           >
             {(primaryFile && (isVideoFile(primaryFile.type, primaryFile.name) ||
               isImageFile(primaryFile.type, primaryFile.name))) && (
-              <Play className="h-3 w-3 shrink-0" />
-            )}
+                <Play className="h-3 w-3 shrink-0" />
+              )}
             <span className="truncate max-w-[160px] font-medium">
               {deliverable.title || 'Başlıksız'} {deliverable.files.length > 1 && <span className="text-xs text-muted">({deliverable.files.length})</span>}
             </span>
@@ -485,40 +485,41 @@ export const DeliverablesPage = () => {
       hideOnMobile: true,
       render: (deliverable) => {
         const isStale = isStalePending(deliverable);
-        
+
         return (
-        <div className="flex flex-col gap-1 items-start">
-          <div className="flex items-center gap-1.5">
-            <Badge variant={statusVariant(deliverable.status)}>
-              {statusLabels[deliverable.status] || deliverable.status}
-            </Badge>
-            {isStale && (
-              <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-sm" title="2 saatdan çoxdur gözləmədədir">
-                Gözləmədə qalıb
+          <div className="flex flex-col gap-1 items-start">
+            <div className="flex items-center gap-1.5">
+              <Badge variant={statusVariant(deliverable.status)}>
+                {statusLabels[deliverable.status] || deliverable.status}
+              </Badge>
+              {isStale && (
+                <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-sm" title="2 saatdan çoxdur gözləmədədir">
+                  Gözləmədə qalıb
+                </span>
+              )}
+              {deliverable.clientFeedback && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFeedbackView(deliverable.clientFeedback!);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-700 ring-1 ring-inset ring-sky-600/20 hover:bg-sky-100 transition"
+                  title="Rəyi göstər"
+                >
+                  <MessageCircle className="h-3 w-3" />
+                  Rəy
+                </button>
+              )}
+            </div>
+            {deliverable.processingDuration && deliverable.status === 'READY' && (
+              <span className="text-[10px] text-faint italic ml-1">
+                Emal: {Math.floor(deliverable.processingDuration / 60)}d {deliverable.processingDuration % 60}s
               </span>
             )}
-            {deliverable.clientFeedback && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setFeedbackView(deliverable.clientFeedback!);
-                }}
-                className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-700 ring-1 ring-inset ring-sky-600/20 hover:bg-sky-100 transition"
-                title="Rəyi göstər"
-              >
-                <MessageCircle className="h-3 w-3" />
-                Rəy
-              </button>
-            )}
           </div>
-          {deliverable.processingDuration && deliverable.status === 'READY' && (
-            <span className="text-[10px] text-faint italic ml-1">
-              Emal: {Math.floor(deliverable.processingDuration / 60)}d {deliverable.processingDuration % 60}s
-            </span>
-          )}
-        </div>
-      )},
+        )
+      },
     },
     {
       key: 'month',
@@ -547,21 +548,19 @@ export const DeliverablesPage = () => {
       <div className="flex border-b border-edge">
         <button
           onClick={() => setActiveTab('files')}
-          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'files'
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'files'
               ? 'border-accent text-accent'
               : 'border-transparent text-muted hover:text-heading hover:border-edge'
-          }`}
+            }`}
         >
           Layihə Faylları
         </button>
         <button
           onClick={() => setActiveTab('highlights')}
-          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'highlights'
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'highlights'
               ? 'border-accent text-accent'
               : 'border-transparent text-muted hover:text-heading hover:border-edge'
-          }`}
+            }`}
         >
           Önə Çıxanlar (Highlights)
         </button>
@@ -572,268 +571,306 @@ export const DeliverablesPage = () => {
       ) : (
         <>
           <section className="space-y-4 pt-2">
-        <div>
-          <h2 className="text-xl font-semibold text-heading">Fayl Kateqoriyaları (Növlər)</h2>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {Array.isArray(categories) && categories.map((category) => (
-            <div key={category.id} className="inline-flex items-center gap-2 rounded-full bg-surface px-3 py-2 text-sm shadow-sm ring-1 ring-edge">
-              {renamingId === category.id ? (
-                <>
-                  <input
-                    value={renameValue}
-                    onChange={(event) => setRenameValue(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') saveRename(category);
-                      if (event.key === 'Escape') setRenamingId('');
-                    }}
-                    className="w-32 rounded border border-field-border bg-field px-2 py-1 text-sm text-heading outline-none"
-                    autoFocus
-                  />
-                  <Button size="sm" onClick={() => saveRename(category)}>Yadda Saxla</Button>
-                </>
-              ) : (
-                <>
-                  <span>{category.name} {category.isVideo && <span className="text-[10px] text-blue-500 font-bold">(VIDEO)</span>}</span>
-                  <button type="button" onClick={() => { setRenamingId(category.id); setRenameValue(category.name); }}>
-                    <Edit2 className="h-3.5 w-3.5 text-muted" />
-                  </button>
-                  <button type="button" onClick={() => setDeleteCategory(category)}>
-                    <X className="h-3.5 w-3.5 text-muted" />
-                  </button>
-                </>
-              )}
+            <div>
+              <h2 className="text-xl font-semibold text-heading">Fayl Kateqoriyaları (Növlər)</h2>
             </div>
-          ))}
-        </div>
-        <div className="flex flex-col sm:flex-row max-w-2xl gap-3 w-full bg-surface-alt p-4 rounded-xl border border-edge">
-          <Input
-            placeholder="Yeni növ adı (məs: Drone Çəkiliş)..."
-            value={newCategory}
-            onChange={(event) => setNewCategory(event.target.value)}
-            className="flex-1"
-          />
-          <div className="flex items-center gap-2 px-2">
-            <input 
-              type="checkbox" 
-              id="isVideo" 
-              checked={isNewCategoryVideo} 
-              onChange={(e) => setIsNewCategoryVideo(e.target.checked)}
-              className="h-4 w-4 rounded border-field-border text-blue-600 focus:ring-blue-600"
-            />
-            <label htmlFor="isVideo" className="text-sm font-medium text-body">Video kateqoriyasıdır?</label>
-          </div>
-          <Button onClick={addCategory} className="shrink-0">
-            <Plus className="h-4 w-4" />
-            Əlavə Et
-          </Button>
-        </div>
-      </section>
-
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-heading">Layihə Faylları</h1>
-          <p className="mt-1 text-sm text-muted">Müştərilərə göndərilən faylları idarə edin.</p>
-        </div>
-        <Button onClick={() => openModal()} className="w-full sm:w-auto">
-          <Plus className="h-4 w-4" />
-          Fayl Əlavə Et
-        </Button>
-      </div>
-      <div className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          <Search className="h-4 w-4 text-faint" />
-        </div>
-        <Input
-          placeholder="Müştəri adı və ya e-poçt ilə axtarın..."
-          className="pl-10"
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-        />
-      </div>
-      {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-      <Table 
-        columns={columns} 
-        data={deliverables} 
-        isLoading={isLoading} 
-        emptyMessage="Fayl tapılmadı." 
-        rowClassName={(row) => isStalePending(row) ? 'bg-red-50/50 hover:bg-red-50' : ''}
-      />
-
-      {/* ── Create / Edit Modal ── */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={editing ? 'Faylı Redaktə Et' : 'Yeni Fayl Əlavə Et'}
-        size="lg"
-      >
-        <form onSubmit={handleSubmit(saveDeliverable)} className="space-y-4">
-          <Input
-            label="Başlıq"
-            placeholder="Faylın başlığını daxil edin..."
-            error={errors.title?.message}
-            {...register('title', { required: 'Başlıq mütləqdir' })}
-          />
-          <Controller
-            name="clientId"
-            control={control}
-            rules={{ required: 'Müştəri mütləqdir' }}
-            render={({ field }) => (
-              <Combobox
-                label="Müştəri"
-                options={clientOptions}
-                value={field.value}
-                onChange={field.onChange}
-                error={errors.clientId?.message}
-              />
-            )}
-          />
-          <Select 
-            label="Növ" 
-            options={[
-              { value: '', label: 'Kateqoriya seçin' },
-              ...(Array.isArray(categories) ? categories.map(c => ({ value: c.id, label: c.name })) : [])
-            ]} 
-            error={errors.categoryId?.message}
-            {...register('categoryId', { required: 'Növ seçmək mütləqdir' })} 
-          />
-          <Input
-            label="Fayllar (Birdən çox seçə bilərsiniz)"
-            type="file"
-            multiple
-            onChange={(event) => {
-              if (event.target.files) {
-                setSelectedFiles(Array.from(event.target.files));
-              }
-            }}
-          />
-          <Input
-            label="Tarix"
-            type="date"
-            error={errors.date?.message}
-            {...register('date', { required: 'Tarix mütləqdir' })}
-          />
-          {/* Thumbnail Upload - only for video categories */}
-          {isSelectedCategoryVideo && (
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-body">
-                Kover şəkli (isteğe bağlı)
-              </label>
+            <div className="flex flex-wrap gap-2">
+              {Array.isArray(categories) && categories.map((category) => (
+                <div key={category.id} className="inline-flex items-center gap-2 rounded-full bg-surface px-3 py-2 text-sm shadow-sm ring-1 ring-edge">
+                  {renamingId === category.id ? (
+                    <>
+                      <input
+                        value={renameValue}
+                        onChange={(event) => setRenameValue(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') saveRename(category);
+                          if (event.key === 'Escape') setRenamingId('');
+                        }}
+                        className="w-32 rounded border border-field-border bg-field px-2 py-1 text-sm text-heading outline-none"
+                        autoFocus
+                      />
+                      <Button size="sm" onClick={() => saveRename(category)}>Yadda Saxla</Button>
+                    </>
+                  ) : (
+                    <>
+                      <span>{category.name} {category.isVideo && <span className="text-[10px] text-blue-500 font-bold">(VIDEO)</span>}</span>
+                      <button type="button" onClick={() => { setRenamingId(category.id); setRenameValue(category.name); }}>
+                        <Edit2 className="h-3.5 w-3.5 text-muted" />
+                      </button>
+                      <button type="button" onClick={() => setDeleteCategory(category)}>
+                        <X className="h-3.5 w-3.5 text-muted" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-col sm:flex-row max-w-2xl gap-3 w-full bg-surface-alt p-4 rounded-xl border border-edge">
               <Input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(event) => {
-                  const file = event.target.files?.[0] || null;
-                  setSelectedThumbnail(file);
-                }}
+                placeholder="Yeni növ adı (məs: Drone Çəkiliş)..."
+                value={newCategory}
+                onChange={(event) => setNewCategory(event.target.value)}
+                className="flex-1"
               />
-              {thumbnailPreview && (
-                <div className="relative mt-2 inline-block">
-                  <img
-                    src={thumbnailPreview}
-                    alt="Kover önizləməsi"
-                    className="h-28 w-auto rounded-lg border border-edge object-cover shadow-sm"
+              <div className="flex items-center gap-2 px-2">
+                <input
+                  type="checkbox"
+                  id="isVideo"
+                  checked={isNewCategoryVideo}
+                  onChange={(e) => setIsNewCategoryVideo(e.target.checked)}
+                  className="h-4 w-4 rounded border-field-border text-blue-600 focus:ring-blue-600"
+                />
+                <label htmlFor="isVideo" className="text-sm font-medium text-body">Video kateqoriyasıdır?</label>
+              </div>
+              <Button onClick={addCategory} className="shrink-0">
+                <Plus className="h-4 w-4" />
+                Əlavə Et
+              </Button>
+            </div>
+          </section>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
+            <div>
+              <h1 className="text-2xl font-semibold text-heading">Layihə Faylları</h1>
+              <p className="mt-1 text-sm text-muted">Müştərilərə göndərilən faylları idarə edin.</p>
+            </div>
+            <Button onClick={() => openModal()} className="w-full sm:w-auto">
+              <Plus className="h-4 w-4" />
+              Fayl Əlavə Et
+            </Button>
+          </div>
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <Search className="h-4 w-4 text-faint" />
+            </div>
+            <Input
+              placeholder="Müştəri adı və ya e-poçt ilə axtarın..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+            />
+          </div>
+          {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+          <Table
+            columns={columns}
+            data={deliverables}
+            isLoading={isLoading}
+            emptyMessage="Fayl tapılmadı."
+            rowClassName={(row) => isStalePending(row) ? 'bg-red-50/50 hover:bg-red-50' : ''}
+          />
+
+          {/* ── Create / Edit Modal ── */}
+          <Modal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            title={editing ? 'Faylı Redaktə Et' : 'Yeni Fayl Əlavə Et'}
+            size="lg"
+          >
+            <form onSubmit={handleSubmit(saveDeliverable)} className="space-y-4">
+              <Input
+                label="Başlıq"
+                placeholder="Faylın başlığını daxil edin..."
+                error={errors.title?.message}
+                {...register('title', { required: 'Başlıq mütləqdir' })}
+              />
+              <Controller
+                name="clientId"
+                control={control}
+                rules={{ required: 'Müştəri mütləqdir' }}
+                render={({ field }) => (
+                  <Combobox
+                    label="Müştəri"
+                    options={clientOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.clientId?.message}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setSelectedThumbnail(null)}
-                    className="absolute -top-2 -right-2 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-md"
-                    aria-label="Koveri sil"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                )}
+              />
+              <Select
+                label="Növ"
+                options={[
+                  { value: '', label: 'Kateqoriya seçin' },
+                  ...(Array.isArray(categories) ? categories.map(c => ({ value: c.id, label: c.name })) : [])
+                ]}
+                error={errors.categoryId?.message}
+                {...register('categoryId', { required: 'Növ seçmək mütləqdir' })}
+              />
+              {/* Existing files list (edit mode) */}
+              {editing && editing.files && editing.files.length > 0 && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-body">Mövcud fayllar</label>
+                  <div className="space-y-1.5">
+                    {editing.files.map((f, idx) => (
+                      <div key={idx} className="flex items-center gap-3 rounded-lg bg-surface-alt px-3 py-2 border border-edge">
+                        {isVideoFile(f.type, f.name) ? (
+                          <Video className="h-4 w-4 text-blue-400 shrink-0" />
+                        ) : isImageFile(f.type, f.name) ? (
+                          <Image className="h-4 w-4 text-green-400 shrink-0" />
+                        ) : (
+                          <FileX className="h-4 w-4 text-muted shrink-0" />
+                        )}
+                        <span className="text-sm text-body truncate flex-1">{f.name}</span>
+                        <span className="text-xs text-muted shrink-0">
+                          {f.size < 1024 * 1024
+                            ? `${(f.size / 1024).toFixed(0)} KB`
+                            : `${(f.size / (1024 * 1024)).toFixed(1)} MB`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
-              <p className="text-xs text-muted">
-                Əgər yüklənməsə, videonun içindən avtomatik çəkiləcək.
-              </p>
-            </div>
-          )}
-          {/* Upload Progress Bar */}
-          {uploadPhase !== 'idle' && (
-            <div className="space-y-2 rounded-lg bg-surface-alt p-3 border border-edge">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-medium text-body">
-                  {uploadPhase === 'uploading' ? 'Yüklənir...' : 'Emal olunur...'}
-                </span>
-                {uploadPhase === 'uploading' && (
-                  <span className="tabular-nums text-muted">{uploadProgress}%</span>
-                )}
+              <Input
+                label={editing && editing.files?.length > 0 ? 'Yeni fayllar əlavə et' : 'Fayllar (Birdən çox seçə bilərsiniz)'}
+                type="file"
+                multiple
+                onChange={(event) => {
+                  if (event.target.files) {
+                    setSelectedFiles(Array.from(event.target.files));
+                  }
+                }}
+              />
+              <Input
+                label="Tarix"
+                type="date"
+                error={errors.date?.message}
+                {...register('date', { required: 'Tarix mütləqdir' })}
+              />
+              {/* Thumbnail Upload - only for video categories */}
+              {isSelectedCategoryVideo && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-body">
+                    {editing?.thumbnailUrl ? 'Hazırkı kover' : 'Kover şəkli (isteğe bağlı)'}
+                  </label>
+                  {/* Show existing thumbnail when editing */}
+                  {editing?.thumbnailUrl && !selectedThumbnail && (
+                    <div className="mt-1">
+                      <img
+                        src={sanitizeUrl(editing.thumbnailUrl)}
+                        alt="Hazırkı kover"
+                        className="h-28 w-auto rounded-lg border border-edge object-cover shadow-sm"
+                      />
+                    </div>
+                  )}
+                  {/* Show new thumbnail preview */}
+                  {thumbnailPreview && (
+                    <div className="relative mt-2 inline-block">
+                      <img
+                        src={thumbnailPreview}
+                        alt="Yeni kover önizləməsi"
+                        className="h-28 w-auto rounded-lg border border-accent object-cover shadow-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setSelectedThumbnail(null)}
+                        className="absolute -top-2 -right-2 p-1 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors shadow-md"
+                        aria-label="Koveri sil"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] || null;
+                      setSelectedThumbnail(file);
+                    }}
+                  />
+                  <p className="text-xs text-muted">
+                    {editing?.thumbnailUrl
+                      ? 'Yeni kover seçsəniz, mövcud kover əvəz olunacaq.'
+                      : 'Əgər yüklənməsə, videonun içindən avtomatik çəkiləcək.'}
+                  </p>
+                </div>
+              )}
+              {/* Upload Progress Bar */}
+              {uploadPhase !== 'idle' && (
+                <div className="space-y-2 rounded-lg bg-surface-alt p-3 border border-edge">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-body">
+                      {uploadPhase === 'uploading' ? 'Yüklənir...' : 'Emal olunur...'}
+                    </span>
+                    {uploadPhase === 'uploading' && (
+                      <span className="tabular-nums text-muted">{uploadProgress}%</span>
+                    )}
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 bg-gray-900`}
+                      style={uploadPhase === 'uploading' ? { width: `${uploadProgress}%` } : undefined}
+                    />
+                  </div>
+
+                </div>
+              )}
+              <div className="flex justify-end gap-3 border-t border-edge pt-4">
+                <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
+                  Ləğv Et
+                </Button>
+                <Button type="submit" isLoading={isSaving}>
+                  Yadda Saxla
+                </Button>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                <div
-                  className={`h-full rounded-full transition-all duration-300 bg-gray-900`}
-                  style={uploadPhase === 'uploading' ? { width: `${uploadProgress}%` } : undefined}
-                />
-              </div>
-              
-            </div>
+            </form>
+          </Modal>
+
+          <ConfirmDialog
+            isOpen={Boolean(deleteCategory)}
+            onClose={() => setDeleteCategory(null)}
+            onConfirm={async () => {
+              if (!deleteCategory) return;
+              await api.delete(`/deliverable-categories/${deleteCategory.id}`);
+              setDeleteCategory(null);
+              await fetchCategories();
+              await fetchDeliverables();
+            }}
+            title="Kateqoriyanı sil"
+            message="Bu kateqoriyaya aid bütün fayllar kateqoriyasız qalacaq."
+          />
+
+          {/* ── Delete Confirm ── */}
+          <ConfirmDialog
+            isOpen={Boolean(deleting)}
+            onClose={() => setDeleting(null)}
+            onConfirm={async () => {
+              if (!deleting) return;
+              await api.delete(`/deliverables/${deleting.id}`);
+              setDeleting(null);
+              await fetchDeliverables();
+            }}
+            title="Faylı sil"
+            message="Bu fayl və ona bağlı məlumatlar həmişəlik silinəcək."
+          />
+
+          {/* ── Admin Custom File Preview Overlay ── */}
+          {previewItem && (
+            <PreviewOverlay item={previewItem} onClose={() => setPreviewItem(null)} />
           )}
-          <div className="flex justify-end gap-3 border-t border-edge pt-4">
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
-              Ləğv Et
-            </Button>
-            <Button type="submit" isLoading={isSaving}>
-              Yadda Saxla
-            </Button>
-          </div>
-        </form>
-      </Modal>
 
-      <ConfirmDialog
-        isOpen={Boolean(deleteCategory)}
-        onClose={() => setDeleteCategory(null)}
-        onConfirm={async () => {
-          if (!deleteCategory) return;
-          await api.delete(`/deliverable-categories/${deleteCategory.id}`);
-          setDeleteCategory(null);
-          await fetchCategories();
-          await fetchDeliverables();
-        }}
-        title="Kateqoriyanı sil"
-        message="Bu kateqoriyaya aid bütün fayllar kateqoriyasız qalacaq."
-      />
-
-      {/* ── Delete Confirm ── */}
-      <ConfirmDialog
-        isOpen={Boolean(deleting)}
-        onClose={() => setDeleting(null)}
-        onConfirm={async () => {
-          if (!deleting) return;
-          await api.delete(`/deliverables/${deleting.id}`);
-          setDeleting(null);
-          await fetchDeliverables();
-        }}
-        title="Faylı sil"
-        message="Bu fayl və ona bağlı məlumatlar həmişəlik silinəcək."
-      />
-
-      {/* ── Admin Custom File Preview Overlay ── */}
-      {previewItem && (
-        <PreviewOverlay item={previewItem} onClose={() => setPreviewItem(null)} />
-      )}
-
-      {/* ── Feedback View Modal ── */}
-      <Modal
-        isOpen={Boolean(feedbackView)}
-        onClose={() => setFeedbackView(null)}
-        title="Müştəri Rəyi"
-        size="sm"
-      >
-        <div className="flex flex-col gap-4">
-          <div
-            className="rounded-lg bg-surface-alt p-4 text-sm text-body leading-relaxed whitespace-pre-wrap border border-edge-light max-h-[60vh] overflow-y-auto"
+          {/* ── Feedback View Modal ── */}
+          <Modal
+            isOpen={Boolean(feedbackView)}
+            onClose={() => setFeedbackView(null)}
+            title="Müştəri Rəyi"
+            size="sm"
           >
-            {feedbackView}
-          </div>
-          <div className="flex justify-end border-t border-edge pt-3">
-            <Button variant="secondary" onClick={() => setFeedbackView(null)}>
-              Bağla
-            </Button>
-          </div>
-        </div>
-      </Modal>
-      </>
+            <div className="flex flex-col gap-4">
+              <div
+                className="rounded-lg bg-surface-alt p-4 text-sm text-body leading-relaxed whitespace-pre-wrap border border-edge-light max-h-[60vh] overflow-y-auto"
+              >
+                {feedbackView}
+              </div>
+              <div className="flex justify-end border-t border-edge pt-3">
+                <Button variant="secondary" onClick={() => setFeedbackView(null)}>
+                  Bağla
+                </Button>
+              </div>
+            </div>
+          </Modal>
+        </>
       )}
     </div>
   );
