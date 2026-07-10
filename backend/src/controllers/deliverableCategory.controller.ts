@@ -16,14 +16,14 @@ export const getCategories = async (_req: Request, res: Response) => {
 
 export const createCategory = async (req: Request, res: Response) => {
   try {
-    const { name } = req.body;
+    const { name, isVideo } = req.body;
     if (!name) {
       sendError(res, 'Name is required', 400);
       return;
     }
 
     const category = await prisma.deliverableCategory.create({
-      data: { name },
+      data: { name, isVideo: isVideo === true },
     });
     sendSuccess(res, category, 201);
   } catch (err) {
