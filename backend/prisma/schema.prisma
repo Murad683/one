@@ -112,6 +112,8 @@ model Deliverable {
   uploadedAt     DateTime?
   thumbnailUrl   String?
   processingDuration Int?
+  width          Int?
+  height         Int?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   client         User                 @relation(fields: [clientId], references: [id], onDelete: Cascade)

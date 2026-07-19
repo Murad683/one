@@ -7,6 +7,7 @@ import { uploadSiteMediaWithThumbnail } from '../middleware/upload.middleware';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 const ffprobeInstaller = require('@ffprobe-installer/ffprobe');
+import sharp from 'sharp';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as crypto from 'crypto';
@@ -28,6 +29,46 @@ const getVideoHeight = (videoPath: string): Promise<number> => {
       resolve(height);
     });
   });
+};
+
+/**
+ * Reads the natural width/height of an image or video file.
+ * Returns null on any failure — dimension reading must never block an upload.
+ */
+const getMediaDimensions = (
+  filePath: string,
+  isVideo: boolean
+): Promise<{ width: number; height: number } | null> => {
+  if (isVideo) {
+    return new Promise((resolve) => {
+      ffmpeg.ffprobe(filePath, (err, metadata) => {
+        if (err || !metadata?.streams) {
+          console.error('[Dimension Debug] ffprobe error:', err?.message);
+          resolve(null);
+          return;
+        }
+        const videoStream = metadata.streams.find((s: any) => s.codec_type === 'video');
+        if (videoStream?.width && videoStream?.height) {
+          resolve({ width: videoStream.width, height: videoStream.height });
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  return sharp(filePath)
+    .metadata()
+    .then((metadata) => {
+      if (metadata.width && metadata.height) {
+        return { width: metadata.width, height: metadata.height };
+      }
+      return null;
+    })
+    .catch((err) => {
+      console.error('[Dimension Debug] sharp metadata error:', err?.message);
+      return null;
+    });
 };
 
 // No longer needed: resolveStoragePath
@@ -481,6 +522,9 @@ const processDeliverableBackground = async (
 
     const newFileObjects: any[] = isUpdatingVideo ? [] : [...oldFiles];
     let newThumbnailUrl: string | null = null;
+    let newWidth: number | null = null;
+    let newHeight: number | null = null;
+    let dimensionsCaptured = false;
 
     // --- CUSTOM THUMBNAIL UPLOAD (priority over auto-generation) ---
     if (customThumbnailFile) {
@@ -570,7 +614,7 @@ const processDeliverableBackground = async (
       // --- GENERATE WEB PREVIEW FOR LARGE VIDEOS ---
       let previewUrl: string | null = null;
       const isVideoForPreview = file.mimetype?.startsWith('video/');
-      
+
       if (isVideoForPreview && file.path) {
         const height = await getVideoHeight(file.path);
         if (height > 720) {
@@ -599,6 +643,14 @@ const processDeliverableBackground = async (
         }
       }
 
+      // --- CAPTURE MEDIA DIMENSIONS (from the first uploaded file) ---
+      if (!dimensionsCaptured && file.path) {
+        const dims = await getMediaDimensions(file.path, isVideoByMimeForFaststart);
+        newWidth = dims?.width ?? null;
+        newHeight = dims?.height ?? null;
+        dimensionsCaptured = true;
+      }
+
       const result = await processAndStoreFile(file, folder);
       
       if (faststartTempPath) {
@@ -624,6 +676,7 @@ const processDeliverableBackground = async (
         processingDuration,
         clientFeedback: null,
         ...(newThumbnailUrl !== undefined && { thumbnailUrl: newThumbnailUrl }),
+        ...(isUpdatingVideo && { width: newWidth, height: newHeight }),
       },
     });
 
@@ -752,6 +805,9 @@ const processDirectUploadBackground = async (
     const folder = isVideo ? 'videos' : 'designs';
     const newFileObjects = [];
     let newThumbnailUrl: string | null = null;
+    let newWidth: number | null = null;
+    let newHeight: number | null = null;
+    let dimensionsCaptured = false;
 
     // --- CUSTOM THUMBNAIL (uploaded via direct upload) ---
     if (customThumbnailStorageKey) {
@@ -829,6 +885,14 @@ const processDirectUploadBackground = async (
         }
       }
 
+      // --- CAPTURE MEDIA DIMENSIONS (from the first uploaded file) ---
+      if (!dimensionsCaptured) {
+        const dims = await getMediaDimensions(currentFilePath, isVideoFile);
+        newWidth = dims?.width ?? null;
+        newHeight = dims?.height ?? null;
+        dimensionsCaptured = true;
+      }
+
       // Orijinal faylı Azure-a yüklə (faststart tətbiq edilmiş versiya)
       const uploadMulterFile: Express.Multer.File = {
         fieldname: 'file',
@@ -869,6 +933,8 @@ const processDirectUploadBackground = async (
         processingDuration,
         clientFeedback: null,
         ...(newThumbnailUrl !== undefined && { thumbnailUrl: newThumbnailUrl }),
+        width: newWidth,
+        height: newHeight,
       },
     });
 

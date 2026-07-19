@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cinematicEasing } from '../../utils/animations';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Bookmark, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Bookmark, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Deliverable {
   id: string;
@@ -18,6 +18,8 @@ interface Deliverable {
   notes: string | null;
   clientFeedback: string | null;
   thumbnailUrl?: string | null;
+  width?: number | null;
+  height?: number | null;
   createdAt: string;
 }
 
@@ -161,68 +163,8 @@ const PreviewModal = ({
   const [error, setError] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const [showCommentsMobile, setShowCommentsMobile] = useState(false);
-  const [containerAspectRatio, setContainerAspectRatio] = useState<number | null>(null);
-  const [modalStyle, setModalStyle] = useState({});
 
-  useEffect(() => {
-    if (!item.files || item.files.length === 0) return;
-    const firstFile = item.files[0];
-    const url = getFileUrl(firstFile);
-    if (!url) return;
-    
-    let isCancelled = false;
-    
-    const setRatio = (ratio: number) => {
-      if (isCancelled) return;
-      const clamped = Math.max(0.8, Math.min(1.91, ratio));
-      setContainerAspectRatio(clamped);
-      
-      const updateSize = () => {
-        const isDesktop = window.innerWidth >= 768;
-        if (isDesktop) {
-          const sidebarW = window.innerWidth >= 1024 ? 400 : 350;
-          const maxH = window.innerHeight * 0.9;
-          const maxMediaW = window.innerWidth * 0.9 - sidebarW;
-          
-          let mediaH = maxH;
-          let mediaW = mediaH * clamped;
-          
-          if (mediaW > maxMediaW) {
-            mediaW = maxMediaW;
-            mediaH = mediaW / clamped;
-          }
-          
-          setModalStyle({
-            height: `${mediaH}px`,
-            width: `${mediaW + sidebarW}px`,
-            maxWidth: '100%'
-          });
-        } else {
-          setModalStyle({});
-        }
-      };
-      
-      updateSize();
-      window.addEventListener('resize', updateSize);
-      return () => window.removeEventListener('resize', updateSize);
-    };
-
-    if (isImageFile(firstFile.type, firstFile.name)) {
-      const img = new window.Image();
-      img.onload = () => setRatio(img.naturalWidth / img.naturalHeight);
-      img.onerror = () => setRatio(1);
-      img.src = url;
-    } else if (isVideoFile(firstFile.type, firstFile.name)) {
-      const video = document.createElement('video');
-      video.onloadedmetadata = () => setRatio(video.videoWidth / video.videoHeight);
-      video.onerror = () => setRatio(1);
-      video.src = url;
-    } else {
-      setRatio(1);
-    }
-    
-    return () => { isCancelled = true; };
-  }, [item.files]);
+  const aspectRatio = item.width && item.height ? item.width / item.height : 16 / 9;
 
   // Swipe states
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -343,9 +285,8 @@ const PreviewModal = ({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3, ease: cinematicEasing }}
-        className="relative w-full h-full md:h-auto overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
+        className="relative w-full h-full md:h-[85vh] overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
         style={{
-          ...modalStyle,
           backgroundColor: 'var(--ig-bg)',
           color: 'var(--ig-text)',
           borderColor: 'var(--ig-border)'
@@ -356,12 +297,12 @@ const PreviewModal = ({
         <Header className="md:hidden" />
 
         {/* --- LEFT: MEDIA AREA (Desktop) / MIDDLE (Mobile) --- */}
-        <div 
-          className="flex-1 relative flex items-center justify-center h-auto md:h-full overflow-hidden shrink-0 border-b md:border-b-0 md:border-r"
-          style={{ 
+        <div
+          className="relative flex w-full md:w-auto md:h-full overflow-hidden shrink-0 border-b md:border-b-0 md:border-r"
+          style={{
             backgroundColor: 'var(--ig-bg)',
             borderColor: 'var(--ig-border)',
-            ...(containerAspectRatio ? { aspectRatio: containerAspectRatio } : {}) 
+            aspectRatio,
           }}
           onTouchStart={onTouchStartHandler}
           onTouchMove={onTouchMoveHandler}
@@ -375,19 +316,10 @@ const PreviewModal = ({
             <X size={20} />
           </button>
 
-          {!containerAspectRatio ? (
-            <div className="w-full h-full min-h-[50vh] md:min-h-[500px] flex flex-col items-center justify-center bg-black/95">
-              <Loader2 className="w-8 h-8 text-white/80 animate-spin mb-4" />
-              <span className="text-white/60 text-sm font-medium tracking-wide">Yüklənir...</span>
-            </div>
+          {activeFile ? (
+            <MediaPreview url={activeFile?.previewUrl || url} mimeType={activeFile.type} fileName={activeFile.name} />
           ) : (
-            <>
-              {activeFile ? (
-                <MediaPreview url={activeFile?.previewUrl || url} mimeType={activeFile.type} fileName={activeFile.name} />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-white/50 text-sm">Media tapılmadı</div>
-              )}
-            </>
+            <div className="w-full h-full flex items-center justify-center text-white/50 text-sm">Media tapılmadı</div>
           )}
 
           {/* 1/X Pagination Badge */}

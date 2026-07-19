@@ -75,6 +75,8 @@ export interface Deliverable {
   mimeType?: string | null;
   notes?: string | null;
   uploadedAt?: string | null;
+  width?: number | null;
+  height?: number | null;
   createdAt: string;
   updatedAt: string;
   downloadUrl?: string | null; // From the secure URL service
