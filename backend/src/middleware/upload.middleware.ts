@@ -36,12 +36,35 @@ const checkSvg = async (filePath: string) => {
   return content.includes('<svg') || content.includes('<?xml');
 };
 
+// file-type@16 predates HEIC/HEIF magic-byte detection (it recognizes AVIF but not
+// HEIC), so fromFile() returns undefined for genuine iPhone photos. Detect the
+// ISO-BMFF "ftyp" box ourselves and read the brand to identify these formats.
+const HEIC_BRANDS = ['heic', 'heix', 'heim', 'heis', 'hevc', 'hevx', 'hevm', 'hevs', 'mif1', 'msf1'];
+const AVIF_BRANDS = ['avif', 'avis'];
+
+const detectIsoBmffBrand = async (filePath: string): Promise<string | null> => {
+  const buffer = Buffer.alloc(12);
+  const fd = await fs.promises.open(filePath, 'r');
+  await fd.read(buffer, 0, 12, 0);
+  await fd.close();
+  if (buffer.toString('ascii', 4, 8) !== 'ftyp') return null;
+  return buffer.toString('ascii', 8, 12).toLowerCase().trim();
+};
+
 const validateFile = async (file: Express.Multer.File) => {
   const isSvg = await checkSvg(file.path);
   if (isSvg) throw new Error('SVG files are not allowed');
 
   const type = await fromFile(file.path);
+
   if (!type) {
+    const brand = await detectIsoBmffBrand(file.path);
+    if (brand && (HEIC_BRANDS.includes(brand) || AVIF_BRANDS.includes(brand))) {
+      const ext = AVIF_BRANDS.includes(brand) ? 'avif' : 'heic';
+      file.mimetype = `image/${ext}`;
+      file.originalname = `${path.parse(file.originalname).name}.${ext}`;
+      return;
+    }
     throw new Error('Could not determine file type. File may be corrupted or unsupported.');
   }
 
@@ -52,6 +75,11 @@ const validateFile = async (file: Express.Multer.File) => {
   // Override extension using the validated mime type extension
   file.originalname = `${path.parse(file.originalname).name}.${type.ext}`;
 };
+
+// Browsers/OSes are inconsistent about the mimetype they report for HEIC/HEIF/AVIF
+// files (some send '', 'application/octet-stream', etc.), so also accept by extension.
+const HEIC_MIME_TYPES = ['image/heic', 'image/heif', 'image/avif'];
+const isHeicOrAvifByExt = (filename: string) => /\.(heic|heif|avif)$/i.test(filename);
 
 const videoFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
   const allowedTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo'];
@@ -65,12 +93,12 @@ const videoFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCal
 const siteMediaFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
   const allowedTypes = [
     'video/mp4', 'video/quicktime', 'video/x-msvideo',
-    'image/jpeg', 'image/png', 'image/webp'
+    'image/jpeg', 'image/png', 'image/webp', ...HEIC_MIME_TYPES,
   ];
-  if (allowedTypes.includes(file.mimetype)) {
+  if (allowedTypes.includes(file.mimetype) || isHeicOrAvifByExt(file.originalname)) {
     cb(null, true);
   } else {
-    cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'Invalid file type. Only MP4, MOV, AVI, JPG, PNG, and WEBP are allowed.'));
+    cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'Invalid file type. Only MP4, MOV, AVI, JPG, PNG, WEBP, and HEIC are allowed.'));
   }
 };
 
@@ -81,20 +109,21 @@ const designFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCa
     'image/jpeg',
     'image/png',
     'image/webp',
+    ...HEIC_MIME_TYPES,
   ];
-  if (allowedTypes.includes(file.mimetype)) {
+  if (allowedTypes.includes(file.mimetype) || isHeicOrAvifByExt(file.originalname)) {
     cb(null, true);
   } else {
-    cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'Invalid file type. Only ZIP, PDF, JPG, PNG, and WEBP are allowed for designs.'));
+    cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'Invalid file type. Only ZIP, PDF, JPG, PNG, WEBP, and HEIC are allowed for designs.'));
   }
 };
 
 const imageFilter = (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-  if (allowedTypes.includes(file.mimetype)) {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', ...HEIC_MIME_TYPES];
+  if (allowedTypes.includes(file.mimetype) || isHeicOrAvifByExt(file.originalname)) {
     cb(null, true);
   } else {
-    cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'Invalid file type. Only JPG, PNG, and WEBP are allowed for images.'));
+    cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'Invalid file type. Only JPG, PNG, WEBP, and HEIC are allowed for images.'));
   }
 };
 

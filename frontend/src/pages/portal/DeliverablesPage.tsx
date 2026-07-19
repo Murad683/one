@@ -165,7 +165,11 @@ const PreviewModal = ({
   const [activeIndex, setActiveIndex] = useState(0);
   const [showCommentsMobile, setShowCommentsMobile] = useState(false);
 
-  const aspectRatio = item.width && item.height ? item.width / item.height : 16 / 9;
+  const rawAspectRatio = item.width && item.height ? item.width / item.height : 16 / 9;
+  // Clamp to Instagram's own bounds (portrait 4:5, landscape 1.91:1) — this both
+  // matches real Instagram behavior and guards against corrupt/extreme metadata
+  // (e.g. unrotated video dimensions) blowing up the container's computed size.
+  const aspectRatio = Math.max(0.8, Math.min(1.91, rawAspectRatio));
 
   // Swipe states
   const [touchStart, setTouchStart] = useState<number | null>(null);

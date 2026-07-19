@@ -32,6 +32,26 @@ const getVideoHeight = (videoPath: string): Promise<number> => {
 };
 
 /**
+ * Reads a video stream's display rotation in degrees (0/90/180/270), checking
+ * both the legacy tag-based rotation (common on H.264 phone recordings) and the
+ * newer Display Matrix side_data (common on HEVC/newer encoders). Browsers apply
+ * this rotation when playing the video, so raw stream width/height alone can
+ * report the pre-rotation (sensor) orientation instead of what's actually shown.
+ */
+const getVideoRotationDegrees = (videoStream: any): number => {
+  const tagRotate = videoStream?.tags?.rotate;
+  if (tagRotate !== undefined) {
+    const deg = parseInt(tagRotate, 10);
+    if (!isNaN(deg)) return ((deg % 360) + 360) % 360;
+  }
+  const sideData = videoStream?.side_data_list?.find((sd: any) => typeof sd?.rotation === 'number');
+  if (sideData) {
+    return ((Math.round(sideData.rotation) % 360) + 360) % 360;
+  }
+  return 0;
+};
+
+/**
  * Reads the natural width/height of an image or video file.
  * Returns null on any failure — dimension reading must never block an upload.
  */
@@ -49,7 +69,12 @@ const getMediaDimensions = (
         }
         const videoStream = metadata.streams.find((s: any) => s.codec_type === 'video');
         if (videoStream?.width && videoStream?.height) {
-          resolve({ width: videoStream.width, height: videoStream.height });
+          const rotation = getVideoRotationDegrees(videoStream);
+          const isSwapped = rotation === 90 || rotation === 270;
+          resolve({
+            width: isSwapped ? videoStream.height : videoStream.width,
+            height: isSwapped ? videoStream.width : videoStream.height,
+          });
         } else {
           resolve(null);
         }
@@ -61,7 +86,13 @@ const getMediaDimensions = (
     .metadata()
     .then((metadata) => {
       if (metadata.width && metadata.height) {
-        return { width: metadata.width, height: metadata.height };
+        // EXIF orientation 5-8 involve a 90°/270° transpose — browsers auto-rotate
+        // for display, so the reported dimensions must be swapped to match.
+        const isSwapped = metadata.orientation !== undefined && metadata.orientation >= 5 && metadata.orientation <= 8;
+        return {
+          width: isSwapped ? metadata.height : metadata.width,
+          height: isSwapped ? metadata.width : metadata.height,
+        };
       }
       return null;
     })
