@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cinematicEasing } from '../../utils/animations';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Bookmark, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Deliverable {
   id: string;
@@ -217,6 +217,17 @@ const PreviewModal = ({
     }
   };
 
+  const handleDownload = () => {
+    if (!activeFile?.downloadUrl && !url) return;
+    const downloadUrl = activeFile?.downloadUrl || url;
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = activeFile?.name || 'media';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -400,12 +411,13 @@ const PreviewModal = ({
                  <button className="hover:opacity-60 transition-opacity"><Send size={24} strokeWidth={1.5} /></button>
                </div>
 
-               <button className="hover:opacity-60 transition-opacity">
-                 {activeFile?.downloadUrl ? (
-                   <a href={activeFile.downloadUrl} download={activeFile.name} title="Yüklə"><Bookmark size={24} strokeWidth={1.5} /></a>
-                 ) : (
-                   <Bookmark size={24} strokeWidth={1.5} />
-                 )}
+               <button
+                 onClick={handleDownload}
+                 disabled={!activeFile?.downloadUrl && !url}
+                 className="hover:opacity-60 disabled:opacity-40 transition-opacity"
+                 title="Yüklə"
+               >
+                 <Download size={24} strokeWidth={1.5} />
                </button>
              </div>
 
