@@ -111,9 +111,15 @@ const MediaPreview = ({
 }) => {
   if (!url) return null;
 
+  // Mobile: full width, natural height (can exceed viewport — the modal itself
+  // scrolls to reveal it). Desktop: no scrolling — the media is capped to a max
+  // height/width (reserving room for the sidebar) and shrinks to fit, exactly
+  // like Instagram, never cropping.
+  const sizingClasses = 'block w-full h-auto md:w-auto md:h-auto md:max-h-[90vh] md:max-w-[calc(90vw-350px)] lg:max-w-[calc(90vw-400px)]';
+
   if (isVideoFile(mimeType, fileName)) {
     return (
-      <video controls autoPlay playsInline preload="metadata" className="w-full h-auto block" style={{ backgroundColor: 'var(--ig-bg)' }} src={url}>
+      <video controls autoPlay playsInline preload="metadata" className={sizingClasses} style={{ backgroundColor: 'var(--ig-bg)' }} src={url}>
         Brauzeriniz video formatını dəstəkləmir.
       </video>
     );
@@ -124,7 +130,7 @@ const MediaPreview = ({
       <img
         src={url}
         alt="Önizləmə"
-        className="w-full h-auto block"
+        className={sizingClasses}
         style={{ backgroundColor: 'var(--ig-bg)' }}
       />
     );
@@ -292,7 +298,7 @@ const PreviewModal = ({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3, ease: cinematicEasing }}
-        className="relative w-full h-full md:h-[85vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
+        className="relative w-full h-full md:w-auto md:h-auto md:max-h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
         style={{
           backgroundColor: 'var(--ig-bg)',
           color: 'var(--ig-text)',
@@ -305,7 +311,7 @@ const PreviewModal = ({
 
         {/* --- LEFT: MEDIA AREA (Desktop) / MIDDLE (Mobile) --- */}
         <div
-          className="relative w-full md:flex-1 md:max-w-[calc(100%-350px)] lg:max-w-[calc(100%-400px)] md:h-full overflow-hidden shrink-0 border-b md:border-b-0 md:border-r"
+          className="relative w-full md:w-auto flex items-center justify-center overflow-hidden shrink-0 border-b md:border-b-0 md:border-r"
           style={{
             backgroundColor: 'var(--ig-bg)',
             borderColor: 'var(--ig-border)',
@@ -322,16 +328,15 @@ const PreviewModal = ({
             <X size={20} />
           </button>
 
-          {/* Media renders at its natural size (never cropped/letterboxed); this
-              area scrolls on desktop, and the whole modal scrolls on mobile, so
-              tall media stays fully reachable without ever overflowing the screen. */}
-          <div className="w-full md:h-full md:overflow-y-auto flex flex-col" style={{ justifyContent: 'safe center' }}>
-            {activeFile ? (
-              <MediaPreview url={activeFile?.previewUrl || url} mimeType={activeFile.type} fileName={activeFile.name} />
-            ) : (
-              <div className="w-full h-full min-h-[50vh] flex items-center justify-center text-white/50 text-sm">Media tapılmadı</div>
-            )}
-          </div>
+          {/* Desktop: media never scrolls — it shrinks to fit within max-height/
+              max-width (see MediaPreview), never cropped, exactly like Instagram.
+              Mobile: media renders at full natural size; the whole modal scrolls
+              (see outer motion.div) so it always stays fully reachable. */}
+          {activeFile ? (
+            <MediaPreview url={activeFile?.previewUrl || url} mimeType={activeFile.type} fileName={activeFile.name} />
+          ) : (
+            <div className="w-full h-full min-h-[50vh] flex items-center justify-center text-white/50 text-sm">Media tapılmadı</div>
+          )}
 
           {/* 1/X Pagination Badge */}
           {item.files && item.files.length > 1 && (
@@ -366,7 +371,7 @@ const PreviewModal = ({
         </div>
 
         {/* --- RIGHT: SIDEBAR (Desktop) / BOTTOM (Mobile) --- */}
-        <div className="w-full md:w-[350px] lg:w-[400px] flex flex-col h-auto md:h-full border-l-0 md:border-l shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
+        <div className="w-full md:w-[350px] lg:w-[400px] flex flex-col h-auto border-l-0 md:border-l shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
           {/* Desktop Header */}
           <Header className="hidden md:flex" />
 
