@@ -51,6 +51,12 @@ const detectIsoBmffBrand = async (filePath: string): Promise<string | null> => {
   return buffer.toString('ascii', 8, 12).toLowerCase().trim();
 };
 
+// Browsers/OSes are unreliable about the mimetype they report for some formats
+// (HEIC in particular commonly arrives as a generic placeholder instead of
+// 'image/heic') — when the browser's reported type is this uninformative, trust
+// the sniffed content type instead of rejecting a genuine file.
+const GENERIC_MIME_TYPES = ['application/octet-stream', 'application/octet-binary', ''];
+
 const validateFile = async (file: Express.Multer.File) => {
   const isSvg = await checkSvg(file.path);
   if (isSvg) throw new Error('SVG files are not allowed');
@@ -68,11 +74,12 @@ const validateFile = async (file: Express.Multer.File) => {
     throw new Error('Could not determine file type. File may be corrupted or unsupported.');
   }
 
-  if (type.mime !== file.mimetype) {
+  if (type.mime !== file.mimetype && !GENERIC_MIME_TYPES.includes(file.mimetype)) {
     throw new Error(`File type mismatch: expected ${file.mimetype}, got ${type.mime}`);
   }
 
-  // Override extension using the validated mime type extension
+  // Trust the sniffed mimetype (ground truth) and override the extension to match
+  file.mimetype = type.mime;
   file.originalname = `${path.parse(file.originalname).name}.${type.ext}`;
 };
 
