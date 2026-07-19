@@ -711,8 +711,11 @@ const processDeliverableBackground = async (
       let optimizedTempPath: string | null = null;
 
       if (isImageByMimeForOptimize && file.path) {
-        const originalUploadResult = await processAndStoreFile(file, folder);
+        // Read dimensions and optimize BEFORE uploading the original —
+        // processAndStoreFile deletes the local temp file once it's uploaded.
         const optimized = await optimizeImage(file.path);
+        const fallbackDims = optimized ? null : await getMediaDimensions(file.path, false);
+        const originalUploadResult = await processAndStoreFile(file, folder);
 
         if (optimized) {
           optimizedTempPath = optimized.path;
@@ -738,9 +741,8 @@ const processDeliverableBackground = async (
           // Optimization failed — serve the original as the main file too
           result = originalUploadResult;
           if (!dimensionsCaptured) {
-            const dims = await getMediaDimensions(file.path, false);
-            newWidth = dims?.width ?? null;
-            newHeight = dims?.height ?? null;
+            newWidth = fallbackDims?.width ?? null;
+            newHeight = fallbackDims?.height ?? null;
           }
         }
 
@@ -1002,6 +1004,11 @@ const processDirectUploadBackground = async (
       let result: { url: string; fileName: string; fileSize: number; mimeType: string };
 
       if (isImageByMimeForOptimize) {
+        // Read dimensions and optimize BEFORE uploading the original —
+        // processAndStoreFile deletes the local temp file once it's uploaded.
+        const optimized = await optimizeImage(currentFilePath);
+        const fallbackDims = optimized ? null : await getMediaDimensions(currentFilePath, false);
+
         const originalMulterFile: Express.Multer.File = {
           fieldname: 'file',
           originalname: file.fileName,
@@ -1015,7 +1022,6 @@ const processDirectUploadBackground = async (
           path: currentFilePath,
         };
         const originalUploadResult = await processAndStoreFile(originalMulterFile, folder);
-        const optimized = await optimizeImage(currentFilePath);
 
         if (optimized) {
           tempFilesToCleanup.push(optimized.path);
@@ -1041,9 +1047,8 @@ const processDirectUploadBackground = async (
           // Optimization failed — serve the original as the main file too
           result = originalUploadResult;
           if (!dimensionsCaptured) {
-            const dims = await getMediaDimensions(currentFilePath, false);
-            newWidth = dims?.width ?? null;
-            newHeight = dims?.height ?? null;
+            newWidth = fallbackDims?.width ?? null;
+            newHeight = fallbackDims?.height ?? null;
           }
         }
 

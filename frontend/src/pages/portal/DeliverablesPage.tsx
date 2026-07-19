@@ -113,23 +113,20 @@ const MediaPreview = ({
 
   if (isVideoFile(mimeType, fileName)) {
     return (
-      <div className="w-full h-full flex items-center justify-center relative" style={{ backgroundColor: 'var(--ig-bg)' }}>
-        <video controls autoPlay playsInline preload="metadata" className="w-full h-full object-contain" src={url}>
-          Brauzeriniz video formatını dəstəkləmir.
-        </video>
-      </div>
+      <video controls autoPlay playsInline preload="metadata" className="w-full h-auto block" style={{ backgroundColor: 'var(--ig-bg)' }} src={url}>
+        Brauzeriniz video formatını dəstəkləmir.
+      </video>
     );
   }
 
   if (isImageFile(mimeType, fileName)) {
     return (
-      <div className="w-full h-full flex items-center justify-center relative" style={{ backgroundColor: 'var(--ig-bg)' }}>
-        <img
-          src={url}
-          alt="Önizləmə"
-          className="w-full h-full object-contain"
-        />
-      </div>
+      <img
+        src={url}
+        alt="Önizləmə"
+        className="w-full h-auto block"
+        style={{ backgroundColor: 'var(--ig-bg)' }}
+      />
     );
   }
 
@@ -164,12 +161,6 @@ const PreviewModal = ({
   const [error, setError] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const [showCommentsMobile, setShowCommentsMobile] = useState(false);
-
-  const rawAspectRatio = item.width && item.height ? item.width / item.height : 16 / 9;
-  // Clamp to Instagram's own bounds (portrait 4:5, landscape 1.91:1) — this both
-  // matches real Instagram behavior and guards against corrupt/extreme metadata
-  // (e.g. unrotated video dimensions) blowing up the container's computed size.
-  const aspectRatio = Math.max(0.8, Math.min(1.91, rawAspectRatio));
 
   // Swipe states
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -301,7 +292,7 @@ const PreviewModal = ({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3, ease: cinematicEasing }}
-        className="relative w-full h-full md:h-[85vh] overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
+        className="relative w-full h-full md:h-[85vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-xl border-0 md:border border-transparent"
         style={{
           backgroundColor: 'var(--ig-bg)',
           color: 'var(--ig-text)',
@@ -314,11 +305,10 @@ const PreviewModal = ({
 
         {/* --- LEFT: MEDIA AREA (Desktop) / MIDDLE (Mobile) --- */}
         <div
-          className="relative flex w-full md:w-auto md:max-w-[calc(100%-350px)] lg:max-w-[calc(100%-400px)] md:max-h-full md:self-center overflow-hidden shrink-0 border-b md:border-b-0 md:border-r"
+          className="relative w-full md:flex-1 md:max-w-[calc(100%-350px)] lg:max-w-[calc(100%-400px)] md:h-full overflow-hidden shrink-0 border-b md:border-b-0 md:border-r"
           style={{
             backgroundColor: 'var(--ig-bg)',
             borderColor: 'var(--ig-border)',
-            aspectRatio,
           }}
           onTouchStart={onTouchStartHandler}
           onTouchMove={onTouchMoveHandler}
@@ -332,11 +322,16 @@ const PreviewModal = ({
             <X size={20} />
           </button>
 
-          {activeFile ? (
-            <MediaPreview url={activeFile?.previewUrl || url} mimeType={activeFile.type} fileName={activeFile.name} />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-white/50 text-sm">Media tapılmadı</div>
-          )}
+          {/* Media renders at its natural size (never cropped/letterboxed); this
+              area scrolls on desktop, and the whole modal scrolls on mobile, so
+              tall media stays fully reachable without ever overflowing the screen. */}
+          <div className="w-full md:h-full md:overflow-y-auto flex flex-col" style={{ justifyContent: 'safe center' }}>
+            {activeFile ? (
+              <MediaPreview url={activeFile?.previewUrl || url} mimeType={activeFile.type} fileName={activeFile.name} />
+            ) : (
+              <div className="w-full h-full min-h-[50vh] flex items-center justify-center text-white/50 text-sm">Media tapılmadı</div>
+            )}
+          </div>
 
           {/* 1/X Pagination Badge */}
           {item.files && item.files.length > 1 && (
