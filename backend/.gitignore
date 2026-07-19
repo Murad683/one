@@ -15,3 +15,7 @@ prisma/*.db
 prisma/*.db-journal
 
 /src/generated/prisma
+
+# Zip archives
+deploy.zip
+dist.zip
