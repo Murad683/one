@@ -114,6 +114,7 @@ model Deliverable {
   processingDuration Int?
   width          Int?
   height         Int?
+  originalUrl    String?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   client         User                 @relation(fields: [clientId], references: [id], onDelete: Cascade)

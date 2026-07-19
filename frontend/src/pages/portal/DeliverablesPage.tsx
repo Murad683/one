@@ -20,6 +20,7 @@ interface Deliverable {
   thumbnailUrl?: string | null;
   width?: number | null;
   height?: number | null;
+  originalUrl?: string | null;
   createdAt: string;
 }
 
@@ -218,8 +219,8 @@ const PreviewModal = ({
   };
 
   const handleDownload = () => {
-    if (!activeFile?.downloadUrl && !url) return;
-    const downloadUrl = activeFile?.downloadUrl || url;
+    const downloadUrl = item.originalUrl || activeFile?.downloadUrl || url;
+    if (!downloadUrl) return;
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.download = activeFile?.name || 'media';
@@ -309,7 +310,7 @@ const PreviewModal = ({
 
         {/* --- LEFT: MEDIA AREA (Desktop) / MIDDLE (Mobile) --- */}
         <div
-          className="relative flex w-full md:w-auto md:h-full overflow-hidden shrink-0 border-b md:border-b-0 md:border-r"
+          className="relative flex w-full md:w-auto md:max-w-[calc(100%-350px)] lg:max-w-[calc(100%-400px)] md:max-h-full md:self-center overflow-hidden shrink-0 border-b md:border-b-0 md:border-r"
           style={{
             backgroundColor: 'var(--ig-bg)',
             borderColor: 'var(--ig-border)',
@@ -413,7 +414,7 @@ const PreviewModal = ({
 
                <button
                  onClick={handleDownload}
-                 disabled={!activeFile?.downloadUrl && !url}
+                 disabled={!item.originalUrl && !activeFile?.downloadUrl && !url}
                  className="hover:opacity-60 disabled:opacity-40 transition-opacity"
                  title="Yüklə"
                >

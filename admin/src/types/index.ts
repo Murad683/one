@@ -77,6 +77,7 @@ export interface Deliverable {
   uploadedAt?: string | null;
   width?: number | null;
   height?: number | null;
+  originalUrl?: string | null;
   createdAt: string;
   updatedAt: string;
   downloadUrl?: string | null; // From the secure URL service

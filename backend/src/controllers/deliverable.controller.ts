@@ -71,6 +71,34 @@ const getMediaDimensions = (
     });
 };
 
+/**
+ * Produces a web-optimized WebP copy of an image: EXIF orientation is
+ * auto-corrected, the image is downscaled only if its longest side exceeds
+ * 1920px, and it's re-encoded as WebP at quality 85.
+ * Returns null on any failure — the caller falls back to the original file.
+ */
+const optimizeImage = async (
+  inputPath: string
+): Promise<{ path: string; width: number; height: number } | null> => {
+  try {
+    const outputPath = path.join(
+      os.tmpdir(),
+      `optimized_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.webp`
+    );
+
+    const info = await sharp(inputPath)
+      .rotate()
+      .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 85 })
+      .toFile(outputPath);
+
+    return { path: outputPath, width: info.width, height: info.height };
+  } catch (err) {
+    console.error('[Image Optimize Debug] Failed to optimize image:', err);
+    return null;
+  }
+};
+
 // No longer needed: resolveStoragePath
 
 // ─── Dynamic Multer Selector ──────────────────
@@ -524,6 +552,7 @@ const processDeliverableBackground = async (
     let newThumbnailUrl: string | null = null;
     let newWidth: number | null = null;
     let newHeight: number | null = null;
+    let newOriginalUrl: string | null = null;
     let dimensionsCaptured = false;
 
     // --- CUSTOM THUMBNAIL UPLOAD (priority over auto-generation) ---
@@ -643,16 +672,65 @@ const processDeliverableBackground = async (
         }
       }
 
-      // --- CAPTURE MEDIA DIMENSIONS (from the first uploaded file) ---
-      if (!dimensionsCaptured && file.path) {
-        const dims = await getMediaDimensions(file.path, isVideoByMimeForFaststart);
-        newWidth = dims?.width ?? null;
-        newHeight = dims?.height ?? null;
-        dimensionsCaptured = true;
+      // --- IMAGE OPTIMIZATION: upload original as-is, then a resized WebP as the main file ---
+      const isImageFileExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif'].includes(path.extname(file.originalname).toLowerCase());
+      const isImageByMimeForOptimize = file.mimetype?.startsWith('image/') || isImageFileExt;
+
+      let result: { url: string; fileName: string; fileSize: number; mimeType: string };
+      let optimizedTempPath: string | null = null;
+
+      if (isImageByMimeForOptimize && file.path) {
+        const originalUploadResult = await processAndStoreFile(file, folder);
+        const optimized = await optimizeImage(file.path);
+
+        if (optimized) {
+          optimizedTempPath = optimized.path;
+          const optimizedBuffer = fs.readFileSync(optimized.path);
+          const optimizedMulterFile: Express.Multer.File = {
+            fieldname: file.fieldname,
+            originalname: `${path.basename(file.originalname, path.extname(file.originalname))}.webp`,
+            encoding: file.encoding,
+            mimetype: 'image/webp',
+            buffer: optimizedBuffer,
+            size: optimizedBuffer.length,
+            stream: null as any,
+            destination: os.tmpdir(),
+            filename: path.basename(optimized.path),
+            path: optimized.path,
+          };
+          result = await processAndStoreFile(optimizedMulterFile, folder);
+          if (!dimensionsCaptured) {
+            newWidth = optimized.width;
+            newHeight = optimized.height;
+          }
+        } else {
+          // Optimization failed — serve the original as the main file too
+          result = originalUploadResult;
+          if (!dimensionsCaptured) {
+            const dims = await getMediaDimensions(file.path, false);
+            newWidth = dims?.width ?? null;
+            newHeight = dims?.height ?? null;
+          }
+        }
+
+        if (!dimensionsCaptured) {
+          newOriginalUrl = originalUploadResult.url;
+          dimensionsCaptured = true;
+        }
+      } else {
+        // --- CAPTURE MEDIA DIMENSIONS (videos & other files — unchanged) ---
+        if (!dimensionsCaptured && file.path) {
+          const dims = await getMediaDimensions(file.path, isVideoByMimeForFaststart);
+          newWidth = dims?.width ?? null;
+          newHeight = dims?.height ?? null;
+          dimensionsCaptured = true;
+        }
+        result = await processAndStoreFile(file, folder);
       }
 
-      const result = await processAndStoreFile(file, folder);
-      
+      if (optimizedTempPath) {
+        await fs.promises.unlink(optimizedTempPath).catch(() => {});
+      }
       if (faststartTempPath) {
         await fs.promises.unlink(faststartTempPath).catch(() => {});
       }
@@ -676,7 +754,7 @@ const processDeliverableBackground = async (
         processingDuration,
         clientFeedback: null,
         ...(newThumbnailUrl !== undefined && { thumbnailUrl: newThumbnailUrl }),
-        ...(isUpdatingVideo && { width: newWidth, height: newHeight }),
+        ...(isUpdatingVideo && { width: newWidth, height: newHeight, originalUrl: newOriginalUrl }),
       },
     });
 
@@ -807,6 +885,7 @@ const processDirectUploadBackground = async (
     let newThumbnailUrl: string | null = null;
     let newWidth: number | null = null;
     let newHeight: number | null = null;
+    let newOriginalUrl: string | null = null;
     let dimensionsCaptured = false;
 
     // --- CUSTOM THUMBNAIL (uploaded via direct upload) ---
@@ -885,28 +964,86 @@ const processDirectUploadBackground = async (
         }
       }
 
-      // --- CAPTURE MEDIA DIMENSIONS (from the first uploaded file) ---
-      if (!dimensionsCaptured) {
-        const dims = await getMediaDimensions(currentFilePath, isVideoFile);
-        newWidth = dims?.width ?? null;
-        newHeight = dims?.height ?? null;
-        dimensionsCaptured = true;
-      }
+      // --- IMAGE OPTIMIZATION: upload original as-is, then a resized WebP as the main file ---
+      const isImageFileExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.heic', '.heif'].includes(path.extname(file.fileName).toLowerCase());
+      const isImageByMimeForOptimize = file.mimeType?.startsWith('image/') || isImageFileExt;
 
-      // Orijinal faylı Azure-a yüklə (faststart tətbiq edilmiş versiya)
-      const uploadMulterFile: Express.Multer.File = {
-        fieldname: 'file',
-        originalname: file.fileName,
-        encoding: '7bit',
-        mimetype: file.mimeType,
-        buffer: null as any,
-        size: fs.statSync(currentFilePath).size,
-        stream: null as any,
-        destination: os.tmpdir(),
-        filename: path.basename(currentFilePath),
-        path: currentFilePath,
-      };
-      const result = await processAndStoreFile(uploadMulterFile, folder);
+      let result: { url: string; fileName: string; fileSize: number; mimeType: string };
+
+      if (isImageByMimeForOptimize) {
+        const originalMulterFile: Express.Multer.File = {
+          fieldname: 'file',
+          originalname: file.fileName,
+          encoding: '7bit',
+          mimetype: file.mimeType,
+          buffer: null as any,
+          size: fs.statSync(currentFilePath).size,
+          stream: null as any,
+          destination: os.tmpdir(),
+          filename: path.basename(currentFilePath),
+          path: currentFilePath,
+        };
+        const originalUploadResult = await processAndStoreFile(originalMulterFile, folder);
+        const optimized = await optimizeImage(currentFilePath);
+
+        if (optimized) {
+          tempFilesToCleanup.push(optimized.path);
+          const optimizedBuffer = fs.readFileSync(optimized.path);
+          const optimizedMulterFile: Express.Multer.File = {
+            fieldname: 'file',
+            originalname: `${path.basename(file.fileName, path.extname(file.fileName))}.webp`,
+            encoding: '7bit',
+            mimetype: 'image/webp',
+            buffer: optimizedBuffer,
+            size: optimizedBuffer.length,
+            stream: null as any,
+            destination: os.tmpdir(),
+            filename: path.basename(optimized.path),
+            path: optimized.path,
+          };
+          result = await processAndStoreFile(optimizedMulterFile, folder);
+          if (!dimensionsCaptured) {
+            newWidth = optimized.width;
+            newHeight = optimized.height;
+          }
+        } else {
+          // Optimization failed — serve the original as the main file too
+          result = originalUploadResult;
+          if (!dimensionsCaptured) {
+            const dims = await getMediaDimensions(currentFilePath, false);
+            newWidth = dims?.width ?? null;
+            newHeight = dims?.height ?? null;
+          }
+        }
+
+        if (!dimensionsCaptured) {
+          newOriginalUrl = originalUploadResult.url;
+          dimensionsCaptured = true;
+        }
+      } else {
+        // --- CAPTURE MEDIA DIMENSIONS (videos & other files — unchanged) ---
+        if (!dimensionsCaptured) {
+          const dims = await getMediaDimensions(currentFilePath, isVideoFile);
+          newWidth = dims?.width ?? null;
+          newHeight = dims?.height ?? null;
+          dimensionsCaptured = true;
+        }
+
+        // Orijinal faylı Azure-a yüklə (faststart tətbiq edilmiş versiya)
+        const uploadMulterFile: Express.Multer.File = {
+          fieldname: 'file',
+          originalname: file.fileName,
+          encoding: '7bit',
+          mimetype: file.mimeType,
+          buffer: null as any,
+          size: fs.statSync(currentFilePath).size,
+          stream: null as any,
+          destination: os.tmpdir(),
+          filename: path.basename(currentFilePath),
+          path: currentFilePath,
+        };
+        result = await processAndStoreFile(uploadMulterFile, folder);
+      }
 
       newFileObjects.push({
         url: result.url,
@@ -935,6 +1072,7 @@ const processDirectUploadBackground = async (
         ...(newThumbnailUrl !== undefined && { thumbnailUrl: newThumbnailUrl }),
         width: newWidth,
         height: newHeight,
+        originalUrl: newOriginalUrl,
       },
     });
 
