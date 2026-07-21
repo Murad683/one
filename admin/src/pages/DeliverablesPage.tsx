@@ -214,7 +214,7 @@ const PreviewOverlay = ({
         <div className="flex items-center gap-3">
           {url && (
             <a
-              href={sanitizeUrl(activeFile?.downloadUrl || '#')}
+              href={sanitizeUrl(item.originalUrl || activeFile?.downloadUrl || '#')}
               download={activeFile?.name || 'file'}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-surface/10 hover:bg-surface/20 rounded-lg transition-colors backdrop-blur-md"
             >
