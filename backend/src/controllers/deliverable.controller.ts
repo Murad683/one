@@ -8,6 +8,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 const ffprobeInstaller = require('@ffprobe-installer/ffprobe');
 import sharp from 'sharp';
+import heicConvert from 'heic-convert';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as crypto from 'crypto';
@@ -102,6 +103,30 @@ const getMediaDimensions = (
     });
 };
 
+const isHeicFile = (filePath: string): boolean =>
+  /\.(heic|heif)$/i.test(filePath);
+
+/**
+ * Decodes a HEIC/HEIF file to a JPEG buffer via heic-convert (WASM libheif).
+ * Needed because sharp's bundled libheif rejects iPhone multi-tile HEICs
+ * ("iref box exceeds the security limits of 16 references").
+ * Returns null on failure.
+ */
+const decodeHeicToJpegBuffer = async (inputPath: string): Promise<Buffer | null> => {
+  try {
+    const inputBuffer = await fs.promises.readFile(inputPath);
+    const output = await heicConvert({
+      buffer: inputBuffer,
+      format: 'JPEG',
+      quality: 0.92,
+    });
+    return Buffer.from(output);
+  } catch (err: any) {
+    console.error('[Image Optimize Debug] heic-convert fallback failed:', err?.message);
+    return null;
+  }
+};
+
 /**
  * Produces a web-optimized WebP copy of an image: EXIF orientation is
  * auto-corrected, the image is downscaled only if its longest side exceeds
@@ -111,21 +136,38 @@ const getMediaDimensions = (
 const optimizeImage = async (
   inputPath: string
 ): Promise<{ path: string; width: number; height: number } | null> => {
-  try {
-    const outputPath = path.join(
-      os.tmpdir(),
-      `optimized_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.webp`
-    );
+  const outputPath = path.join(
+    os.tmpdir(),
+    `optimized_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.webp`
+  );
 
-    const info = await sharp(inputPath)
+  const encodeToWebp = async (input: string | Buffer) => {
+    const info = await sharp(input)
       .rotate()
       .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 85 })
       .toFile(outputPath);
-
     return { path: outputPath, width: info.width, height: info.height };
+  };
+
+  try {
+    return await encodeToWebp(inputPath);
   } catch (err) {
     console.error('[Image Optimize Debug] Failed to optimize image:', err);
+
+    if (isHeicFile(inputPath)) {
+      const jpegBuffer = await decodeHeicToJpegBuffer(inputPath);
+      if (jpegBuffer) {
+        try {
+          const result = await encodeToWebp(jpegBuffer);
+          console.log('[Image Optimize Debug] HEIC decoded via heic-convert fallback');
+          return result;
+        } catch (fallbackErr) {
+          console.error('[Image Optimize Debug] Fallback optimize failed:', fallbackErr);
+        }
+      }
+    }
+
     return null;
   }
 };
@@ -212,7 +254,19 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
           }
         }
 
-        return { ...d, files: filesWithSignedUrls, thumbnailUrl: signedThumbnailUrl };
+        // originalUrl is a raw storage key — sign it, otherwise the client
+        // resolves it as a relative URL and downloads the SPA's index.html
+        let signedOriginalUrl = d.originalUrl;
+        if (signedOriginalUrl) {
+          try {
+            signedOriginalUrl = await getSecureDownloadUrlForDownload(signedOriginalUrl);
+          } catch (e) {
+            console.warn('Failed to sign originalUrl', e);
+            signedOriginalUrl = null;
+          }
+        }
+
+        return { ...d, files: filesWithSignedUrls, thumbnailUrl: signedThumbnailUrl, originalUrl: signedOriginalUrl };
       })
     );
 
@@ -300,10 +354,23 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
           }
         }
 
+        // originalUrl is a raw storage key — sign it, otherwise the admin panel
+        // resolves it as a relative URL instead of the stored file
+        let signedOriginalUrl = d.originalUrl;
+        if (signedOriginalUrl) {
+          try {
+            signedOriginalUrl = await getSecureDownloadUrlForDownload(signedOriginalUrl);
+          } catch (e) {
+            console.warn('Failed to sign originalUrl', e);
+            signedOriginalUrl = null;
+          }
+        }
+
         return {
           ...d,
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
+          originalUrl: signedOriginalUrl,
         };
       })
     );

@@ -100,10 +100,23 @@ export const getDeliverables = async (req: Request, res: Response): Promise<void
           }
         }
 
+        // originalUrl is a raw storage key — sign it, otherwise the client
+        // resolves it as a relative URL and downloads the SPA's index.html
+        let signedOriginalUrl = d.originalUrl;
+        if (signedOriginalUrl) {
+          try {
+            signedOriginalUrl = await getSecureDownloadUrlForDownload(signedOriginalUrl);
+          } catch (e) {
+            console.warn('Failed to sign originalUrl', e);
+            signedOriginalUrl = null;
+          }
+        }
+
         return {
           ...d,
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
+          originalUrl: signedOriginalUrl,
         };
       })
     );
