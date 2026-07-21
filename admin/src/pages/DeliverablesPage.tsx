@@ -51,6 +51,7 @@ interface Deliverable extends Record<string, unknown> {
   title: string;
   files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null }[];
   thumbnailUrl?: string | null;
+  originalUrl?: string | null;
   clientFeedback?: string | null;
   processingDuration?: number | null;
   createdAt?: string;
