@@ -155,7 +155,7 @@ export const PortfolioPage = () => {
       let thumbnailUrl = values.thumbnailUrl || null;
       if (selectedFile) {
         const upload = await uploadImage(selectedFile, 'thumbnails');
-        thumbnailUrl = upload.fileUrl;
+        thumbnailUrl = upload.url;
       }
 
       const youtubeId = getYoutubeId(values.youtubeId);

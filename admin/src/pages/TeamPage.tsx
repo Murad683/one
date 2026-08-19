@@ -99,7 +99,7 @@ export const TeamPage = () => {
       let avatarUrl = values.avatarUrl || null;
       if (selectedFile) {
         const upload = await uploadImage(selectedFile, 'avatars');
-        avatarUrl = upload.fileUrl;
+        avatarUrl = upload.url;
       }
 
       const payload = {

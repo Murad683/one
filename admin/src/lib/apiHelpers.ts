@@ -15,7 +15,7 @@ export interface Paginated<T> {
 }
 
 interface UploadResult {
-  fileUrl: string;
+  url: string;
   fileName: string;
   fileSize: number;
   mimeType: string;
