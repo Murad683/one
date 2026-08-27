@@ -62,24 +62,6 @@ const Callout = ({
   );
 };
 
-const Steps = ({ items }: { items: ReactNode[] }) => (
-  <ol className="my-3">
-    {items.map((item, i) => (
-      <li
-        key={i}
-        className={`relative py-3 pl-11 text-sm leading-relaxed text-body ${
-          i < items.length - 1 ? 'border-b border-dashed border-edge-light' : ''
-        }`}
-      >
-        <span className="absolute left-0 top-2.5 flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-xs font-semibold text-blue-600 ring-1 ring-inset ring-blue-500/20">
-          {i + 1}
-        </span>
-        {item}
-      </li>
-    ))}
-  </ol>
-);
-
 const FieldTable = ({ rows }: { rows: [ReactNode, ReactNode][] }) => (
   <div className="my-4 overflow-hidden rounded-xl border border-edge">
     <table className="w-full text-sm">
