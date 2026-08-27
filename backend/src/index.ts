@@ -37,15 +37,27 @@ app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
 // ─── Global Middleware ──────────────────────────
-const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL].filter(Boolean) as string[];
-app.use(cors({ 
+// FRONTEND_URL, ADMIN_URL and CORS_ORIGIN may each hold one origin or a
+// comma-separated list. They are merged so the API can be reached from the
+// Vercel URLs and the custom domain(s) at the same time (e.g. during a
+// domain switch). Trailing slashes are ignored.
+const allowedOrigins = Array.from(
+  new Set(
+    [process.env.FRONTEND_URL, process.env.ADMIN_URL, process.env.CORS_ORIGIN]
+      .filter(Boolean)
+      .flatMap((v) => (v as string).split(','))
+      .map((s) => s.trim().replace(/\/+$/, ''))
+      .filter(Boolean)
+  )
+);
+app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin.replace(/\/+$/, ''))) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
-  }, 
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 
   allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token', 'X-Portal'],
   credentials: true 
