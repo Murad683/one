@@ -140,11 +140,16 @@ const PortalLoginPage = () => {
             </button>
           </form>
 
-          <div className="mt-8 text-center">
+          <div className="mt-8 text-center space-y-3">
             <p className="text-[10px] leading-relaxed uppercase tracking-tighter" style={{ color: 'var(--text-ghost)' }}>
               Hesabınız yoxdur? <br />
               <Link to="/elaqe" className="cursor-pointer hover:opacity-80" style={{ color: 'var(--accent-text)', opacity: 0.6 }}>
                 Bizimlə əlaqə saxlayın →
+              </Link>
+            </p>
+            <p className="text-[10px] leading-relaxed uppercase tracking-tighter" style={{ color: 'var(--text-ghost)' }}>
+              <Link to="/telimat" className="cursor-pointer hover:opacity-80" style={{ color: 'var(--accent-text)', opacity: 0.6 }}>
+                Necə istifadə olunur? — Təlimata baxın →
               </Link>
             </p>
           </div>

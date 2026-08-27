@@ -21,6 +21,7 @@ const PackagesPage = lazy(() => import('./pages/PackagesPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const PortalLoginPage = lazy(() => import('./pages/PortalLoginPage'));
+const GuidePage = lazy(() => import('./pages/GuidePage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // Lazy Loaded Pages — Client Dashboard
@@ -66,6 +67,7 @@ function AnimatedRoutes() {
             <Route path="haqqimizda" element={<AboutPage />} />
             <Route path="elaqe" element={<ContactPage />} />
             <Route path="portal" element={<PortalLoginPage />} />
+            <Route path="telimat" element={<GuidePage />} />
           </Route>
 
           {/* Client Dashboard Routes */}

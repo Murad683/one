@@ -36,6 +36,7 @@ export default function Footer() {
     { label: 'PAKETLƏR',  to: '/paketler' },
     { label: 'HAQQIMIZDA',     to: '/haqqimizda' },
     { label: 'ƏLAQƏ',   to: '/elaqe' },
+    { label: 'TƏLİMAT',  to: '/telimat' },
   ];
 
   return (
