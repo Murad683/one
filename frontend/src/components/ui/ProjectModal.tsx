@@ -158,8 +158,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
                       </div>
                     </div>
 
-                    {project.externalUrl && (
-                      <a 
+                    {project.externalUrl && !/youtube\.com|youtu\.be/i.test(project.externalUrl) && (
+                      <a
                         href={project.externalUrl}
                         target="_blank"
                         rel="noopener noreferrer"

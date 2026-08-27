@@ -13,8 +13,8 @@ import Toggle from '../components/ui/Toggle';
 import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
-import { uploadShowcaseVideo, deleteShowcaseVideo } from '../api/showcaseVideo.api';
-import ShowcaseUploadPill from '../components/ShowcaseUploadPill';
+import { deleteShowcaseVideo } from '../api/showcaseVideo.api';
+import { useShowcaseUpload } from '../context/ShowcaseUploadContext';
 
 interface PackagePlan extends Record<string, unknown> {
   id: string;
@@ -61,9 +61,7 @@ export const PackagesPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoPct, setVideoPct] = useState(0);
-  const [videoLabel, setVideoLabel] = useState('');
-  const [videoPhase, setVideoPhase] = useState<'idle' | 'uploading' | 'processing' | 'error'>('idle');
+  const { start: startVideoUpload, lastCompleted: videoUploadDone } = useShowcaseUpload();
 
   const { register, control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<PackageFormValues>({
     defaultValues,
@@ -91,14 +89,9 @@ export const PackagesPage = () => {
   }, []);
 
   useEffect(() => {
-    if (videoPhase !== 'uploading') return;
-    const warn = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [videoPhase]);
+    if (videoUploadDone) fetchPackages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoUploadDone]);
 
   const openModal = (pkg?: PackagePlan) => {
     setEditing(pkg || null);
@@ -138,28 +131,14 @@ export const PackagesPage = () => {
         rowId = res.data.data.id;
       }
 
-      // Close now; the video uploads in the background behind a floating pill.
+      // Close now; the video uploads in the background via the app-level
+      // provider so its pill survives navigation.
       const pendingVideo = videoFile;
       setIsModalOpen(false);
       await fetchPackages();
 
       if (pendingVideo && rowId) {
-        setVideoLabel(pendingVideo.name);
-        setVideoPct(0);
-        setVideoPhase('uploading');
-        uploadShowcaseVideo('package', rowId, pendingVideo, setVideoPct)
-          .then(async () => {
-            setVideoPhase('processing');
-            await fetchPackages();
-            setTimeout(() => {
-              fetchPackages();
-              setVideoPhase('idle');
-            }, 15000);
-          })
-          .catch((err) => {
-            setVideoPhase('error');
-            setError(requestErrorMessage(err, 'Video yüklənə bilmədi.'));
-          });
+        startVideoUpload('package', rowId, pendingVideo);
       }
     } catch (err) {
       setError(requestErrorMessage(err, 'Paket yadda saxlanıla bilmədi.'));
@@ -304,13 +283,6 @@ export const PackagesPage = () => {
         }}
         title="Paketi sil"
         message="Bu paket həmişəlik silinəcək."
-      />
-
-      <ShowcaseUploadPill
-        phase={videoPhase}
-        pct={videoPct}
-        label={videoLabel}
-        onDismiss={() => setVideoPhase('idle')}
       />
     </div>
   );

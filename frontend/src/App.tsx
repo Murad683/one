@@ -21,6 +21,7 @@ const PackagesPage = lazy(() => import('./pages/PackagesPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const PortalLoginPage = lazy(() => import('./pages/PortalLoginPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // Lazy Loaded Pages — Client Dashboard
 const PortalLayout = lazy(() => import('./components/layout/PortalLayout'));
@@ -76,6 +77,8 @@ function AnimatedRoutes() {
               <Route path="support" element={<SupportPage />} />
             </Route>
           </Route>
+
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
     </AnimatePresence>

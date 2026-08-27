@@ -13,8 +13,8 @@ import Select from '../components/ui/Select';
 import { api } from '../lib/api';
 import { assetUrl, getYoutubeId, requestErrorMessage, uploadImage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
-import { uploadShowcaseVideo, deleteShowcaseVideo } from '../api/showcaseVideo.api';
-import ShowcaseUploadPill from '../components/ShowcaseUploadPill';
+import { deleteShowcaseVideo } from '../api/showcaseVideo.api';
+import { useShowcaseUpload } from '../context/ShowcaseUploadContext';
 
 interface Category extends Record<string, unknown> {
   id: string;
@@ -83,9 +83,7 @@ export const PortfolioPage = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoPct, setVideoPct] = useState(0);
-  const [videoLabel, setVideoLabel] = useState('');
-  const [videoPhase, setVideoPhase] = useState<'idle' | 'uploading' | 'processing' | 'error'>('idle');
+  const { start: startVideoUpload, lastCompleted: videoUploadDone } = useShowcaseUpload();
 
   const {
     register,
@@ -128,15 +126,12 @@ export const PortfolioPage = () => {
     [categories],
   );
 
+  // Refetch when a background showcase-video upload finishes so the row flips
+  // to its READY thumbnail without a manual refresh.
   useEffect(() => {
-    if (videoPhase !== 'uploading') return;
-    const warn = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [videoPhase]);
+    if (videoUploadDone) fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoUploadDone]);
 
   const openProjectModal = (project?: Project) => {
     setEditingProject(project || null);
@@ -189,7 +184,9 @@ export const PortfolioPage = () => {
         categoryId: values.categoryId || null,
         youtubeId,
         year: values.year ? Number(values.year) : null,
-        externalUrl: youtubeId ? `https://www.youtube.com/watch?v=${youtubeId}` : null,
+        // A real "view it live" link the admin enters (client site / Instagram),
+        // no longer auto-derived from the YouTube id.
+        externalUrl: values.externalUrl?.trim() || null,
         isPublished: values.isPublished,
         isFeatured: values.isFeatured,
       };
@@ -212,29 +209,14 @@ export const PortfolioPage = () => {
         rowId = res.data.data.id;
       }
 
-      // Close the modal now; the video (if any) uploads in the background
-      // behind a floating progress pill — mirrors the deliverables page.
+      // Close the modal now; the video (if any) uploads in the background via
+      // the app-level provider, so its progress pill survives navigation.
       const pendingVideo = videoFile;
       setIsProjectModalOpen(false);
       await fetchData();
 
       if (pendingVideo && rowId) {
-        setVideoLabel(pendingVideo.name);
-        setVideoPct(0);
-        setVideoPhase('uploading');
-        uploadShowcaseVideo('project', rowId, pendingVideo, setVideoPct)
-          .then(async () => {
-            setVideoPhase('processing');
-            await fetchData();
-            setTimeout(() => {
-              fetchData();
-              setVideoPhase('idle');
-            }, 15000);
-          })
-          .catch((err) => {
-            setVideoPhase('error');
-            setError(requestErrorMessage(err, 'Video yüklənə bilmədi.'));
-          });
+        startVideoUpload('project', rowId, pendingVideo);
       }
     } catch (err) {
       setError(requestErrorMessage(err, 'Layihə yadda saxlanıla bilmədi.'));
@@ -418,7 +400,12 @@ export const PortfolioPage = () => {
             />
             {previewUrl && <img src={previewUrl} alt="" className="h-28 w-40 rounded-lg object-cover" />}
           </div>
-          <Input label="YouTube ID və ya Link" {...register('youtubeId')} />
+          <Input label="YouTube ID və ya Link (köhnə — showcase video yükləmək daha yaxşıdır)" {...register('youtubeId')} />
+          <Input
+            label="Canlı layihə linki (sayt / Instagram) — modaldakı «Canlı Bax» üçün"
+            placeholder="https://..."
+            {...register('externalUrl')}
+          />
           <div className="space-y-2">
             <Input
               label="Showcase Video (MP4/MOV) — YouTube-un yerinə yüklənir"
@@ -480,13 +467,6 @@ export const PortfolioPage = () => {
         }}
         title="Layihəni sil"
         message="Bu layihə həmişəlik silinəcək."
-      />
-
-      <ShowcaseUploadPill
-        phase={videoPhase}
-        pct={videoPct}
-        label={videoLabel}
-        onDismiss={() => setVideoPhase('idle')}
       />
     </div>
   );
