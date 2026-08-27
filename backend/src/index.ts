@@ -33,7 +33,11 @@ import { xssSanitize } from './middleware/xss.middleware';
 ensureUploadDirs();
 
 const app = express();
-app.set('trust proxy', 1);
+// The only ingress is the Cloudflare Tunnel: cloudflared connects from
+// loopback and forwards X-Forwarded-* (incl. CF-Connecting-IP with the real
+// client IP). Trust just loopback so req.secure / req.protocol are correct
+// without trusting arbitrary upstream XFF.
+app.set('trust proxy', 'loopback');
 const PORT = process.env.PORT || 5000;
 
 // ─── Global Middleware ──────────────────────────
@@ -84,7 +88,13 @@ morgan.token('url', (req: Request) => {
     '$1[redacted]'
   );
 });
-app.use(morgan('dev'));
+// Behind the tunnel `:remote-addr` is always 127.0.0.1 — log the real client IP.
+morgan.token('remote-addr', (req: Request) => {
+  const cf = req.headers['cf-connecting-ip'];
+  return (typeof cf === 'string' && cf) || req.ip || '-';
+});
+// Custom format: real client IP + no ANSI colour codes (cleaner in journald).
+app.use(morgan(':remote-addr :method :url :status :response-time ms - :res[content-length]'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
