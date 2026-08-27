@@ -11,11 +11,12 @@ on:
 
 concurrency:
   group: hetzner-backend-deploy
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Deploy over SSH
         env:
@@ -24,9 +25,23 @@ jobs:
           HETZNER_SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
         run: |
           set -euo pipefail
+
           mkdir -p ~/.ssh
-          printf '%s\n' "$HETZNER_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 700 ~/.ssh
+          # write key, tolerate CRLF from the secret store, ensure trailing newline
+          printf '%s\n' "$HETZNER_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$HETZNER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          ssh -o IdentitiesOnly=yes -i ~/.ssh/deploy_key \
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null || { echo "::error::HETZNER_SSH_KEY is not a valid private key"; exit 1; }
+
+          # pin host key (TOFU); accept-new also covers first connect
+          ssh-keyscan -t rsa,ecdsa,ed25519 "$HETZNER_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          timeout 600 ssh \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=accept-new \
+            -o ConnectTimeout=20 \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=6 \
+            -i ~/.ssh/deploy_key \
             "$HETZNER_USER@$HETZNER_HOST" 'bash /opt/one-agency/deploy.sh'
