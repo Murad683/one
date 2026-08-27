@@ -19,3 +19,7 @@ export const MULTIPART_PART_SIZE_BYTES = 16 * 1024 * 1024;
 
 /** Bir multipart yükləmədə maksimum part sayı (S3 limiti 10000; təhlükəsiz hədd) */
 export const MULTIPART_MAX_PARTS = 1000;
+
+/** Portfolio/paket showcase videoları üçün maksimum yükləmə ölçüsü (2 GB) —
+ *  qısa marketinq klipləridir, klient deliverable-ları deyil */
+export const SHOWCASE_MAX_UPLOAD_SIZE_BYTES = 2 * 1024 * 1024 * 1024;

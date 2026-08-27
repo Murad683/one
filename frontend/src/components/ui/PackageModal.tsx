@@ -88,7 +88,20 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
                   borderColor: 'var(--card-border)',
                 }}
               >
-                {!pkg.videoSrc || pkg.videoSrc.includes('.mp4') ? (
+                {pkg.videoUrl ? (
+                  <video
+                    key={pkg.videoUrl}
+                    src={pkg.videoUrl}
+                    poster={pkg.videoThumbnailUrl || undefined}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{ backgroundColor: 'var(--card-bg)' }}
+                  >
+                    Brauzeriniz video formatını dəstəkləmir.
+                  </video>
+                ) : !pkg.videoSrc || pkg.videoSrc.includes('.mp4') ? (
                   <>
                     <div
                       className="absolute inset-0"

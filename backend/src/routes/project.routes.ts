@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/project.controller';
+import * as showcase from '../controllers/showcaseVideo.controller';
 import { verifyTokenMiddleware } from '../middleware/verifyToken.middleware';
 import { isAdmin } from '../middleware/rbac.middleware';
 import { validate } from '../middleware/validate.middleware';
@@ -209,5 +210,11 @@ router.post(
   uploadImage,
   ctrl.uploadThumbnail
 );
+
+// Admin-uploaded showcase video (browser PUTs straight to storage, then a
+// background job faststarts + transcodes to 720p). YouTube stays as fallback.
+router.post('/:id/video/initiate', verifyTokenMiddleware, isAdmin, uploadRateLimiter, showcase.initiate('project'));
+router.post('/:id/video/finalize', verifyTokenMiddleware, isAdmin, uploadRateLimiter, showcase.finalize('project'));
+router.delete('/:id/video', verifyTokenMiddleware, isAdmin, uploadRateLimiter, showcase.remove('project'));
 
 export default router;

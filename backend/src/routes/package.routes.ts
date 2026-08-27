@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/package.controller';
+import * as showcase from '../controllers/showcaseVideo.controller';
 import { verifyTokenMiddleware } from '../middleware/verifyToken.middleware';
 import { isAdmin } from '../middleware/rbac.middleware';
 import { validate } from '../middleware/validate.middleware';
+import { uploadRateLimiter } from '../middleware/rateLimiter.middleware';
 import {
   createPackageSchema,
   updatePackageSchema,
@@ -168,5 +170,11 @@ router.patch('/:id', verifyTokenMiddleware, isAdmin, validate(updatePackageSchem
  *         description: Package not found
  */
 router.delete('/:id', verifyTokenMiddleware, isAdmin, ctrl.remove);
+
+// Admin-uploaded showcase video (browser PUTs straight to storage, then a
+// background job faststarts + transcodes to 720p). YouTube stays as fallback.
+router.post('/:id/video/initiate', verifyTokenMiddleware, isAdmin, uploadRateLimiter, showcase.initiate('package'));
+router.post('/:id/video/finalize', verifyTokenMiddleware, isAdmin, uploadRateLimiter, showcase.finalize('package'));
+router.delete('/:id/video', verifyTokenMiddleware, isAdmin, uploadRateLimiter, showcase.remove('package'));
 
 export default router;

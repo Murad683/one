@@ -78,7 +78,19 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
 
             <div className="overflow-y-auto no-scrollbar overscroll-contain">
               <div className="relative w-full aspect-video bg-black">
-                {project.youtubeId ? (
+                {project.videoUrl ? (
+                  <video
+                    key={project.videoUrl}
+                    src={project.videoUrl}
+                    poster={project.videoThumbnailUrl || undefined}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="w-full h-full object-contain bg-black"
+                  >
+                    Brauzeriniz video formatını dəstəkləmir.
+                  </video>
+                ) : project.youtubeId ? (
                   <iframe
                     width="100%"
                     height="100%"

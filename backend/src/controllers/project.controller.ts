@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { getSecureDownloadUrl } from '../services/upload.service';
+import { getSecureDownloadUrl, cleanupOrphanFiles } from '../services/upload.service';
 import { optimizeAndStore } from '../services/image.service';
 
 function extractStorageKey(keyOrUrl: string | null | undefined): string {
@@ -43,6 +43,20 @@ const signProjectUrls = async (project: any) => {
       project.thumbnailUrl = await getSecureDownloadUrl(project.thumbnailUrl);
     } catch (e) {
       console.warn('Failed to sign thumbnailUrl', e);
+    }
+  }
+  if (project.videoUrl) {
+    try {
+      project.videoUrl = await getSecureDownloadUrl(project.videoUrl);
+    } catch (e) {
+      console.warn('Failed to sign videoUrl', e);
+    }
+  }
+  if (project.videoThumbnailUrl) {
+    try {
+      project.videoThumbnailUrl = await getSecureDownloadUrl(project.videoThumbnailUrl);
+    } catch (e) {
+      console.warn('Failed to sign videoThumbnailUrl', e);
     }
   }
   return project;
@@ -181,6 +195,11 @@ export const remove = async (req: Request, res: Response): Promise<void> => {
       sendError(res, 'Project not found', 404);
       return;
     }
+
+    await cleanupOrphanFiles(
+      [existing.videoUrl, existing.videoThumbnailUrl].filter(Boolean) as string[],
+      []
+    );
 
     await prisma.project.delete({ where: { id } });
 

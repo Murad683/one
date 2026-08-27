@@ -13,6 +13,7 @@ import Toggle from '../components/ui/Toggle';
 import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
+import { uploadShowcaseVideo, deleteShowcaseVideo } from '../api/showcaseVideo.api';
 
 interface PackagePlan extends Record<string, unknown> {
   id: string;
@@ -21,6 +22,8 @@ interface PackagePlan extends Record<string, unknown> {
   priceLabel: string;
   features: string[];
   youtubeUrl?: string | null;
+  videoUrl?: string | null;
+  videoStatus?: string | null;
   buttonText: string;
   buttonUrl: string;
   isPopular: boolean;
@@ -56,6 +59,9 @@ export const PackagesPage = () => {
   const [deleting, setDeleting] = useState<PackagePlan | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPct, setVideoPct] = useState<number | null>(null);
+  const [videoPhase, setVideoPhase] = useState<'idle' | 'uploading' | 'processing'>('idle');
 
   const { register, control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<PackageFormValues>({
     defaultValues,
@@ -84,6 +90,9 @@ export const PackagesPage = () => {
 
   const openModal = (pkg?: PackagePlan) => {
     setEditing(pkg || null);
+    setVideoFile(null);
+    setVideoPct(null);
+    setVideoPhase('idle');
     reset(pkg ? {
       name: pkg.name,
       description: pkg.description,
@@ -111,14 +120,41 @@ export const PackagesPage = () => {
         isActive: values.isActive,
       };
 
-      if (editing) await api.patch(`/packages/${editing.id}`, payload);
-      else await api.post('/packages', payload);
+      let rowId = editing?.id ?? null;
+      if (editing) {
+        await api.patch(`/packages/${editing.id}`, payload);
+      } else {
+        const res = await api.post<ApiEnvelope<PackagePlan>>('/packages', payload);
+        rowId = res.data.data.id;
+      }
+
+      if (videoFile && rowId) {
+        setVideoPhase('uploading');
+        try {
+          await uploadShowcaseVideo('package', rowId, videoFile, setVideoPct);
+          setVideoPhase('processing');
+        } catch (err) {
+          setError(requestErrorMessage(err, 'Video yüklənə bilmədi.'));
+        }
+      }
+
       setIsModalOpen(false);
       await fetchPackages();
     } catch (err) {
       setError(requestErrorMessage(err, 'Paket yadda saxlanıla bilmədi.'));
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteVideo = async () => {
+    if (!editing) return;
+    try {
+      await deleteShowcaseVideo('package', editing.id);
+      setIsModalOpen(false);
+      await fetchPackages();
+    } catch (err) {
+      setError(requestErrorMessage(err, 'Video silinə bilmədi.'));
     }
   };
 
@@ -200,6 +236,32 @@ export const PackagesPage = () => {
             ))}
           </div>
           <Input label="YouTube Video Linki" {...register('youtubeUrl')} />
+          <div className="space-y-2">
+            <Input
+              label="Showcase Video (MP4/MOV) — YouTube-un yerinə yüklənir"
+              type="file"
+              accept="video/mp4,video/quicktime"
+              onChange={(event) => setVideoFile(event.target.files?.[0] ?? null)}
+            />
+            {editing?.videoUrl && videoPhase === 'idle' && (
+              <div className="flex items-center gap-3 text-sm text-muted">
+                <video src={editing.videoUrl} className="h-16 rounded" muted />
+                <span>
+                  Video mövcuddur
+                  {editing.videoStatus ? ` (${editing.videoStatus})` : ''}
+                </span>
+                <Button type="button" variant="secondary" onClick={handleDeleteVideo}>
+                  Videonu sil
+                </Button>
+              </div>
+            )}
+            {videoPhase === 'uploading' && (
+              <p className="text-sm text-muted">Video yüklənir {videoPct ?? 0}%</p>
+            )}
+            {videoPhase === 'processing' && (
+              <p className="text-sm text-muted">Video emal olunur… (bir azdan hazır olacaq)</p>
+            )}
+          </div>
           <div className="space-y-2">
             <Toggle checked={watchedPopular} onChange={(checked) => setValue('isPopular', checked)} label="Ən Populyar kimi işarələ" />
             {watchedPopular && (

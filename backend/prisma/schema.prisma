@@ -44,6 +44,10 @@ model Project {
   externalUrl    String?
   year           Int?
 
+  videoUrl          String?
+  videoThumbnailUrl String?
+  videoStatus       String?
+
   description    String
   title          String
   category       Category? @relation(fields: [categoryId], references: [id])
@@ -68,6 +72,11 @@ model Package {
   buttonText  String   @default("Planı Seç")
   buttonUrl   String   @default("/contact")
   youtubeUrl  String?
+
+  videoUrl          String?
+  videoThumbnailUrl String?
+  videoStatus       String?
+
   description String
   features    String[]
   name        String

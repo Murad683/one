@@ -13,6 +13,7 @@ import Select from '../components/ui/Select';
 import { api } from '../lib/api';
 import { assetUrl, getYoutubeId, requestErrorMessage, uploadImage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
+import { uploadShowcaseVideo, deleteShowcaseVideo } from '../api/showcaseVideo.api';
 
 interface Category extends Record<string, unknown> {
   id: string;
@@ -33,6 +34,8 @@ interface Project extends Record<string, unknown> {
   isPublished: boolean;
   externalUrl?: string | null;
   year?: number | null;
+  videoUrl?: string | null;
+  videoStatus?: string | null;
 
   sortOrder: number;
 }
@@ -78,6 +81,9 @@ export const PortfolioPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPct, setVideoPct] = useState<number | null>(null);
+  const [videoPhase, setVideoPhase] = useState<'idle' | 'uploading' | 'processing'>('idle');
 
   const {
     register,
@@ -123,6 +129,9 @@ export const PortfolioPage = () => {
   const openProjectModal = (project?: Project) => {
     setEditingProject(project || null);
     setSelectedFile(null);
+    setVideoFile(null);
+    setVideoPct(null);
+    setVideoPhase('idle');
     setPreviewUrl(assetUrl(project?.thumbnailUrl));
     reset(
       project
@@ -149,6 +158,17 @@ export const PortfolioPage = () => {
     setPreviewUrl(URL.createObjectURL(file));
   };
 
+  const handleDeleteVideo = async () => {
+    if (!editingProject) return;
+    try {
+      await deleteShowcaseVideo('project', editingProject.id);
+      setIsProjectModalOpen(false);
+      await fetchData();
+    } catch (err) {
+      setError(requestErrorMessage(err, 'Video silinə bilmədi.'));
+    }
+  };
+
   const submitProject = async (values: ProjectFormValues) => {
     setIsSaving(true);
     try {
@@ -171,10 +191,22 @@ export const PortfolioPage = () => {
         isFeatured: values.isFeatured,
       };
 
+      let rowId = editingProject?.id ?? null;
       if (editingProject) {
         await api.patch(`/projects/${editingProject.id}`, payload);
       } else {
-        await api.post('/projects', payload);
+        const res = await api.post<ApiEnvelope<Project>>('/projects', payload);
+        rowId = res.data.data.id;
+      }
+
+      if (videoFile && rowId) {
+        setVideoPhase('uploading');
+        try {
+          await uploadShowcaseVideo('project', rowId, videoFile, setVideoPct);
+          setVideoPhase('processing');
+        } catch (err) {
+          setError(requestErrorMessage(err, 'Video yüklənə bilmədi.'));
+        }
       }
 
       setIsProjectModalOpen(false);
@@ -362,6 +394,32 @@ export const PortfolioPage = () => {
             {previewUrl && <img src={previewUrl} alt="" className="h-28 w-40 rounded-lg object-cover" />}
           </div>
           <Input label="YouTube ID və ya Link" {...register('youtubeId')} />
+          <div className="space-y-2">
+            <Input
+              label="Showcase Video (MP4/MOV) — YouTube-un yerinə yüklənir"
+              type="file"
+              accept="video/mp4,video/quicktime"
+              onChange={(event) => setVideoFile(event.target.files?.[0] ?? null)}
+            />
+            {editingProject?.videoUrl && videoPhase === 'idle' && (
+              <div className="flex items-center gap-3 text-sm text-muted">
+                <video src={editingProject.videoUrl} className="h-16 rounded" muted />
+                <span>
+                  Video mövcuddur
+                  {editingProject.videoStatus ? ` (${editingProject.videoStatus})` : ''}
+                </span>
+                <Button type="button" variant="secondary" onClick={handleDeleteVideo}>
+                  Videonu sil
+                </Button>
+              </div>
+            )}
+            {videoPhase === 'uploading' && (
+              <p className="text-sm text-muted">Video yüklənir {videoPct ?? 0}%</p>
+            )}
+            {videoPhase === 'processing' && (
+              <p className="text-sm text-muted">Video emal olunur… (bir azdan hazır olacaq)</p>
+            )}
+          </div>
           <Textarea label="Təsvir" error={errors.description?.message} {...register('description', { required: 'Təsvir mütləqdir' })} />
 
           <Input label="İl" type="number" {...register('year', { valueAsNumber: true })} />

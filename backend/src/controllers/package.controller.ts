@@ -1,6 +1,27 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
+import { getSecureDownloadUrl, cleanupOrphanFiles } from '../services/upload.service';
+
+// Signs the showcase-video keys on a package on the way out (same pattern as
+// project.signProjectUrls). youtubeUrl stays a raw external URL.
+const signPackageUrls = async (pkg: any) => {
+  if (pkg?.videoUrl) {
+    try {
+      pkg.videoUrl = await getSecureDownloadUrl(pkg.videoUrl);
+    } catch (e) {
+      console.warn('Failed to sign package videoUrl', e);
+    }
+  }
+  if (pkg?.videoThumbnailUrl) {
+    try {
+      pkg.videoThumbnailUrl = await getSecureDownloadUrl(pkg.videoThumbnailUrl);
+    } catch (e) {
+      console.warn('Failed to sign package videoThumbnailUrl', e);
+    }
+  }
+  return pkg;
+};
 
 // GET /api/v1/packages
 export const getAll = async (req: Request, res: Response): Promise<void> => {
@@ -22,8 +43,10 @@ export const getAll = async (req: Request, res: Response): Promise<void> => {
       prisma.package.count({ where }),
     ]);
 
+    const signed = await Promise.all(items.map(signPackageUrls));
+
     sendSuccess(res, {
-      items,
+      items: signed,
       total,
       page,
       limit,
@@ -46,7 +69,7 @@ export const getById = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    sendSuccess(res, pkg);
+    sendSuccess(res, await signPackageUrls(pkg));
   } catch (err) {
     console.error('Package getById error:', err);
     sendError(res, 'Failed to fetch package', 500);
@@ -108,6 +131,11 @@ export const remove = async (req: Request, res: Response): Promise<void> => {
       sendError(res, 'Package not found', 404);
       return;
     }
+
+    await cleanupOrphanFiles(
+      [existing.videoUrl, existing.videoThumbnailUrl].filter(Boolean) as string[],
+      []
+    );
 
     await prisma.package.delete({ where: { id } });
 
