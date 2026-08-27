@@ -941,7 +941,8 @@ export const DeliverablesPage = () => {
               )}
               {uploadPhase === 'uploading' && (
                 <p className="mt-2 text-[11px] text-muted">
-                  Bu pəncərəni bağlaya bilərsiniz — yükləmə arxa planda davam edir.
+                  Panel-də başqa işlərlə məşğul ola bilərsiniz — yükləmə arxa planda davam edir.
+                  Bu vərəqi <span className="font-medium">bağlamayın və yeniləməyin</span>.
                 </p>
               )}
             </div>
