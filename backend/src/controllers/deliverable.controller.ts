@@ -13,6 +13,16 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as crypto from 'crypto';
 import { SAS_UPLOAD_EXPIRY_SECONDS, FILE_SIZE_TOLERANCE_PERCENT, MAX_UPLOAD_SIZE_BYTES, MULTIPART_PART_SIZE_BYTES, MULTIPART_MAX_PARTS } from '../config/upload.constants';
+import { createLimiter } from '../utils/limiter';
+
+// Caps concurrent ffmpeg pipelines (thumbnail + faststart + 720p transcode).
+// Uploads are unaffected — only post-upload processing is gated. Extra jobs
+// wait in an in-memory queue. Override with MEDIA_PROCESSING_CONCURRENCY.
+const MEDIA_PROCESSING_CONCURRENCY = Math.max(
+  1,
+  parseInt(process.env.MEDIA_PROCESSING_CONCURRENCY || '2', 10) || 2
+);
+const mediaProcessingLimiter = createLimiter(MEDIA_PROCESSING_CONCURRENCY, 200);
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
@@ -617,8 +627,14 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
 
     sendSuccess(res, updatedDeliverable);
 
-    // Fire and forget the background task
-    processDeliverableBackground(id, deliverable, uploadedFiles, customThumbnailFile).catch((err) => {
+    // Fire and forget — gated so no more than MEDIA_PROCESSING_CONCURRENCY
+    // transcodes run at once; the rest queue in memory.
+    if (mediaProcessingLimiter.pending > 0) {
+      console.log(`[Media Queue] ${mediaProcessingLimiter.active} running, ${mediaProcessingLimiter.pending + 1} queued`);
+    }
+    mediaProcessingLimiter(() =>
+      processDeliverableBackground(id, deliverable, uploadedFiles, customThumbnailFile)
+    ).catch((err) => {
       console.error('[Video Debug] Fatal error in background processing:', err);
     });
   } catch (err) {
@@ -1054,8 +1070,14 @@ export const finalizeDirectUpload = async (req: Request, res: Response): Promise
 
     sendSuccess(res, { message: 'Processing started' });
 
-    // Arxa planda emal başla (fire and forget)
-    processDirectUploadBackground(id, deliverable, verifications, thumbnailStorageKey || null).catch((err) => {
+    // Arxa planda emal başla — eyni limiter ilə (upload yollarının hər ikisi
+    // birlikdə MEDIA_PROCESSING_CONCURRENCY həddini aşmır).
+    if (mediaProcessingLimiter.pending > 0) {
+      console.log(`[Media Queue] ${mediaProcessingLimiter.active} running, ${mediaProcessingLimiter.pending + 1} queued`);
+    }
+    mediaProcessingLimiter(() =>
+      processDirectUploadBackground(id, deliverable, verifications, thumbnailStorageKey || null)
+    ).catch((err) => {
       console.error('[Direct Upload] Fatal error in background processing:', err);
     });
   } catch (err) {
