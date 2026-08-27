@@ -59,6 +59,14 @@ export class S3StorageProvider implements IStorageProvider {
       // path-style URLs (https://endpoint/bucket/key) rather than AWS's
       // virtual-hosted style (https://bucket.endpoint/key).
       forcePathStyle: process.env.S3_FORCE_PATH_STYLE !== 'false',
+      // aws-sdk v3 defaults to sending CRC32 checksums on every request. Ceph
+      // RGW (Hetzner Object Storage) rejects the x-amz-checksum-* / x-amz-sdk-
+      // checksum-algorithm params — and for browser presigned PUT URLs the
+      // checksum is signed with a placeholder that can never match the real
+      // body, breaking direct uploads. Only send checksums when the operation
+      // actually requires them.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     });
   }
 
