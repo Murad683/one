@@ -14,6 +14,7 @@ import { api } from '../lib/api';
 import { assetUrl, getYoutubeId, requestErrorMessage, uploadImage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
 import { uploadShowcaseVideo, deleteShowcaseVideo } from '../api/showcaseVideo.api';
+import ShowcaseUploadPill from '../components/ShowcaseUploadPill';
 
 interface Category extends Record<string, unknown> {
   id: string;
@@ -82,8 +83,9 @@ export const PortfolioPage = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoPct, setVideoPct] = useState<number | null>(null);
-  const [videoPhase, setVideoPhase] = useState<'idle' | 'uploading' | 'processing'>('idle');
+  const [videoPct, setVideoPct] = useState(0);
+  const [videoLabel, setVideoLabel] = useState('');
+  const [videoPhase, setVideoPhase] = useState<'idle' | 'uploading' | 'processing' | 'error'>('idle');
 
   const {
     register,
@@ -126,12 +128,20 @@ export const PortfolioPage = () => {
     [categories],
   );
 
+  useEffect(() => {
+    if (videoPhase !== 'uploading') return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [videoPhase]);
+
   const openProjectModal = (project?: Project) => {
     setEditingProject(project || null);
     setSelectedFile(null);
     setVideoFile(null);
-    setVideoPct(null);
-    setVideoPhase('idle');
     setPreviewUrl(assetUrl(project?.thumbnailUrl));
     reset(
       project
@@ -202,18 +212,30 @@ export const PortfolioPage = () => {
         rowId = res.data.data.id;
       }
 
-      if (videoFile && rowId) {
-        setVideoPhase('uploading');
-        try {
-          await uploadShowcaseVideo('project', rowId, videoFile, setVideoPct);
-          setVideoPhase('processing');
-        } catch (err) {
-          setError(requestErrorMessage(err, 'Video yüklənə bilmədi.'));
-        }
-      }
-
+      // Close the modal now; the video (if any) uploads in the background
+      // behind a floating progress pill — mirrors the deliverables page.
+      const pendingVideo = videoFile;
       setIsProjectModalOpen(false);
       await fetchData();
+
+      if (pendingVideo && rowId) {
+        setVideoLabel(pendingVideo.name);
+        setVideoPct(0);
+        setVideoPhase('uploading');
+        uploadShowcaseVideo('project', rowId, pendingVideo, setVideoPct)
+          .then(async () => {
+            setVideoPhase('processing');
+            await fetchData();
+            setTimeout(() => {
+              fetchData();
+              setVideoPhase('idle');
+            }, 15000);
+          })
+          .catch((err) => {
+            setVideoPhase('error');
+            setError(requestErrorMessage(err, 'Video yüklənə bilmədi.'));
+          });
+      }
     } catch (err) {
       setError(requestErrorMessage(err, 'Layihə yadda saxlanıla bilmədi.'));
     } finally {
@@ -404,7 +426,7 @@ export const PortfolioPage = () => {
               accept="video/mp4,video/quicktime"
               onChange={(event) => setVideoFile(event.target.files?.[0] ?? null)}
             />
-            {editingProject?.videoUrl && videoPhase === 'idle' && (
+            {editingProject?.videoUrl && (
               <div className="flex items-center gap-3 text-sm text-muted">
                 <video src={editingProject.videoUrl} className="h-16 rounded" muted />
                 <span>
@@ -415,12 +437,6 @@ export const PortfolioPage = () => {
                   Videonu sil
                 </Button>
               </div>
-            )}
-            {videoPhase === 'uploading' && (
-              <p className="text-sm text-muted">Video yüklənir {videoPct ?? 0}%</p>
-            )}
-            {videoPhase === 'processing' && (
-              <p className="text-sm text-muted">Video emal olunur… (bir azdan hazır olacaq)</p>
             )}
           </div>
           <Textarea label="Təsvir" error={errors.description?.message} {...register('description', { required: 'Təsvir mütləqdir' })} />
@@ -464,6 +480,13 @@ export const PortfolioPage = () => {
         }}
         title="Layihəni sil"
         message="Bu layihə həmişəlik silinəcək."
+      />
+
+      <ShowcaseUploadPill
+        phase={videoPhase}
+        pct={videoPct}
+        label={videoLabel}
+        onDismiss={() => setVideoPhase('idle')}
       />
     </div>
   );

@@ -14,6 +14,7 @@ import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
 import { uploadShowcaseVideo, deleteShowcaseVideo } from '../api/showcaseVideo.api';
+import ShowcaseUploadPill from '../components/ShowcaseUploadPill';
 
 interface PackagePlan extends Record<string, unknown> {
   id: string;
@@ -60,8 +61,9 @@ export const PackagesPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoPct, setVideoPct] = useState<number | null>(null);
-  const [videoPhase, setVideoPhase] = useState<'idle' | 'uploading' | 'processing'>('idle');
+  const [videoPct, setVideoPct] = useState(0);
+  const [videoLabel, setVideoLabel] = useState('');
+  const [videoPhase, setVideoPhase] = useState<'idle' | 'uploading' | 'processing' | 'error'>('idle');
 
   const { register, control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<PackageFormValues>({
     defaultValues,
@@ -88,11 +90,19 @@ export const PackagesPage = () => {
     fetchPackages();
   }, []);
 
+  useEffect(() => {
+    if (videoPhase !== 'uploading') return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [videoPhase]);
+
   const openModal = (pkg?: PackagePlan) => {
     setEditing(pkg || null);
     setVideoFile(null);
-    setVideoPct(null);
-    setVideoPhase('idle');
     reset(pkg ? {
       name: pkg.name,
       description: pkg.description,
@@ -128,18 +138,29 @@ export const PackagesPage = () => {
         rowId = res.data.data.id;
       }
 
-      if (videoFile && rowId) {
-        setVideoPhase('uploading');
-        try {
-          await uploadShowcaseVideo('package', rowId, videoFile, setVideoPct);
-          setVideoPhase('processing');
-        } catch (err) {
-          setError(requestErrorMessage(err, 'Video yüklənə bilmədi.'));
-        }
-      }
-
+      // Close now; the video uploads in the background behind a floating pill.
+      const pendingVideo = videoFile;
       setIsModalOpen(false);
       await fetchPackages();
+
+      if (pendingVideo && rowId) {
+        setVideoLabel(pendingVideo.name);
+        setVideoPct(0);
+        setVideoPhase('uploading');
+        uploadShowcaseVideo('package', rowId, pendingVideo, setVideoPct)
+          .then(async () => {
+            setVideoPhase('processing');
+            await fetchPackages();
+            setTimeout(() => {
+              fetchPackages();
+              setVideoPhase('idle');
+            }, 15000);
+          })
+          .catch((err) => {
+            setVideoPhase('error');
+            setError(requestErrorMessage(err, 'Video yüklənə bilmədi.'));
+          });
+      }
     } catch (err) {
       setError(requestErrorMessage(err, 'Paket yadda saxlanıla bilmədi.'));
     } finally {
@@ -243,7 +264,7 @@ export const PackagesPage = () => {
               accept="video/mp4,video/quicktime"
               onChange={(event) => setVideoFile(event.target.files?.[0] ?? null)}
             />
-            {editing?.videoUrl && videoPhase === 'idle' && (
+            {editing?.videoUrl && (
               <div className="flex items-center gap-3 text-sm text-muted">
                 <video src={editing.videoUrl} className="h-16 rounded" muted />
                 <span>
@@ -254,12 +275,6 @@ export const PackagesPage = () => {
                   Videonu sil
                 </Button>
               </div>
-            )}
-            {videoPhase === 'uploading' && (
-              <p className="text-sm text-muted">Video yüklənir {videoPct ?? 0}%</p>
-            )}
-            {videoPhase === 'processing' && (
-              <p className="text-sm text-muted">Video emal olunur… (bir azdan hazır olacaq)</p>
             )}
           </div>
           <div className="space-y-2">
@@ -289,6 +304,13 @@ export const PackagesPage = () => {
         }}
         title="Paketi sil"
         message="Bu paket həmişəlik silinəcək."
+      />
+
+      <ShowcaseUploadPill
+        phase={videoPhase}
+        pct={videoPct}
+        label={videoLabel}
+        onDismiss={() => setVideoPhase('idle')}
       />
     </div>
   );
