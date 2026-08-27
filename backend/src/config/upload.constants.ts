@@ -13,3 +13,9 @@ export const FILE_SIZE_TOLERANCE_PERCENT = 5;
 
 /** Maksimum fayl ölçüsü (10 GB) — bundan böyük fayllar rədd edilir */
 export const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024 * 1024;
+
+/** Multipart part ölçüsü (16 MB). S3 minimumu 5 MB-dır; 16 MB → az sayda part, yaxşı paralellik */
+export const MULTIPART_PART_SIZE_BYTES = 16 * 1024 * 1024;
+
+/** Bir multipart yükləmədə maksimum part sayı (S3 limiti 10000; təhlükəsiz hədd) */
+export const MULTIPART_MAX_PARTS = 1000;

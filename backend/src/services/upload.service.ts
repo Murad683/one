@@ -60,6 +60,32 @@ export async function getBlobProperties(storageKey: string) {
   return storageProvider.getBlobProperties(storageKey);
 }
 
+// --- Multipart direct upload (parallel parts) ---
+export async function createMultipartUpload(folder: string, fileName: string, mimeType: string) {
+  return storageProvider.createMultipartUpload(folder, fileName, mimeType);
+}
+
+export async function getMultipartUploadUrls(
+  storageKey: string,
+  uploadId: string,
+  partCount: number,
+  expiresInSeconds?: number
+) {
+  return storageProvider.getMultipartUploadUrls(storageKey, uploadId, partCount, expiresInSeconds);
+}
+
+export async function completeMultipartUpload(
+  storageKey: string,
+  uploadId: string,
+  parts: { partNumber: number; etag: string }[]
+) {
+  return storageProvider.completeMultipartUpload(storageKey, uploadId, parts);
+}
+
+export async function abortMultipartUpload(storageKey: string, uploadId: string) {
+  return storageProvider.abortMultipartUpload(storageKey, uploadId);
+}
+
 export async function downloadBlobToFile(storageKey: string, localPath: string) {
   return storageProvider.downloadToFile(storageKey, localPath);
 }

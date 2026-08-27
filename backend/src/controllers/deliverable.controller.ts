@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloadUrlForDownload, cleanupOrphanFiles, getPresignedUploadUrl, getBlobProperties, downloadBlobToFile } from '../services/upload.service';
+import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloadUrlForDownload, cleanupOrphanFiles, getPresignedUploadUrl, getBlobProperties, downloadBlobToFile, createMultipartUpload, getMultipartUploadUrls, completeMultipartUpload as completeMultipartUploadStorage, abortMultipartUpload as abortMultipartUploadStorage } from '../services/upload.service';
 import { uploadSiteMediaWithThumbnail } from '../middleware/upload.middleware';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
@@ -12,7 +12,7 @@ import heicConvert from 'heic-convert';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as crypto from 'crypto';
-import { SAS_UPLOAD_EXPIRY_SECONDS, FILE_SIZE_TOLERANCE_PERCENT, MAX_UPLOAD_SIZE_BYTES } from '../config/upload.constants';
+import { SAS_UPLOAD_EXPIRY_SECONDS, FILE_SIZE_TOLERANCE_PERCENT, MAX_UPLOAD_SIZE_BYTES, MULTIPART_PART_SIZE_BYTES, MULTIPART_MAX_PARTS } from '../config/upload.constants';
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
@@ -901,6 +901,102 @@ export const initiateDirectUpload = async (req: Request, res: Response): Promise
   } catch (err) {
     console.error('initiateDirectUpload error:', err);
     sendError(res, 'Failed to initiate upload', 500);
+  }
+};
+
+// POST /api/v1/deliverables/:id/initiate-multipart
+// Starts an S3 multipart upload and returns a presigned PUT URL per part so the
+// browser can upload chunks in parallel. Used for large files instead of a
+// single-stream PUT (much faster over high-latency links).
+export const initiateMultipartUpload = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const { fileName, fileSize, mimeType } = req.body;
+
+    if (!fileName || !mimeType || !fileSize) {
+      sendError(res, 'fileName, fileSize and mimeType are required', 400);
+      return;
+    }
+    if (fileSize > MAX_UPLOAD_SIZE_BYTES) {
+      sendError(res, `File size exceeds maximum limit of ${Math.round(MAX_UPLOAD_SIZE_BYTES / (1024 * 1024 * 1024))}GB`, 400);
+      return;
+    }
+
+    const deliverable = await prisma.deliverable.findUnique({
+      where: { id },
+      include: { category: true },
+    });
+    if (!deliverable) { sendError(res, 'Deliverable not found', 404); return; }
+
+    const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
+    const folder = isVideo ? 'videos' : 'designs';
+
+    // Pick a part size: at least MULTIPART_PART_SIZE_BYTES, but grow it so the
+    // part count never exceeds MULTIPART_MAX_PARTS.
+    let partSize = Math.max(
+      MULTIPART_PART_SIZE_BYTES,
+      Math.ceil(fileSize / MULTIPART_MAX_PARTS)
+    );
+    // round up to a whole MB for tidy chunking on the client
+    partSize = Math.ceil(partSize / (1024 * 1024)) * (1024 * 1024);
+    const partCount = Math.max(1, Math.ceil(fileSize / partSize));
+
+    const { storageKey, uploadId } = await createMultipartUpload(folder, fileName, mimeType);
+    const partUrls = await getMultipartUploadUrls(storageKey, uploadId, partCount, SAS_UPLOAD_EXPIRY_SECONDS);
+
+    sendSuccess(res, { storageKey, uploadId, partSize, partCount, partUrls, folder });
+  } catch (err) {
+    console.error('initiateMultipartUpload error:', err);
+    sendError(res, 'Failed to initiate multipart upload', 500);
+  }
+};
+
+// POST /api/v1/deliverables/:id/complete-multipart
+// Assembles the uploaded parts into a single object. Processing is still kicked
+// off separately by the existing /finalize-upload call.
+export const completeMultipartUpload = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { storageKey, uploadId, parts } = req.body as {
+      storageKey?: string;
+      uploadId?: string;
+      parts?: { partNumber: number; etag: string }[];
+    };
+
+    if (!storageKey || !uploadId || !Array.isArray(parts) || parts.length === 0) {
+      sendError(res, 'storageKey, uploadId and a non-empty parts array are required', 400);
+      return;
+    }
+    if (parts.some((p) => !p || typeof p.partNumber !== 'number' || !p.etag)) {
+      sendError(res, 'Each part needs a numeric partNumber and an etag', 400);
+      return;
+    }
+
+    await completeMultipartUploadStorage(storageKey, uploadId, parts);
+    sendSuccess(res, { storageKey });
+  } catch (err) {
+    console.error('completeMultipartUpload error:', err);
+    sendError(res, 'Failed to complete multipart upload', 500);
+  }
+};
+
+// POST /api/v1/deliverables/:id/abort-multipart
+// Best-effort cleanup so a failed upload leaves no dangling multipart upload.
+export const abortMultipartUpload = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { storageKey, uploadId } = req.body as { storageKey?: string; uploadId?: string };
+    if (!storageKey || !uploadId) {
+      sendError(res, 'storageKey and uploadId are required', 400);
+      return;
+    }
+    try {
+      await abortMultipartUploadStorage(storageKey, uploadId);
+    } catch (e) {
+      console.warn('abortMultipartUpload: storage abort failed (ignored):', e);
+    }
+    sendSuccess(res, { aborted: true });
+  } catch (err) {
+    console.error('abortMultipartUpload error:', err);
+    sendError(res, 'Failed to abort multipart upload', 500);
   }
 };
 

@@ -284,7 +284,8 @@ export const DeliverablesPage = () => {
   const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading'>('idle');
+  const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
+  const [uploadLabel, setUploadLabel] = useState('');
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
   const [previewItem, setPreviewItem] = useState<Deliverable | null>(null);
   const [activeTab, setActiveTab] = useState<'files' | 'highlights'>('files');
@@ -352,6 +353,17 @@ export const DeliverablesPage = () => {
     fetchDeliverables();
   }, [searchQuery]);
 
+  // Warn before leaving the tab while a background upload is still running.
+  useEffect(() => {
+    if (uploadPhase !== 'uploading') return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [uploadPhase]);
+
   const openModal = (deliverable?: Deliverable) => {
     setEditing(deliverable || null);
     setSelectedFiles([]);
@@ -373,6 +385,7 @@ export const DeliverablesPage = () => {
     setIsSaving(true);
     setUploadProgress(0);
     setUploadPhase('idle');
+    setError('');
     try {
       const date = new Date(values.date);
       const payload = {
@@ -388,31 +401,52 @@ export const DeliverablesPage = () => {
         : await api.post<ApiEnvelope<Deliverable>>('/deliverables', payload);
 
       const deliverableId = editing?.id || response.data.data.id;
+      const filesToUpload = [...selectedFiles];
+      const thumbToUpload = selectedThumbnail;
 
-      if (selectedFiles.length > 0 || selectedThumbnail) {
-        setUploadPhase('uploading');
-        const isLargeVideo = selectedFiles.some(f =>
-          f.type.startsWith('video/') && f.size > DIRECT_UPLOAD_THRESHOLD_BYTES
-        );
-        if (isLargeVideo) {
-          await directUploadDeliverableFile(deliverableId, selectedFiles, (percent) => {
-            setUploadProgress(percent);
-          }, selectedThumbnail);
-        } else {
-          await uploadFilesWithProgress(deliverableId, selectedFiles, (percent) => {
-            setUploadProgress(percent);
-          }, selectedThumbnail);
-        }
+      if (filesToUpload.length === 0 && !thumbToUpload) {
+        setIsModalOpen(false);
+        setIsSaving(false);
+        await fetchDeliverables();
+        return;
       }
 
-      setUploadPhase('idle');
+      // The record exists — hand the (potentially long) upload to a background
+      // task and free the modal so the admin can keep working.
+      setUploadLabel(
+        filesToUpload.length === 1
+          ? filesToUpload[0].name
+          : filesToUpload.length > 1
+            ? `${filesToUpload.length} fayl`
+            : (thumbToUpload?.name ?? 'Fayl'),
+      );
+      setUploadPhase('uploading');
+      setUploadProgress(0);
       setIsModalOpen(false);
-      await fetchDeliverables();
+      setIsSaving(false);
+
+      const isLargeVideo = filesToUpload.some(
+        f => f.type.startsWith('video/') && f.size > DIRECT_UPLOAD_THRESHOLD_BYTES,
+      );
+      const runUpload = isLargeVideo ? directUploadDeliverableFile : uploadFilesWithProgress;
+
+      try {
+        await runUpload(deliverableId, filesToUpload, (percent) => {
+          setUploadProgress(percent);
+        }, thumbToUpload);
+        setUploadPhase('done');
+        setUploadProgress(100);
+        await fetchDeliverables();
+        window.setTimeout(() => setUploadPhase('idle'), 4000);
+      } catch (uploadErr) {
+        setUploadPhase('error');
+        setError(requestErrorMessage(uploadErr, 'Fayl yüklənə bilmədi.'));
+        await fetchDeliverables();
+      }
     } catch (err) {
       setError(requestErrorMessage(err, 'Fayl yadda saxlanıla bilmədi.'));
-    } finally {
-      setIsSaving(false);
       setUploadPhase('idle');
+      setIsSaving(false);
     }
   };
 
@@ -871,6 +905,47 @@ export const DeliverablesPage = () => {
               </div>
             </div>
           </Modal>
+
+          {/* ── Background upload progress pill ── */}
+          {uploadPhase !== 'idle' && !isModalOpen && (
+            <div className="fixed bottom-4 right-4 z-50 w-[320px] max-w-[calc(100vw-2rem)] rounded-xl border border-edge bg-surface shadow-lg p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-body">
+                    {uploadPhase === 'uploading' && 'Yüklənir…'}
+                    {uploadPhase === 'done' && 'Yükləndi ✓'}
+                    {uploadPhase === 'error' && 'Yükləmə uğursuz oldu'}
+                  </p>
+                  <p className="truncate text-xs text-muted">{uploadLabel}</p>
+                </div>
+                {uploadPhase === 'uploading' ? (
+                  <span className="tabular-nums text-xs font-medium text-muted">{uploadProgress}%</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setUploadPhase('idle')}
+                    className="text-xs text-muted hover:text-body"
+                    aria-label="Bağla"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              {uploadPhase === 'uploading' && (
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+                  <div
+                    className="h-full rounded-full bg-gray-900 transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
+              {uploadPhase === 'uploading' && (
+                <p className="mt-2 text-[11px] text-muted">
+                  Bu pəncərəni bağlaya bilərsiniz — yükləmə arxa planda davam edir.
+                </p>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

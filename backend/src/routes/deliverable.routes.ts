@@ -188,6 +188,28 @@ router.post(
   ctrl.finalizeDirectUpload
 );
 
+router.post(
+  '/:id/initiate-multipart',
+  verifyTokenMiddleware,
+  isAdmin,
+  uploadRateLimiter,
+  ctrl.initiateMultipartUpload
+);
+
+router.post(
+  '/:id/complete-multipart',
+  verifyTokenMiddleware,
+  isAdmin,
+  ctrl.completeMultipartUpload
+);
+
+router.post(
+  '/:id/abort-multipart',
+  verifyTokenMiddleware,
+  isAdmin,
+  ctrl.abortMultipartUpload
+);
+
 /**
  * @swagger
  * /deliverables/{id}/status:

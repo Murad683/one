@@ -214,4 +214,18 @@ export class AzureStorageProvider implements IStorageProvider {
 
     await blockBlobClient.downloadToFile(localPath);
   }
+
+  // Multipart parallel upload is only implemented for the S3 provider.
+  async createMultipartUpload(): Promise<{ storageKey: string; uploadId: string }> {
+    throw new Error('Multipart upload is not supported by AzureStorageProvider.');
+  }
+  async getMultipartUploadUrls(): Promise<never> {
+    throw new Error('Multipart upload is not supported by AzureStorageProvider.');
+  }
+  async completeMultipartUpload(): Promise<void> {
+    throw new Error('Multipart upload is not supported by AzureStorageProvider.');
+  }
+  async abortMultipartUpload(): Promise<void> {
+    throw new Error('Multipart upload is not supported by AzureStorageProvider.');
+  }
 }

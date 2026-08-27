@@ -4,9 +4,13 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl as presignS3Url } from '@aws-sdk/s3-request-presigner';
-import { IStorageProvider, UploadResult } from './storage.interface';
+import { IStorageProvider, UploadResult, MultipartPartUrl, CompletedPart } from './storage.interface';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
@@ -175,6 +179,88 @@ export class S3StorageProvider implements IStorageProvider {
     );
 
     return { uploadUrl, storageKey };
+  }
+
+  // --- Multipart direct upload ---
+
+  async createMultipartUpload(
+    folder: string,
+    fileName: string,
+    mimeType: string
+  ): Promise<{ storageKey: string; uploadId: string }> {
+    const folderKey = folder.toLowerCase();
+    const uniqueName = `${uuidv4()}-${Date.now()}${path.extname(fileName)}`;
+    const storageKey = `${folderKey}/${uniqueName}`;
+
+    const out = await this.client.send(
+      new CreateMultipartUploadCommand({
+        Bucket: this.bucket,
+        Key: storageKey,
+        ContentType: mimeType,
+      })
+    );
+
+    if (!out.UploadId) {
+      throw new Error('S3 CreateMultipartUpload returned no UploadId');
+    }
+    return { storageKey, uploadId: out.UploadId };
+  }
+
+  async getMultipartUploadUrls(
+    storageKey: string,
+    uploadId: string,
+    partCount: number,
+    expiresInSeconds = 7200
+  ): Promise<MultipartPartUrl[]> {
+    const urls: MultipartPartUrl[] = [];
+    for (let partNumber = 1; partNumber <= partCount; partNumber++) {
+      const url = await presignS3Url(
+        this.client,
+        new UploadPartCommand({
+          Bucket: this.bucket,
+          Key: storageKey,
+          UploadId: uploadId,
+          PartNumber: partNumber,
+        }),
+        { expiresIn: expiresInSeconds }
+      );
+      urls.push({ partNumber, url });
+    }
+    return urls;
+  }
+
+  async completeMultipartUpload(
+    storageKey: string,
+    uploadId: string,
+    parts: CompletedPart[]
+  ): Promise<void> {
+    const Parts = [...parts]
+      .sort((a, b) => a.partNumber - b.partNumber)
+      .map((p) => ({
+        PartNumber: p.partNumber,
+        // S3 / Ceph expect the ETag quoted; browsers hand it back already quoted,
+        // but normalise in case it isn't.
+        ETag: p.etag.startsWith('"') ? p.etag : `"${p.etag}"`,
+      }));
+
+    await this.client.send(
+      new CompleteMultipartUploadCommand({
+        Bucket: this.bucket,
+        Key: storageKey,
+        UploadId: uploadId,
+        MultipartUpload: { Parts },
+      })
+    );
+  }
+
+  async abortMultipartUpload(storageKey: string, uploadId: string): Promise<void> {
+    await this.client.send(
+      new AbortMultipartUploadCommand({
+        Bucket: this.bucket,
+        Key: storageKey,
+        UploadId: uploadId,
+      })
+    );
   }
 
   async getBlobProperties(storageKey: string): Promise<{ exists: boolean; contentLength?: number }> {

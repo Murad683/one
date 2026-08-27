@@ -51,4 +51,18 @@ export class LocalStorageProvider implements IStorageProvider {
     const fsSync = require('fs');
     fsSync.copyFileSync(storageKey, localPath);
   }
+
+  // Multipart parallel upload is only implemented for the S3 provider.
+  async createMultipartUpload(): Promise<{ storageKey: string; uploadId: string }> {
+    throw new Error('Multipart upload is not supported for local storage.');
+  }
+  async getMultipartUploadUrls(): Promise<never> {
+    throw new Error('Multipart upload is not supported for local storage.');
+  }
+  async completeMultipartUpload(): Promise<void> {
+    throw new Error('Multipart upload is not supported for local storage.');
+  }
+  async abortMultipartUpload(): Promise<void> {
+    throw new Error('Multipart upload is not supported for local storage.');
+  }
 }
