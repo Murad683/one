@@ -17,6 +17,7 @@ import { TicketsPage } from './pages/TicketsPage';
 import { AddPaymentPage } from './pages/AddPaymentPage';
 import { AdminManagementPage } from './pages/AdminManagementPage';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
+import { GuidePage } from './pages/GuidePage';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -42,6 +43,7 @@ const router = createBrowserRouter([
               { path: '/tickets', element: <TicketsPage /> },
               { path: '/payments/new', element: <AddPaymentPage /> },
               { path: '/settings', element: <SettingsPage /> },
+              { path: '/telimat', element: <GuidePage /> },
               { path: '*', element: <NotFoundPage /> },
             ],
           },

@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   LifeBuoy,
   LogOut,
+  BookOpen,
   Menu,
   MessageSquare,
   Moon,
@@ -31,6 +32,7 @@ interface NavItem {
 
 const settingsItems: NavItem[] = [
   { icon: Settings, label: 'Veb-sayt Ayarları', path: '/settings' },
+  { icon: BookOpen, label: 'İstifadə Təlimatı', path: '/telimat' },
 ];
 
 export const AdminLayout = () => {
