@@ -11,7 +11,9 @@ export const createProjectSchema = z.object({
     .string({ error: 'Description is required' })
     .min(2, 'Description must be at least 2 characters')
     .max(5000, 'Description cannot exceed 5000 characters'),
-  thumbnailUrl: z.string().max(500).optional().nullable(),
+  // max 2000 not 500: the admin edit form round-trips the value it received,
+  // which is a signed storage URL (long ?X-Amz-* query string).
+  thumbnailUrl: z.string().max(2000).optional().nullable(),
   youtubeId: z.string().max(50).optional(),
   category: z.string().min(2, 'Category must be at least 2 characters').max(100).optional(),
   categoryLegacy: z.string().min(2, 'Category must be at least 2 characters').max(100).optional(),
@@ -81,7 +83,7 @@ export const createTeamMemberSchema = z.object({
     .string({ error: 'Role is required' })
     .min(2, 'Role must be at least 2 characters')
     .max(100, 'Role cannot exceed 100 characters'),
-  avatarUrl: z.string().max(500).optional().nullable(),
+  avatarUrl: z.string().max(2000).optional().nullable(),
   linkedinUrl: z.union([z.string().url().max(500), z.literal('')]).optional().nullable(),
   twitterUrl: z.union([z.string().url().max(500), z.literal('')]).optional().nullable(),
   isActive: z.boolean().optional(),

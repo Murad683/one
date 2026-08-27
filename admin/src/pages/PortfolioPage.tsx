@@ -172,24 +172,27 @@ export const PortfolioPage = () => {
   const submitProject = async (values: ProjectFormValues) => {
     setIsSaving(true);
     try {
-      let thumbnailUrl = values.thumbnailUrl || null;
-      if (selectedFile) {
-        const upload = await uploadImage(selectedFile, 'thumbnails');
-        thumbnailUrl = upload.url;
-      }
-
       const youtubeId = getYoutubeId(values.youtubeId);
-      const payload = {
+      const payload: Record<string, unknown> = {
         title: values.title,
         description: values.description,
         categoryId: values.categoryId || null,
-        thumbnailUrl,
         youtubeId,
         year: values.year ? Number(values.year) : null,
         externalUrl: youtubeId ? `https://www.youtube.com/watch?v=${youtubeId}` : null,
         isPublished: values.isPublished,
         isFeatured: values.isFeatured,
       };
+
+      // Only send thumbnailUrl when a new image was picked — never round-trip
+      // the signed URL the form was seeded with (it fails backend validation
+      // and normalises to a stale key). Omitting it leaves the existing one.
+      if (selectedFile) {
+        const upload = await uploadImage(selectedFile, 'thumbnails');
+        payload.thumbnailUrl = upload.url;
+      } else if (!editingProject) {
+        payload.thumbnailUrl = null;
+      }
 
       let rowId = editingProject?.id ?? null;
       if (editingProject) {
