@@ -11,7 +11,6 @@ interface Project {
   youtubeId?: string;
   categoryLegacy?: string;
   category?: any;
-  slug?: string;
 }
 
 interface PortfolioCardProps {
@@ -20,18 +19,7 @@ interface PortfolioCardProps {
 }
 
 const PortfolioCard: React.FC<PortfolioCardProps> = ({ project, onClick }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  const handleMouseEnter = () => {
-    videoRef.current?.play().catch(() => {});
-  };
-
-  const handleMouseLeave = () => {
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-    }
-  };
+  const thumbFailed = useRef(false);
 
   const categoryName = project.category ? project.category.name : (project.categoryLegacy || '');
 
@@ -45,28 +33,20 @@ const PortfolioCard: React.FC<PortfolioCardProps> = ({ project, onClick }) => {
       }}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3, ease: cinematicEasing }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
       onClick={onClick}
     >
       <img
         src={assetUrl(project.thumbnailUrl) || "/portfolio.jpeg"}
         alt={project.title}
+        loading="lazy"
+        decoding="async"
+        onError={(e) => {
+          if (thumbFailed.current) return;
+          thumbFailed.current = true;
+          (e.currentTarget as HTMLImageElement).src = "/portfolio.jpeg";
+        }}
         className="absolute inset-0 w-full h-full object-cover opacity-80"
       />
-      
-      {project.slug && (
-        <video
-          ref={videoRef}
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"
-        >
-          <source src={assetUrl(`/videos/portfolio/${project.slug}.mp4`)} type="video/mp4" />
-        </video>
-      )}
 
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-20" />
 

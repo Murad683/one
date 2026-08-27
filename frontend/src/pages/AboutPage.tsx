@@ -96,6 +96,14 @@ const AboutPage = () => {
                 <img
                   src={assetUrl(member.avatarUrl) || "/avatar-icon.png"}
                   alt={member.name}
+                  width={64}
+                  height={64}
+                  loading="lazy"
+                  decoding="async"
+                  onError={(e) => {
+                    const el = e.currentTarget as HTMLImageElement;
+                    if (!el.src.endsWith('/avatar-icon.png')) el.src = "/avatar-icon.png";
+                  }}
                   className="w-16 h-16 rounded-full object-cover mx-auto mb-4 grayscale hover:grayscale-0 transition-all duration-300"
                 />
                 <h3 className="font-heading text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>

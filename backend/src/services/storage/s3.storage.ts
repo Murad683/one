@@ -92,6 +92,10 @@ export class S3StorageProvider implements IStorageProvider {
           Body: body,
           ContentType: file.mimetype,
           ContentLength: file.size,
+          // Keys are content-unique (uuid + timestamp); a replaced file gets a
+          // new key and the old one is deleted, so the object is effectively
+          // immutable and safe to cache for a year.
+          CacheControl: 'public, max-age=31536000, immutable',
         })
       );
     } finally {
@@ -149,6 +153,9 @@ export class S3StorageProvider implements IStorageProvider {
           Bucket: this.bucket,
           Key: storageKey,
           ResponseContentDisposition: disposition,
+          // Set on the response even for objects written before CacheControl
+          // was added at upload time.
+          ResponseCacheControl: 'public, max-age=31536000, immutable',
         }),
         { expiresIn: expiresInSeconds }
       );

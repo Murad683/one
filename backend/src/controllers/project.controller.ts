@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { processAndStoreFile, getSecureDownloadUrl } from '../services/upload.service';
+import { getSecureDownloadUrl } from '../services/upload.service';
+import { optimizeAndStore } from '../services/image.service';
 
 function extractStorageKey(keyOrUrl: string | null | undefined): string {
   if (!keyOrUrl) return '';
@@ -206,7 +207,7 @@ export const uploadThumbnail = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    const result = await processAndStoreFile(req.file, 'thumbnails');
+    const result = await optimizeAndStore(req.file, 'thumbnails', { maxEdge: 1600 });
 
     const updated = await prisma.project.update({
       where: { id },

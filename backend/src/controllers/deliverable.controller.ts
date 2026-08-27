@@ -8,7 +8,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 const ffprobeInstaller = require('@ffprobe-installer/ffprobe');
 import sharp from 'sharp';
-import heicConvert from 'heic-convert';
+import { optimizeImage } from '../services/image.service';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as crypto from 'crypto';
@@ -113,76 +113,8 @@ const getMediaDimensions = (
     });
 };
 
-const isHeicFile = (filePath: string): boolean =>
-  /\.(heic|heif)$/i.test(filePath);
-
-/**
- * Decodes a HEIC/HEIF file to a JPEG buffer via heic-convert (WASM libheif).
- * Needed because sharp's bundled libheif rejects iPhone multi-tile HEICs
- * ("iref box exceeds the security limits of 16 references").
- * Returns null on failure.
- */
-const decodeHeicToJpegBuffer = async (inputPath: string): Promise<Buffer | null> => {
-  try {
-    const inputBuffer = await fs.promises.readFile(inputPath);
-    const output = await heicConvert({
-      buffer: inputBuffer,
-      format: 'JPEG',
-      quality: 0.92,
-    });
-    return Buffer.from(output);
-  } catch (err: any) {
-    console.error('[Image Optimize Debug] heic-convert fallback failed:', err?.message);
-    return null;
-  }
-};
-
-/**
- * Produces a web-optimized WebP copy of an image: EXIF orientation is
- * auto-corrected, the image is downscaled only if its longest side exceeds
- * 1920px, and it's re-encoded as WebP at quality 85.
- * Returns null on any failure — the caller falls back to the original file.
- */
-const optimizeImage = async (
-  inputPath: string
-): Promise<{ path: string; width: number; height: number } | null> => {
-  const outputPath = path.join(
-    os.tmpdir(),
-    `optimized_${Date.now()}_${Math.random().toString(36).substring(2, 9)}.webp`
-  );
-
-  const encodeToWebp = async (input: string | Buffer) => {
-    const info = await sharp(input)
-      .rotate()
-      .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 85 })
-      .toFile(outputPath);
-    return { path: outputPath, width: info.width, height: info.height };
-  };
-
-  try {
-    return await encodeToWebp(inputPath);
-  } catch (err) {
-    console.error('[Image Optimize Debug] Failed to optimize image:', err);
-
-    if (isHeicFile(inputPath)) {
-      const jpegBuffer = await decodeHeicToJpegBuffer(inputPath);
-      if (jpegBuffer) {
-        try {
-          const result = await encodeToWebp(jpegBuffer);
-          console.log('[Image Optimize Debug] HEIC decoded via heic-convert fallback');
-          return result;
-        } catch (fallbackErr) {
-          console.error('[Image Optimize Debug] Fallback optimize failed:', fallbackErr);
-        }
-      }
-    }
-
-    return null;
-  }
-};
-
-// No longer needed: resolveStoragePath
+// isHeicFile / decodeHeicToJpegBuffer / optimizeImage moved to
+// ../services/image.service (shared with the non-deliverable upload paths).
 
 // ─── Dynamic Multer Selector ──────────────────
 // Accepts all common media types for deliverables (video + images + docs)

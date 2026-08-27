@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
-import { processAndStoreFile, getSecureDownloadUrl } from '../services/upload.service';
+import { getSecureDownloadUrl } from '../services/upload.service';
+import { optimizeAndStore } from '../services/image.service';
 import { sendSuccess, sendError } from '../utils/response.util';
 
 const signSettingsUrls = async (settings: any) => {
@@ -100,7 +101,13 @@ export const uploadSettingsMedia = async (req: Request, res: Response): Promise<
     }
 
     const folder = 'site'; // Store site-related assets in a 'site' folder
-    const result = await processAndStoreFile(req.file, folder);
+    // Hero image gets a generous cap; logos are small on-screen and benefit
+    // from a higher-quality WebP to keep sharp edges clean. A hero *video*
+    // isn't a raster image, so optimizeAndStore passes it through untouched.
+    const imageOpts = field === 'heroVideoUrl'
+      ? { maxEdge: 2400, quality: 85 }
+      : { maxEdge: 800, quality: 90 };
+    const result = await optimizeAndStore(req.file, folder, imageOpts);
 
     // Store the RELATIVE path (url) in the database, not the absolute storageKey
     const updated = await prisma.siteSettings.upsert({

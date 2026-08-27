@@ -1,6 +1,18 @@
 import { storageProvider } from './storage/storage.factory';
 import { UploadResult } from './storage/storage.interface';
 
+// How long a signed read/display URL stays valid. Default 1 day so a portal
+// tab left open for hours (or overnight) doesn't start returning 403s on its
+// images and download links. Clamped to [60s, 7d] — 7 days is the AWS SigV4
+// hard maximum. Tradeoff: a leaked URL is usable for this long.
+const PRESIGNED_URL_TTL_SECONDS = Math.min(
+  Math.max(
+    parseInt(process.env.PRESIGNED_URL_TTL_SECONDS || '86400', 10) || 86400,
+    60
+  ),
+  604800
+);
+
 export async function processAndStoreFile(file: Express.Multer.File, folder: string): Promise<UploadResult> {
   return storageProvider.upload(file, folder);
 }
@@ -10,13 +22,12 @@ export async function deleteFile(storageKey: string): Promise<void> {
 }
 
 export async function getSecureDownloadUrl(storageKey: string): Promise<string> {
-  // Returns a signed URL valid for 1 hour (3600 seconds)
-  return storageProvider.getSignedUrl(storageKey, 3600);
+  return storageProvider.getSignedUrl(storageKey, PRESIGNED_URL_TTL_SECONDS);
 }
 
 export async function getSecureDownloadUrlForDownload(storageKey: string): Promise<string> {
-  // Returns a signed URL with forced 'attachment' disposition for downloads
-  return storageProvider.getSignedUrl(storageKey, 3600, 'attachment');
+  // Signed URL with forced 'attachment' disposition for downloads.
+  return storageProvider.getSignedUrl(storageKey, PRESIGNED_URL_TTL_SECONDS, 'attachment');
 }
 
 export function extractStorageKey(keyOrUrl: string | null | undefined): string {

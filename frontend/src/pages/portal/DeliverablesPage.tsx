@@ -130,6 +130,7 @@ const MediaPreview = ({
       <img
         src={url}
         alt="Önizləmə"
+        decoding="async"
         className={sizingClasses}
         style={{ backgroundColor: 'var(--ig-bg)' }}
       />
@@ -564,6 +565,10 @@ const PreviewModal = ({
 };
 
 /* ─── Main Page ──────────────────────────────── */
+// Re-pull deliverables if the tab is refocused after being idle this long, so
+// stale signed URLs on visible cards get refreshed.
+const STALE_MS = 30 * 60 * 1000;
+
 const DeliverablesPage = () => {
   const { user } = useAuth();
   const [items, setItems] = useState<Deliverable[]>([]);
@@ -575,6 +580,8 @@ const DeliverablesPage = () => {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalPosts, setTotalPosts] = useState(0);
+
+  const lastFetched = useRef(0);
 
   const fetchItems = useCallback((currentPage: number) => {
     if (currentPage === 1) setLoading(true);
@@ -590,6 +597,7 @@ const DeliverablesPage = () => {
           setHasMore(false);
           setTotalPosts(res.data.length);
         }
+        lastFetched.current = Date.now();
       })
       .catch(() => {})
       .finally(() => {
@@ -600,6 +608,24 @@ const DeliverablesPage = () => {
 
   useEffect(() => {
     fetchItems(page);
+  }, [page, fetchItems]);
+
+  useEffect(() => {
+    const revalidate = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        page === 1 &&
+        Date.now() - lastFetched.current > STALE_MS
+      ) {
+        fetchItems(1);
+      }
+    };
+    document.addEventListener('visibilitychange', revalidate);
+    window.addEventListener('focus', revalidate);
+    return () => {
+      document.removeEventListener('visibilitychange', revalidate);
+      window.removeEventListener('focus', revalidate);
+    };
   }, [page, fetchItems]);
 
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -777,6 +803,8 @@ const DeliverablesPage = () => {
                             src={resolveFileUrl(h.imageUrl)}
                             alt={h.title}
                             className="w-full h-full object-cover"
+                            loading="lazy"
+                            decoding="async"
                             draggable={false}
                           />
                         </div>
@@ -891,6 +919,7 @@ const DeliverablesPage = () => {
                       alt={d.title}
                       className="w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-80"
                       loading="lazy"
+                      decoding="async"
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ color: 'var(--text-faint)' }}>

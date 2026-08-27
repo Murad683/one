@@ -91,7 +91,17 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ isOpen, onClose, project })
                   ></iframe>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-white/40">
-                    <img src={assetUrl(project.thumbnailUrl) || "/portfolio.jpeg"} className="w-full h-full object-cover opacity-50" alt="" />
+                    <img
+                      src={assetUrl(project.thumbnailUrl) || "/portfolio.jpeg"}
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        const el = e.currentTarget as HTMLImageElement;
+                        if (!el.src.endsWith('/portfolio.jpeg')) el.src = "/portfolio.jpeg";
+                      }}
+                      className="w-full h-full object-cover opacity-50"
+                      alt=""
+                    />
                     <p className="absolute">Video tezliklə əlavə olunacaq</p>
                   </div>
                 )}

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { cockpitContainer, cockpitItem } from '../../utils/animations';
@@ -11,6 +11,13 @@ const HeroSection = () => {
   const { scrollY } = useScroll();
   const { isDark } = useTheme();
   const videoRef = useRef<HTMLVideoElement>(null);
+  // When the configured hero media fails to load (e.g. an expired signed URL
+  // or a missing object) fall back to the bundled clip instead of a blank panel.
+  const [heroMediaFailed, setHeroMediaFailed] = useState(false);
+
+  useEffect(() => {
+    setHeroMediaFailed(false);
+  }, [settings?.heroVideoUrl]);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -19,7 +26,7 @@ const HeroSection = () => {
         console.error("Autoplay was prevented:", error);
       });
     }
-  }, [settings]);
+  }, [settings, heroMediaFailed]);
 
   const y = useTransform(scrollY, [0, 800], [0, 200]);
   const filter = useTransform(scrollY, [0, 600], ["blur(0px)", "blur(24px)"]);
@@ -33,7 +40,7 @@ const HeroSection = () => {
         style={{ y, filter, opacity }}
         className="absolute inset-0 w-full h-full z-0 pointer-events-none scale-110 will-change-transform"
       >
-        {settings.heroVideoUrl && settings.heroVideoUrl.match(/\.(mp4|webm|ogg)([?#]|$)|video/i) ? (
+        {!heroMediaFailed && settings.heroVideoUrl && settings.heroVideoUrl.match(/\.(mp4|webm|ogg)([?#]|$)|video/i) ? (
           <video
             ref={videoRef}
             autoPlay
@@ -41,15 +48,17 @@ const HeroSection = () => {
             loop
             playsInline
             key={settings.heroVideoUrl}
+            onError={() => setHeroMediaFailed(true)}
             className="w-full h-full object-cover brightness-90 contrast-[1.1]"
             style={{ backgroundColor: 'var(--bg-primary)' }}
           >
-            <source src={assetUrl(settings.heroVideoUrl)} type="video/mp4" />
+            <source src={assetUrl(settings.heroVideoUrl)} type="video/mp4" onError={() => setHeroMediaFailed(true)} />
           </video>
-        ) : settings.heroVideoUrl ? (
-          <motion.img 
-            src={assetUrl(settings.heroVideoUrl)} 
+        ) : !heroMediaFailed && settings.heroVideoUrl ? (
+          <motion.img
+            src={assetUrl(settings.heroVideoUrl)}
             alt="Hero Background"
+            onError={() => setHeroMediaFailed(true)}
             className="w-full h-full object-cover brightness-90 contrast-[1.1]"
             style={{ backgroundColor: 'var(--bg-primary)' }}
           />

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useSiteSettings } from '../../hooks/useSiteData';
+import { assetUrl } from '../../utils/api';
 
 export default function Footer() {
   const { data: settings, loading } = useSiteSettings();
@@ -53,7 +54,7 @@ export default function Footer() {
           <div className="max-w-xs">
             <Link to="/">
               <img
-                src={settings?.navbarLogoUrl || '/logo.jpg'}
+                src={assetUrl(settings?.footerLogoUrl) || assetUrl(settings?.navbarLogoUrl) || '/logo.jpg'}
                 alt="Logo"
                 className="h-8 md:h-10 w-auto object-contain rounded-sm"
                 onError={(e) => {

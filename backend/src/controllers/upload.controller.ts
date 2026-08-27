@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { processAndStoreFile } from '../services/upload.service';
+import { optimizeAndStore } from '../services/image.service';
 import { sendError, sendSuccess } from '../utils/response.util';
 
 const allowedFolders = new Set(['thumbnails', 'avatars', 'images', 'highlights']);
@@ -15,7 +15,8 @@ export const uploadImageFile = async (req: Request, res: Response): Promise<void
       ? req.query.folder
       : 'images';
 
-    const result = await processAndStoreFile(req.file, folder);
+    // Raster images are downscaled + re-encoded to WebP; non-images pass through.
+    const result = await optimizeAndStore(req.file, folder, { maxEdge: 1600 });
     sendSuccess(res, result, 201);
   } catch (err) {
     console.error('uploadImageFile error:', err);

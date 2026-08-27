@@ -66,7 +66,12 @@ export class AzureStorageProvider implements IStorageProvider {
 
     try {
       await blockBlobClient.uploadFile(file.path, {
-        blobHTTPHeaders: { blobContentType: file.mimetype },
+        blobHTTPHeaders: {
+          blobContentType: file.mimetype,
+          // Keys are content-unique; a replaced file gets a new key, so the
+          // object is effectively immutable and safe to cache for a year.
+          blobCacheControl: 'public, max-age=31536000, immutable',
+        },
       });
     } finally {
       await fs.promises.unlink(file.path).catch(() => {});
