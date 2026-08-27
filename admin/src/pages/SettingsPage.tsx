@@ -201,7 +201,7 @@ const HeroCard = ({ settings, onSave, onUpload, setSuccess }: any) => {
           </div>
           {settings?.heroVideoUrl && (
             <div className="h-24 w-40 overflow-hidden rounded-xl border border-edge shadow-inner bg-surface-hover flex items-center justify-center">
-               {settings.heroVideoUrl.match(/\.(mp4|webm|ogg)$|video/i) ? (
+               {settings.heroVideoUrl.match(/\.(mp4|webm|ogg)([?#]|$)|video/i) ? (
                  <video src={assetUrl(settings.heroVideoUrl)} className="h-full w-full object-cover" autoPlay muted loop playsInline />
                ) : (
                  <img src={assetUrl(settings.heroVideoUrl)} alt="Hero" className="h-full w-full object-cover" />

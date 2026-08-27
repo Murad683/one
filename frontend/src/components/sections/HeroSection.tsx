@@ -33,7 +33,7 @@ const HeroSection = () => {
         style={{ y, filter, opacity }}
         className="absolute inset-0 w-full h-full z-0 pointer-events-none scale-110 will-change-transform"
       >
-        {settings.heroVideoUrl && settings.heroVideoUrl.match(/\.(mp4|webm|ogg)$|video/i) ? (
+        {settings.heroVideoUrl && settings.heroVideoUrl.match(/\.(mp4|webm|ogg)([?#]|$)|video/i) ? (
           <video
             ref={videoRef}
             autoPlay
