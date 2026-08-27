@@ -72,6 +72,18 @@ app.use(helmet({
   },
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
+// Redact auth tokens (and presigned-URL signatures) from the logged URL so
+// they never land in journald / log files in plaintext. The query-string
+// token is still accepted by verifyToken for browser-navigation downloads
+// (<a href>, <img src>) that can't send an Authorization header — the leak
+// vector is the log, not the request.
+morgan.token('url', (req: Request) => {
+  const url = (req as any).originalUrl || req.url || '';
+  return url.replace(
+    /([?&](?:token|adminToken|refreshToken|X-Amz-[A-Za-z0-9-]+)=)[^&#]*/gi,
+    '$1[redacted]'
+  );
+});
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
