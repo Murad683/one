@@ -45,7 +45,7 @@ const Navbar = () => {
         }}
         animate={hidden ? "hidden" : "visible"}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed top-6 left-0 right-0 mx-auto z-[100] w-[92%] md:w-[95%] max-w-5xl rounded-full px-5 md:px-6 py-2.5 md:py-3 flex items-center justify-between liquid-glass transition-all duration-300"
+        className="fixed top-6 left-0 right-0 mx-auto z-[100] w-[92%] md:w-[95%] max-w-5xl rounded-full px-5 md:px-6 py-2.5 md:py-3 flex items-center justify-between liquid-glass transition-colors duration-300"
         style={{ willChange: 'transform', transform: 'translateZ(0)' }}
       >
         {/* Logo */}
@@ -67,7 +67,7 @@ const Navbar = () => {
               key={link.path}
               to={link.path}
               className={({ isActive }) =>
-                `text-[13px] tracking-wide transition-all duration-300 ${isActive ? 'font-semibold' : 'font-normal hover:opacity-100'
+                `text-[13px] tracking-wide transition-colors duration-300 ${isActive ? 'font-semibold' : 'font-normal hover:opacity-100'
                 }`
               }
               style={({ isActive }) => ({
@@ -91,7 +91,7 @@ const Navbar = () => {
 
           <Link
             to="/portal"
-            className="text-[12px] px-5 py-2 rounded-full border liquid-glass-btn transition-all font-medium hover:opacity-90"
+            className="text-[12px] px-5 py-2 rounded-full border liquid-glass-btn transition-[color,background-color,border-color,opacity] duration-300 font-medium hover:opacity-90"
             style={{
               backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
               borderColor: 'var(--border-subtle)',
@@ -106,7 +106,7 @@ const Navbar = () => {
         <div className="flex lg:hidden items-center gap-4">
           <Link
             to="/portal"
-            className="text-[11px] px-4 py-1.5 rounded-full border liquid-glass-btn md:hidden transition-all"
+            className="text-[11px] px-4 py-1.5 rounded-full border liquid-glass-btn md:hidden transition-colors duration-300"
             style={{
               backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
               borderColor: 'var(--border-subtle)',
