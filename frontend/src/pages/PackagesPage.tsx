@@ -17,7 +17,7 @@ const PackagesPage = () => {
   if (loading || !settings) return null;
 
   return (
-    <PageTransition className="relative pt-40 pb-16 px-6 md:px-16 min-h-screen overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
+    <PageTransition className="relative pt-40 pb-32 px-6 md:px-16 min-h-screen overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
       <div className="max-w-7xl mx-auto text-center relative z-10">
         <motion.div
           variants={cockpitContainer}

@@ -41,8 +41,8 @@ export default function Footer() {
 
   return (
     <footer
-      className="relative mt-8 overflow-hidden transition-colors duration-300"
-      style={{ borderTop: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-primary)' }}
+      className="relative mt-32 overflow-hidden transition-colors duration-300"
+      style={{ borderTop: '1px solid var(--border-subtle)' }}
     >
       <div
         className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-px"

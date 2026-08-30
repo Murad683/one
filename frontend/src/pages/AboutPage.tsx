@@ -31,7 +31,7 @@ const AboutPage = () => {
         variants={cockpitContainer}
         initial="hidden"
         animate="show"
-        className="pt-40 pb-16 px-6 md:px-24 max-w-5xl mx-auto"
+        className="pt-40 pb-32 px-6 md:px-24 max-w-5xl mx-auto"
       >
         <motion.p variants={cockpitItem} className="text-xs uppercase tracking-widest font-medium mb-4" style={{ color: 'var(--accent-text)' }}>
           {settings.aboutTopLabel}
