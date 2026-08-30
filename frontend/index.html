@@ -6,6 +6,12 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Fetch the above-the-fold fonts immediately instead of after CSS parse -->
+  <link rel="preload" href="/fonts/Manrope-Medium.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/Inter-Variable.woff2" as="font" type="font/woff2" crossorigin />
+  <!-- Warm the media-bucket connection (hero video + background image) -->
+  <link rel="preconnect" href="https://one-agency-media.nbg1.your-objectstorage.com" crossorigin />
+
   <title>One — Rəqəmsal Marketinq və Brendinq Agentliyi</title>
   <meta name="description" content="One — brendlər üçün SMM, brend dizaynı, logo və video istehsalı. Peşəkar komanda ilə brendinizi gələcəyə daşıyırıq." />
   <link rel="canonical" href="https://ourneweye.com/" />

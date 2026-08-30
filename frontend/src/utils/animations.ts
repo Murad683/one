@@ -5,23 +5,26 @@ export const cinematicTransition = {
   ease: cinematicEasing,
 };
 
+// Shared reveal used both for hero entrance and for the whileInView sections.
+// Kept the easing/character; tightened the travel + stagger + duration so
+// fast-scrolling past the lower sections no longer reads as a "rush".
 export const cockpitContainer = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.05,
+      staggerChildren: 0.06,
+      delayChildren: 0.04,
     },
   },
 };
 
 export const cockpitItem = {
-  hidden: { opacity: 0, y: 20 },
-  show: { 
-    opacity: 1, 
-    y: 0, 
-    transition: cinematicTransition 
+  hidden: { opacity: 0, y: 12 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: cinematicEasing },
   },
 };
 

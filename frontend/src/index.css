@@ -1,28 +1,22 @@
 @import "tailwindcss";
 
-/* ─── Local Fonts ───────────────────────────── */
+/* ─── Local Fonts (WOFF2 — ~4.5x smaller than the old TTFs) ─────────────
+   The Inter *italic* face was dropped: it was a 900 KB file used by a single
+   paragraph on /haqqimizda. Browsers synthesise a slanted Inter there. */
 
-/* Inter Variable */
+/* Inter Variable — body text */
 @font-face {
   font-family: 'Inter';
-  src: url('/fonts/Inter-Variable.ttf') format('truetype');
+  src: url('/fonts/Inter-Variable.woff2') format('woff2');
   font-weight: 100 900;
   font-display: swap;
   font-style: normal;
 }
 
-@font-face {
-  font-family: 'Inter';
-  src: url('/fonts/Inter-Italic-Variable.ttf') format('truetype');
-  font-weight: 100 900;
-  font-display: swap;
-  font-style: italic;
-}
-
-/* Manrope Static */
+/* Manrope Static — headings */
 @font-face {
   font-family: 'Manrope';
-  src: url('/fonts/Manrope-Regular.ttf') format('truetype');
+  src: url('/fonts/Manrope-Regular.woff2') format('woff2');
   font-weight: 400;
   font-display: swap;
   font-style: normal;
@@ -30,7 +24,7 @@
 
 @font-face {
   font-family: 'Manrope';
-  src: url('/fonts/Manrope-Medium.ttf') format('truetype');
+  src: url('/fonts/Manrope-Medium.woff2') format('woff2');
   font-weight: 500;
   font-display: swap;
   font-style: normal;
@@ -38,7 +32,7 @@
 
 @font-face {
   font-family: 'Manrope';
-  src: url('/fonts/Manrope-SemiBold.ttf') format('truetype');
+  src: url('/fonts/Manrope-SemiBold.woff2') format('woff2');
   font-weight: 600;
   font-display: swap;
   font-style: normal;
@@ -46,7 +40,7 @@
 
 @font-face {
   font-family: 'Manrope';
-  src: url('/fonts/Manrope-Bold.ttf') format('truetype');
+  src: url('/fonts/Manrope-Bold.woff2') format('woff2');
   font-weight: 700;
   font-display: swap;
   font-style: normal;

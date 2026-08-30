@@ -33,7 +33,7 @@ const HeroSection = () => {
   // was removed: animating `filter: blur()` on this full-viewport layer forced
   // a per-frame repaint and was the main cause of home-page scroll jank.
   // `y` + `opacity` are compositor-cheap and keep the parallax exit intact.
-  const yRaw = useTransform(scrollY, [0, 800], [0, 200]);
+  const yRaw = useTransform(scrollY, [0, 800], [0, 60]);
   const opacityRaw = useTransform(scrollY, [0, 600], [1, 0.2]);
   const y = reduceMotion ? 0 : yRaw;
   const opacity = reduceMotion ? 1 : opacityRaw;
