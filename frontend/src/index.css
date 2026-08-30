@@ -229,10 +229,18 @@
 
 /* ─── Premium Liquid Glass Utility ────────── */
 /* `contain` lets the browser skip style/layout recalc for the glass subtree
-   while the page scrolls behind it — cheaper compositing, no visual change. */
+   while the page scrolls behind it — cheaper compositing, no visual change.
+
+   Tiering: the base classes use a plain frosted blur. The SVG warp
+   (`url(#glass-distortion)`) — the expensive part, recomputed every frame as
+   content scrolls behind it — is opt-in via `.liquid-glass-warp`, added only
+   to the large surfaces where the distortion actually reads: the floating
+   navbar, the slide-in mobile menu, and the content modals. On small pills and
+   on cards sitting over the muted global background the warp is invisible, so
+   they stay plain. */
 .liquid-glass {
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  backdrop-filter: url(#glass-distortion) blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  backdrop-filter: blur(10px) saturate(160%);
   background-color: var(--glass-bg);
   box-shadow: var(--shadow-navbar), inset 0 1px 1px rgba(255, 255, 255, 0.1);
   border: 1px solid var(--glass-border);
@@ -240,18 +248,28 @@
 }
 
 .liquid-glass-btn {
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  backdrop-filter: url(#glass-distortion) blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(8px) saturate(160%);
+  backdrop-filter: blur(8px) saturate(160%);
   background-color: var(--glass-bg);
   box-shadow: var(--shadow-button), inset 0 1px 1px rgba(255, 255, 255, 0.1);
   border: 1px solid var(--glass-border);
   contain: layout style;
 }
 
+/* Opt-in iPhone-style warp for the large glass panels only. */
+.liquid-glass-warp {
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  backdrop-filter: url(#glass-distortion) blur(var(--glass-blur)) saturate(160%);
+}
+
 /* Mobile optimizations for performance */
 @media (max-width: 768px) {
   .liquid-glass, .liquid-glass-btn {
-    -webkit-backdrop-filter: url(#glass-distortion) blur(1.5px) saturate(120%);
+    -webkit-backdrop-filter: blur(6px) saturate(140%);
+    backdrop-filter: blur(6px) saturate(140%);
+  }
+  .liquid-glass-warp {
+    -webkit-backdrop-filter: blur(1.5px) saturate(120%);
     backdrop-filter: url(#glass-distortion) blur(1.5px) saturate(120%);
   }
 }
