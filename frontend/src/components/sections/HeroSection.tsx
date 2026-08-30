@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { cockpitContainer, cockpitItem } from '../../utils/animations';
 import { useTheme } from '../../context/ThemeContext';
@@ -10,6 +10,7 @@ const HeroSection = () => {
   const { data: settings, loading } = useSiteSettings();
   const { scrollY } = useScroll();
   const { isDark } = useTheme();
+  const reduceMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
   // When the configured hero media fails to load (e.g. an expired signed URL
   // or a missing object) fall back to the bundled clip instead of a blank panel.
@@ -28,16 +29,21 @@ const HeroSection = () => {
     }
   }, [settings, heroMediaFailed]);
 
-  const y = useTransform(scrollY, [0, 800], [0, 200]);
-  const filter = useTransform(scrollY, [0, 600], ["blur(0px)", "blur(24px)"]);
-  const opacity = useTransform(scrollY, [0, 600], [1, 0.2]);
+  // Scroll-linked parallax + fade. The progressive blur that used to run here
+  // was removed: animating `filter: blur()` on this full-viewport layer forced
+  // a per-frame repaint and was the main cause of home-page scroll jank.
+  // `y` + `opacity` are compositor-cheap and keep the parallax exit intact.
+  const yRaw = useTransform(scrollY, [0, 800], [0, 200]);
+  const opacityRaw = useTransform(scrollY, [0, 600], [1, 0.2]);
+  const y = reduceMotion ? 0 : yRaw;
+  const opacity = reduceMotion ? 1 : opacityRaw;
 
   if (loading || !settings) return <section className="min-h-screen bg-transparent" />;
 
   return (
     <section className="min-h-screen relative flex items-center justify-center text-center px-6 overflow-hidden">
       <motion.div
-        style={{ y, filter, opacity }}
+        style={{ y, opacity }}
         className="absolute inset-0 w-full h-full z-0 pointer-events-none scale-110 will-change-transform"
       >
         {!heroMediaFailed && settings.heroVideoUrl && settings.heroVideoUrl.match(/\.(mp4|webm|ogg)([?#]|$)|video/i) ? (

@@ -25,28 +25,31 @@ export const cockpitItem = {
   },
 };
 
+// Page-level enter/exit only. Same easing + shape as before — just shorter, so
+// route changes (with mode="wait") no longer feel like a stall. Content-stagger
+// timings (cinematicTransition / cockpitItem) are untouched.
 export const pageVariants = {
-  initial: { 
-    opacity: 0, 
-    scale: 0.99, 
+  initial: {
+    opacity: 0,
+    scale: 0.99,
     y: 10
   },
-  animate: { 
-    opacity: 1, 
-    scale: 1, 
-    y: 0, 
+  animate: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
     transition: {
-      duration: 0.5,
+      duration: 0.28,
       ease: cinematicEasing,
       when: "beforeChildren",
     }
   },
-  exit: { 
-    opacity: 0, 
-    scale: 0.99, 
+  exit: {
+    opacity: 0,
+    scale: 0.99,
     y: -10,
     transition: {
-      duration: 0.4,
+      duration: 0.18,
       ease: cinematicEasing,
     }
   },

@@ -93,7 +93,7 @@
   --shadow-button: 0 4px 12px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(255,255,255,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
   --accent-text: #A3E635;
   --accent-on-accent: #000000;
-  --bg-image: url('/dark-back.jpg');
+  --bg-image: url('/dark-back.webp');
   --icon-invert: 1;
   
   /* Instagram Profile Variables (Dark) */
@@ -139,7 +139,7 @@
   --shadow-button: 0 4px 12px rgba(0,0,0,0.05), inset 0 0 0 1px rgba(255,255,255,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
   --accent-text: #65A30D;
   --accent-on-accent: #000000;
-  --bg-image: url('/light-back.jpg');
+  --bg-image: url('/light-back.webp');
   --icon-invert: 0;
 
   /* Instagram Profile Variables (Light) */
@@ -234,12 +234,15 @@
 }
 
 /* ─── Premium Liquid Glass Utility ────────── */
+/* `contain` lets the browser skip style/layout recalc for the glass subtree
+   while the page scrolls behind it — cheaper compositing, no visual change. */
 .liquid-glass {
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
   backdrop-filter: url(#glass-distortion) blur(var(--glass-blur)) saturate(160%);
   background-color: var(--glass-bg);
   box-shadow: var(--shadow-navbar), inset 0 1px 1px rgba(255, 255, 255, 0.1);
   border: 1px solid var(--glass-border);
+  contain: layout style;
 }
 
 .liquid-glass-btn {
@@ -248,6 +251,7 @@
   background-color: var(--glass-bg);
   box-shadow: var(--shadow-button), inset 0 1px 1px rgba(255, 255, 255, 0.1);
   border: 1px solid var(--glass-border);
+  contain: layout style;
 }
 
 /* Mobile optimizations for performance */
@@ -302,4 +306,18 @@
   /* Use Instagram blue as accent inside portal */
   --accent-text: #0095F6;
   --glow-accent-subtle: rgba(0, 149, 246, 0.1);
+}
+
+/* ─── Reduced Motion ─────────────────────────
+   Respect the OS "reduce motion" setting: near-instant transitions/animations
+   and no smooth scroll. No effect for everyone else. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

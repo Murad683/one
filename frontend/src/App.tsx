@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Layout from './components/layout/Layout';
@@ -15,14 +15,37 @@ if (isWebKit) {
 }
 
 // Lazy Loaded Pages — Main Website
-const HomePage = lazy(() => import('./pages/HomePage'));
-const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
-const PackagesPage = lazy(() => import('./pages/PackagesPage'));
-const AboutPage = lazy(() => import('./pages/AboutPage'));
-const ContactPage = lazy(() => import('./pages/ContactPage'));
+const importHome = () => import('./pages/HomePage');
+const importPortfolio = () => import('./pages/PortfolioPage');
+const importPackages = () => import('./pages/PackagesPage');
+const importAbout = () => import('./pages/AboutPage');
+const importContact = () => import('./pages/ContactPage');
+
+const HomePage = lazy(importHome);
+const PortfolioPage = lazy(importPortfolio);
+const PackagesPage = lazy(importPackages);
+const AboutPage = lazy(importAbout);
+const ContactPage = lazy(importContact);
 const PortalLoginPage = lazy(() => import('./pages/PortalLoginPage'));
 const GuidePage = lazy(() => import('./pages/GuidePage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+
+// Warm the main-site route chunks once the browser is idle, so navigating
+// between them doesn't hit a "loading" gap (the other half of the perceived
+// navigation stall, alongside the transition duration).
+function preloadMainRoutes() {
+  const run = () => {
+    importPortfolio();
+    importPackages();
+    importAbout();
+    importContact();
+  };
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(run, { timeout: 3000 });
+  } else {
+    setTimeout(run, 1500);
+  }
+}
 
 // Lazy Loaded Pages — Client Dashboard
 const PortalLayout = lazy(() => import('./components/layout/PortalLayout'));
@@ -52,8 +75,12 @@ const PageLoader = () => {
 function AnimatedRoutes() {
   const location = useLocation();
 
+  useEffect(() => {
+    preloadMainRoutes();
+  }, []);
+
   return (
-    <AnimatePresence 
+    <AnimatePresence
       mode="wait" 
       onExitComplete={() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })}
     >
