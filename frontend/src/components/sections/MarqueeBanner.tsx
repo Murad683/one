@@ -1,13 +1,8 @@
-import { useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useSiteSettings } from '../../hooks/useSiteData';
 
 const MarqueeBanner = () => {
   const { data: settings, loading } = useSiteSettings();
-  const containerRef = useRef<HTMLDivElement>(null);
-  // Only run the infinite scroll while the banner is actually on screen.
-  // Off-screen it would keep taxing the compositor for nothing.
-  const inView = useInView(containerRef, { margin: '200px 0px' });
 
   if (loading || !settings) return <div className="h-40" />;
 
@@ -22,7 +17,6 @@ const MarqueeBanner = () => {
 
   return (
     <div
-      ref={containerRef}
       className="w-full overflow-hidden py-12 relative flex items-center transition-colors duration-300"
       style={{
         backgroundColor: 'transparent',
@@ -32,8 +26,8 @@ const MarqueeBanner = () => {
     >
       <motion.div
         className="flex whitespace-nowrap"
-        animate={inView ? { x: ["0%", "-50%"] } : { x: "0%" }}
-        transition={inView ? { ease: "linear", duration: 30, repeat: Infinity } : { duration: 0 }}
+        animate={{ x: ["0%", "-50%"] }}
+        transition={{ ease: "linear", duration: 30, repeat: Infinity }}
       >
         <div className="flex whitespace-nowrap">
           <span className="font-heading text-7xl font-black tracking-widest px-4 uppercase" style={{ color: 'var(--text-ghost)' }}>
