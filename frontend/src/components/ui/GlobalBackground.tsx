@@ -1,16 +1,26 @@
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 
 const GlobalBackground = () => {
+  const reduceMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll();
+  // A tiny slower-than-content drift over the whole page. Imperceptible frame
+  // to frame, but it gives the scroll a motion reference so the lower
+  // (transparent-background) sections don't feel like they fly past a frozen
+  // image. Headroom comes from the -inset-y below.
+  const bgYRaw = useTransform(scrollYProgress, [0, 1], [0, -48]);
+  const bgY = reduceMotion ? 0 : bgYRaw;
+
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
       {/* Base Background Image Layer */}
-      <div 
-        className="absolute inset-0 z-[-2] transition-all duration-700"
-        style={{ 
+      <motion.div
+        className="absolute -inset-y-24 inset-x-0 z-[-2] transition-all duration-700 will-change-transform"
+        style={{
           backgroundImage: 'var(--bg-image)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          opacity: 0.6
+          opacity: 0.6,
+          y: bgY,
         }}
       />
       
