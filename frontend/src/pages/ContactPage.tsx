@@ -68,7 +68,7 @@ const ContactPage = () => {
         variants={cockpitContainer}
         initial="hidden"
         animate="show"
-        className="pt-40 pb-32 px-6 md:px-16 max-w-6xl mx-auto"
+        className="pt-40 pb-16 px-6 md:px-16 max-w-6xl mx-auto"
       >
         
         {/* Header */}
