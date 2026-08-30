@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /portal
+Disallow: /portal/panel
+
+Sitemap: https://ourneweye.com/sitemap.xml

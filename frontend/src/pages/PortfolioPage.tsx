@@ -5,8 +5,15 @@ import PortfolioGrid from '../components/sections/PortfolioGrid';
 import PageTransition from '../components/utils/PageTransition';
 import { cockpitContainer, cockpitItem } from '../utils/animations';
 import { useSiteSettings, useProjects } from '../hooks/useSiteData';
+import { useSeo } from '../hooks/useSeo';
 
 const PortfolioPage = () => {
+  useSeo({
+    title: 'Portfolio',
+    description:
+      'One agentliyinin işləri — brend dizaynı, logo, SMM və video layihələri. Real nəticələr və nümunələr.',
+    path: '/portfolio',
+  });
   const { data: settings, loading: settingsLoading } = useSiteSettings();
   const { data: projects, loading: projectsLoading } = useProjects();
   const [activeFilter, setActiveFilter] = useState('all');

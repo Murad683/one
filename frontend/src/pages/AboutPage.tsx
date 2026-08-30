@@ -3,8 +3,15 @@ import PageTransition from '../components/utils/PageTransition';
 import { cockpitContainer, cockpitItem } from '../utils/animations';
 import { useSiteSettings, useTeam } from '../hooks/useSiteData';
 import { assetUrl } from '../utils/api';
+import { useSeo } from '../hooks/useSeo';
 
 const AboutPage = () => {
+  useSeo({
+    title: 'Haqqımızda',
+    description:
+      'One — brendinizi gələcəyə daşıyan komanda. Agentliyimiz, dəyərlərimiz və işə yanaşmamız haqqında.',
+    path: '/haqqimizda',
+  });
   const { data: settings, loading: settingsLoading } = useSiteSettings();
   const { data: team, loading: teamLoading } = useTeam();
 

@@ -3,8 +3,15 @@ import PricingCards from '../components/sections/PricingCards';
 import PageTransition from '../components/utils/PageTransition';
 import { cockpitContainer, cockpitItem } from '../utils/animations';
 import { useSiteSettings } from '../hooks/useSiteData';
+import { useSeo } from '../hooks/useSeo';
 
 const PackagesPage = () => {
+  useSeo({
+    title: 'Paketlər və Qiymətlər',
+    description:
+      'One xidmət paketləri — SMM, brend dizaynı və kontent istehsalı üçün aylıq planlar və qiymətlər.',
+    path: '/paketler',
+  });
   const { data: settings, loading } = useSiteSettings();
 
   if (loading || !settings) return null;

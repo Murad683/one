@@ -6,8 +6,15 @@ import { cockpitContainer, cockpitItem } from '../utils/animations';
 import { useTheme } from '../context/ThemeContext';
 import { useSiteSettings } from '../hooks/useSiteData';
 import { apiClient } from '../api/client';
+import { useSeo } from '../hooks/useSeo';
 
 const ContactPage = () => {
+  useSeo({
+    title: 'Əlaqə',
+    description:
+      'One ilə əlaqə saxlayın — layihəniz üçün təklif alın. Ünvan, telefon və müraciət forması.',
+    path: '/elaqe',
+  });
   const { isDark } = useTheme();
   const { data: settings, loading } = useSiteSettings();
 
