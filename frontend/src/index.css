@@ -234,10 +234,10 @@
    Tiering: the base classes use a plain frosted blur. The SVG warp
    (`url(#glass-distortion)`) — the expensive part, recomputed every frame as
    content scrolls behind it — is opt-in via `.liquid-glass-warp`, added only
-   to the large surfaces where the distortion actually reads: the floating
-   navbar, the slide-in mobile menu, and the content modals. On small pills and
-   on cards sitting over the muted global background the warp is invisible, so
-   they stay plain. */
+   to the floating navbar and the slide-in mobile menu. It is NOT used on
+   modals: Chrome's SVG backdrop-filter visibly displaces the modal's own
+   media (video / iframe embeds) instead of just the backdrop. Small pills and
+   cards over the muted global background don't get it either — invisible there. */
 .liquid-glass {
   -webkit-backdrop-filter: blur(10px) saturate(160%);
   backdrop-filter: blur(10px) saturate(160%);
@@ -256,7 +256,7 @@
   contain: layout style;
 }
 
-/* Opt-in iPhone-style warp for the large glass panels only. */
+/* Opt-in iPhone-style warp — navbar + mobile menu only (see note above). */
 .liquid-glass-warp {
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
   backdrop-filter: url(#glass-distortion) blur(var(--glass-blur)) saturate(160%);
