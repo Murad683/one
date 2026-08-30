@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { register, login, me, updateProfile, refresh, logout } from '../controllers/auth.controller';
 import { verifyTokenMiddleware } from '../middleware/verifyToken.middleware';
+import { isAdmin } from '../middleware/rbac.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { registerSchema, loginSchema } from '../utils/validators/auth.validators';
 import { updateProfileSchema } from '../utils/validators/profile.validators';
@@ -48,7 +49,9 @@ const router = Router();
  *       422:
  *         description: Validation failed
  */
-router.post('/register', validate(registerSchema), register);
+// Admin-only: clients are onboarded by an admin, there is no public self-signup.
+// (Admin panel calls this with the admin's Bearer token via /admin Users page.)
+router.post('/register', verifyTokenMiddleware, isAdmin, validate(registerSchema), register);
 
 /**
  * @swagger

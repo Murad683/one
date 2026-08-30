@@ -50,13 +50,20 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       },
     });
 
-    const cookieOptions = { httpOnly: true, secure: true, sameSite: 'none' as const };
-    const isFromAdminPortal = req.headers['x-portal'] === 'admin';
-    const tokenName = isFromAdminPortal ? 'adminToken' : 'token';
-    const refreshName = isFromAdminPortal ? 'adminRefreshToken' : 'refreshToken';
+    // This route is admin-only now. When an authenticated admin creates a
+    // client, setting auth cookies here would overwrite the admin's OWN
+    // session cookies (they share the X-Portal="admin" cookie names). So only
+    // set cookies for a genuine unauthenticated self-signup. The new user's
+    // token is still returned in the body regardless (the admin UI ignores it).
+    if (!req.user) {
+      const cookieOptions = { httpOnly: true, secure: true, sameSite: 'none' as const };
+      const isFromAdminPortal = req.headers['x-portal'] === 'admin';
+      const tokenName = isFromAdminPortal ? 'adminToken' : 'token';
+      const refreshName = isFromAdminPortal ? 'adminRefreshToken' : 'refreshToken';
 
-    res.cookie(tokenName, token, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
-    res.cookie(refreshName, refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+      res.cookie(tokenName, token, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
+      res.cookie(refreshName, refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+    }
     sendSuccess(res, { user: safeUser, token, refreshToken }, 201);
   } catch (err) {
     console.error('Register error:', err);
