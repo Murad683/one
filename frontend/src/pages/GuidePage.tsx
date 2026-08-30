@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import PageTransition from '../components/utils/PageTransition';
 import { cockpitContainer, cockpitItem } from '../utils/animations';
+import { useSeo } from '../hooks/useSeo';
 
 const sections = [
   { id: 'giris', label: 'Portala necə daxil olmaq' },
@@ -164,6 +165,12 @@ const Section = ({
 );
 
 const GuidePage = () => {
+  useSeo({
+    title: 'İstifadə Təlimatı',
+    description:
+      'One müştəri portalının istifadə təlimatı — portala giriş, çatdırılmalar, rəy bildirmə, ödənişlər, dəstək və profil ayarları.',
+    path: '/telimat',
+  });
   return (
     <PageTransition className="min-h-screen transition-colors duration-300" style={{ backgroundColor: 'transparent' }}>
       <motion.div
