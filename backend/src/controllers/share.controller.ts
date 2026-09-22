@@ -102,6 +102,7 @@ export const getSharedProfile = async (req: Request, res: Response): Promise<voi
         igFollowing: client.igFollowing,
         igPostsCount: client.igPostsCount,
         igProfilePic: client.igProfilePic,
+        igHighlights: client.igHighlights,
       },
     });
   } catch (err) {
