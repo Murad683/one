@@ -29,6 +29,7 @@ const ContactPage = lazy(importContact);
 const PortalLoginPage = lazy(() => import('./pages/PortalLoginPage'));
 const GuidePage = lazy(() => import('./pages/GuidePage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const SharePage = lazy(() => import('./pages/SharePage'));
 
 // Warm the main-site route chunks once the browser is idle, so navigating
 // between them doesn't hit a "loading" gap (the other half of the perceived
@@ -106,6 +107,8 @@ function AnimatedRoutes() {
               <Route path="support" element={<SupportPage />} />
             </Route>
           </Route>
+
+          <Route path="/share/:token" element={<SharePage />} />
 
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

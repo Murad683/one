@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Edit2, Plus, Trash2, Package } from 'lucide-react';
+import { Edit2, Plus, Trash2, Package, Link2, Copy } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 
 import Button from '../components/ui/Button';
@@ -28,6 +28,9 @@ interface ClientUser extends Record<string, unknown> {
   createdAt: string;
   package?: PackageInfo | null;
   _count?: { payments: number };
+  shareToken?: string | null;
+  shareTokenExpiresAt?: string | null;
+  shareUrl?: string | null;
 }
 
 interface Payment extends Record<string, unknown> {
@@ -75,6 +78,11 @@ export const UsersPage = () => {
   const [userPayments, setUserPayments] = useState<Payment[]>([]);
   const [isPaymentsLoading, setIsPaymentsLoading] = useState(false);
   const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
+
+  // Share-link state
+  const [sharingUser, setSharingUser] = useState<ClientUser | null>(null);
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [revokingLinkUser, setRevokingLinkUser] = useState<ClientUser | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<UserFormValues>({
     defaultValues,
@@ -193,6 +201,37 @@ export const UsersPage = () => {
     }
   };
 
+  const handleGenerateShareLink = async () => {
+    if (!sharingUser) return;
+    setIsGeneratingLink(true);
+    try {
+      const response = await api.post<ApiEnvelope<{ token: string; url: string; expiresAt: string }>>(
+        `/users/${sharingUser.id}/share-link`,
+      );
+      const { url, expiresAt } = response.data.data;
+      setSharingUser((prev) => (prev ? { ...prev, shareUrl: url, shareTokenExpiresAt: expiresAt } : prev));
+      addToast('Paylaşım linki yaradıldı.', 'success');
+      await fetchUsers();
+    } catch (err) {
+      addToast(requestErrorMessage(err, 'Link yaradıla bilmədi.'), 'error');
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  };
+
+  const handleRevokeShareLink = async () => {
+    if (!revokingLinkUser) return;
+    try {
+      await api.delete(`/users/${revokingLinkUser.id}/share-link`);
+      addToast('Paylaşım linki ləğv edildi.', 'success');
+      setRevokingLinkUser(null);
+      setSharingUser((prev) => (prev ? { ...prev, shareUrl: null, shareTokenExpiresAt: null } : prev));
+      await fetchUsers();
+    } catch (err) {
+      addToast(requestErrorMessage(err, 'Link ləğv edilə bilmədi.'), 'error');
+    }
+  };
+
   const columns: TableColumn<ClientUser>[] = [
     { key: 'name', header: 'Ad' },
     { key: 'email', header: 'E-poçt' },
@@ -272,6 +311,9 @@ export const UsersPage = () => {
           </Button>
           <Button variant="ghost" size="sm" onClick={() => openModal(user)} title="Redaktə Et">
             <Edit2 className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setSharingUser(user)} title="Paylaşım Linki">
+            <Link2 className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setDeleting(user)} className="text-red-600 hover:bg-red-50 hover:text-red-700" title="Sil">
             <Trash2 className="h-4 w-4" />
@@ -412,6 +454,75 @@ export const UsersPage = () => {
         onConfirm={() => deletingPaymentId && handleDeletePayment(deletingPaymentId)}
         title="Ödənişi sil"
         message="Bu ödəniş qeydi həmişəlik silinəcək. Davam etmək istədiyinizə əminsiniz?"
+      />
+
+      {/* Share Link Modal */}
+      <Modal
+        isOpen={Boolean(sharingUser)}
+        onClose={() => setSharingUser(null)}
+        title={sharingUser ? `${sharingUser.name} — Paylaşım Linki` : 'Paylaşım Linki'}
+        size="sm"
+      >
+        <div className="space-y-4">
+          {sharingUser?.shareUrl ? (
+            <>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-body">Aktiv link</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={sharingUser.shareUrl}
+                    className="flex-1 rounded-lg border border-field-border bg-surface-alt px-3 py-2 text-sm text-body outline-none"
+                    onFocus={(e) => e.currentTarget.select()}
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(sharingUser.shareUrl!);
+                      addToast('Link kopyalandı.', 'success');
+                    }}
+                    title="Kopyala"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                {sharingUser.shareTokenExpiresAt && (
+                  <p className="text-xs text-muted">
+                    Bitmə tarixi: {new Date(sharingUser.shareTokenExpiresAt).toLocaleString('az-AZ')}
+                  </p>
+                )}
+              </div>
+              <div className="flex justify-between gap-2 border-t border-edge pt-4">
+                <Button variant="danger" size="sm" onClick={() => setRevokingLinkUser(sharingUser)}>
+                  Ləğv et
+                </Button>
+                <Button variant="secondary" size="sm" onClick={handleGenerateShareLink} isLoading={isGeneratingLink}>
+                  Yenilə
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-muted">
+                Bu müştəri üçün hələ paylaşım linki yoxdur. Yaradılan link 7 gün etibarlı olacaq və istənilən vaxt ləğv edilə bilər.
+              </p>
+              <div className="flex justify-end border-t border-edge pt-4">
+                <Button onClick={handleGenerateShareLink} isLoading={isGeneratingLink}>
+                  Link yarat
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={Boolean(revokingLinkUser)}
+        onClose={() => setRevokingLinkUser(null)}
+        onConfirm={handleRevokeShareLink}
+        title="Paylaşım linkini ləğv et"
+        message="Bu link artıq işləməyəcək. Davam etmək istədiyinizə əminsiniz?"
       />
     </div>
   );

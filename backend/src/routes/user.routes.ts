@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsers, updateUser, deleteUser } from '../controllers/user.controller';
+import { getUsers, updateUser, deleteUser, generateShareLink, revokeShareLink } from '../controllers/user.controller';
 import { verifyTokenMiddleware as verifyToken } from '../middleware/verifyToken.middleware';
 import { isAdmin } from '../middleware/rbac.middleware';
 
@@ -82,5 +82,34 @@ router.patch('/:id', verifyToken, isAdmin, updateUser);
  *         description: User deleted
  */
 router.delete('/:id', verifyToken, isAdmin, deleteUser);
+
+/**
+ * @swagger
+ * /users/{id}/share-link:
+ *   post:
+ *     summary: Generate (or regenerate) a public share link for a client's deliverables
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Share link generated
+ *       400:
+ *         description: User is not a client
+ *       404:
+ *         description: User not found
+ *   delete:
+ *     summary: Revoke a client's public share link
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Share link revoked
+ *       404:
+ *         description: User not found
+ */
+router.post('/:id/share-link', verifyToken, isAdmin, generateShareLink);
+router.delete('/:id/share-link', verifyToken, isAdmin, revokeShareLink);
 
 export default router;

@@ -92,6 +92,8 @@ export const getClientUsers = async (req: Request, res: Response): Promise<void>
         isActive: true,
         createdAt: true,
         updatedAt: true,
+        shareToken: true,
+        shareTokenExpiresAt: true,
         package: {
           select: { id: true, name: true, priceLabel: true },
         },
@@ -101,7 +103,12 @@ export const getClientUsers = async (req: Request, res: Response): Promise<void>
       },
     });
 
-    sendSuccess(res, users);
+    const withShareUrl = users.map((u) => ({
+      ...u,
+      shareUrl: u.shareToken ? `${process.env.FRONTEND_URL}/share/${u.shareToken}` : null,
+    }));
+
+    sendSuccess(res, withShareUrl);
   } catch (err) {
     console.error('getClientUsers error:', err);
     sendError(res, 'İstifadəçiləri yükləmək mümkün olmadı', 500);

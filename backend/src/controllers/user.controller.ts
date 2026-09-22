@@ -1,7 +1,10 @@
 import { Request, Response } from 'express';
+import crypto from 'crypto';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { hashPassword } from '../utils/password.util';
+
+const SHARE_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export const getUsers = async (req: Request, res: Response) => {
   try {
@@ -30,6 +33,8 @@ export const getUsers = async (req: Request, res: Response) => {
           createdAt: true,
           updatedAt: true,
           igHighlights: true,
+          shareToken: true,
+          shareTokenExpiresAt: true,
         },
       }),
       prisma.user.count({ where }),
@@ -116,5 +121,58 @@ export const deleteUser = async (req: Request, res: Response) => {
     return res.status(204).send();
   } catch (error) {
     return sendError(res, 'Error deleting user', 500, error);
+  }
+};
+
+// POST /api/v1/users/:id/share-link (Admin only)
+export const generateShareLink = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const existing = await prisma.user.findUnique({ where: { id } });
+
+    if (!existing) {
+      return sendError(res, 'User not found', 404);
+    }
+
+    if (existing.role !== 'CLIENT') {
+      return sendError(res, 'Share links can only be generated for clients', 400);
+    }
+
+    const shareToken = crypto.randomBytes(32).toString('hex');
+    const shareTokenExpiresAt = new Date(Date.now() + SHARE_LINK_TTL_MS);
+
+    await prisma.user.update({
+      where: { id },
+      data: { shareToken, shareTokenExpiresAt },
+    });
+
+    return sendSuccess(res, {
+      token: shareToken,
+      url: `${process.env.FRONTEND_URL}/share/${shareToken}`,
+      expiresAt: shareTokenExpiresAt,
+    });
+  } catch (error) {
+    return sendError(res, 'Error generating share link', 500, error);
+  }
+};
+
+// DELETE /api/v1/users/:id/share-link (Admin only)
+export const revokeShareLink = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const existing = await prisma.user.findUnique({ where: { id } });
+
+    if (!existing) {
+      return sendError(res, 'User not found', 404);
+    }
+
+    await prisma.user.update({
+      where: { id },
+      data: { shareToken: null, shareTokenExpiresAt: null },
+    });
+
+    return sendSuccess(res, { id, shareToken: null });
+  } catch (error) {
+    return sendError(res, 'Error revoking share link', 500, error);
   }
 };

@@ -152,14 +152,18 @@ const MediaPreview = ({
 };
 
 /* ─── Preview Modal (Instagram Style) ────────── */
-const PreviewModal = ({
+export const PreviewModal = ({
   item,
   onClose,
   onFeedbackSent,
+  readOnly = false,
+  profileOverride,
 }: {
   item: Deliverable;
   onClose: () => void;
   onFeedbackSent: (id: string, fullFeedback: string) => void;
+  readOnly?: boolean;
+  profileOverride?: { igUsername?: string | null; igProfilePic?: string | null; name?: string | null };
 }) => {
   const { user } = useAuth();
   const [newMessage, setNewMessage] = useState('');
@@ -287,8 +291,9 @@ const PreviewModal = ({
     };
   }, [onClose, showCommentsMobile]);
 
-  const igUsername = user?.igUsername || 'username';
-  const igProfilePic = sanitizeUrl(user?.igProfilePic || null);
+  const igUsername = profileOverride?.igUsername || user?.igUsername || 'username';
+  const igProfilePic = sanitizeUrl(profileOverride?.igProfilePic || user?.igProfilePic || null);
+  const displayName = profileOverride?.name || user?.name;
 
   const Header = ({ className = '' }) => (
     <div className={`flex items-center justify-between px-4 py-3 border-b shrink-0 ${className}`} style={{ borderColor: 'var(--ig-border)' }}>
@@ -298,7 +303,7 @@ const PreviewModal = ({
             {igProfilePic ? (
               <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover absolute inset-0 rounded-full" style={{ border: '2px solid var(--ig-bg)' }} />
             ) : (
-              <span className="text-white text-[12px] font-bold z-10">{user?.name?.charAt(0) || 'U'}</span>
+              <span className="text-white text-[12px] font-bold z-10">{displayName?.charAt(0) || 'U'}</span>
             )}
           </div>
         </div>
@@ -407,6 +412,7 @@ const PreviewModal = ({
           <Header className="hidden md:flex" />
 
           {/* Desktop Comments (Scrollable Area) */}
+          {!readOnly && (
           <div className="flex-1 min-h-0 overflow-y-auto p-4 custom-scrollbar no-scrollbar hidden md:block">
             {/* Client Comments */}
             {feedbackHistory && !isEditingFeedback && (
@@ -415,7 +421,7 @@ const PreviewModal = ({
                    {igProfilePic ? (
                      <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover" />
                    ) : (
-                     <span className="text-white text-xs font-bold">{user?.name?.charAt(0) || 'U'}</span>
+                     <span className="text-white text-xs font-bold">{displayName?.charAt(0) || 'U'}</span>
                    )}
                  </div>
                  <div className="flex-1">
@@ -435,6 +441,7 @@ const PreviewModal = ({
               </div>
             )}
           </div>
+          )}
 
           {/* Actions & Footer */}
           <div className="flex flex-col pb-3 pt-2 md:border-t shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
@@ -451,7 +458,9 @@ const PreviewModal = ({
                <div className="flex items-center gap-4">
                  <button className="hover:opacity-60 transition-opacity"><Heart size={24} strokeWidth={1.5} /></button>
                  {/* Open mobile comments on small screens */}
-                 <button className="hover:opacity-60 transition-opacity md:pointer-events-none" onClick={() => setShowCommentsMobile(true)}><MessageCircle size={24} strokeWidth={1.5} /></button>
+                 {!readOnly && (
+                   <button className="hover:opacity-60 transition-opacity md:pointer-events-none" onClick={() => setShowCommentsMobile(true)}><MessageCircle size={24} strokeWidth={1.5} /></button>
+                 )}
                  <button className="hover:opacity-60 transition-opacity"><Send size={24} strokeWidth={1.5} /></button>
                </div>
 
@@ -471,11 +480,13 @@ const PreviewModal = ({
                  <span className="font-semibold mr-1">one_agency</span>
                  <span>{item.notes || 'Yeni material çatdırıldı!'}</span>
                </div>
-               <div className="md:hidden cursor-pointer" onClick={() => setShowCommentsMobile(true)}>
-                 <span style={{ color: 'var(--ig-text-secondary)' }}>
-                   {feedbackHistory ? 'Rəylərə bax' : 'Rəy yaz...'}
-                 </span>
-               </div>
+               {!readOnly && (
+                 <div className="md:hidden cursor-pointer" onClick={() => setShowCommentsMobile(true)}>
+                   <span style={{ color: 'var(--ig-text-secondary)' }}>
+                     {feedbackHistory ? 'Rəylərə bax' : 'Rəy yaz...'}
+                   </span>
+                 </div>
+               )}
              </div>
 
              <div className="px-4 text-[12px] mt-1" style={{ color: 'var(--ig-text-secondary)' }}>
@@ -484,7 +495,7 @@ const PreviewModal = ({
              </div>
 
              {/* Desktop Input — shown for the first review, or while editing the existing one */}
-             {(!feedbackHistory || isEditingFeedback) && (
+             {!readOnly && (!feedbackHistory || isEditingFeedback) && (
                <div className="hidden md:flex border-t mt-3 p-4 shrink-0 flex-col" style={{ borderColor: 'var(--ig-border)' }}>
                   {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
                   <div className="flex items-center gap-3">
@@ -566,7 +577,7 @@ const PreviewModal = ({
                          {igProfilePic ? (
                            <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover" />
                          ) : (
-                           <span className="text-white text-xs font-bold">{user?.name?.charAt(0) || 'U'}</span>
+                           <span className="text-white text-xs font-bold">{displayName?.charAt(0) || 'U'}</span>
                          )}
                        </div>
                        <div className="flex-1">

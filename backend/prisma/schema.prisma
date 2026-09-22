@@ -21,6 +21,8 @@ model User {
   igPostsCount String?
   igProfilePic String?
   igHighlights Json          @default("[]")
+  shareToken           String?   @unique
+  shareTokenExpiresAt  DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   package      Package?      @relation(fields: [packageId], references: [id], onDelete: SetNull)

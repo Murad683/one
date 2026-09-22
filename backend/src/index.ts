@@ -23,6 +23,7 @@ import uploadRoutes from './routes/upload.routes';
 import swaggerRoutes from './routes/swagger.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import adminRoutes from './routes/admin.routes';
+import shareRoutes from './routes/share.routes';
 
 import { sendError } from './utils/response.util';
 import { ensureUploadDirs } from './utils/ensureUploadDir';
@@ -132,6 +133,7 @@ apiRouter.use('/contact', contactRateLimiter, contactSubmissionRoutes); // Alias
 apiRouter.use('/uploads', uploadRateLimiter, uploadRoutes);
 apiRouter.use('/dashboard', dashboardRoutes);
 apiRouter.use('/admin', adminRoutes);
+apiRouter.use('/share', shareRoutes);
 
 app.use('/api/v1', apiRouter);
 
