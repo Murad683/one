@@ -30,6 +30,8 @@ interface ClientUser extends Record<string, unknown> {
   name: string;
   email: string;
   igHighlights?: { title: string; imageUrl: string }[];
+  shareUrl?: string | null;
+  shareTokenExpiresAt?: string | null;
 }
 
 interface DeliverableCategory extends Record<string, unknown> {
@@ -287,7 +289,7 @@ export const DeliverablesPage = () => {
   const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
   const [uploadLabel, setUploadLabel] = useState('');
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
-  const [sharingClient, setSharingClient] = useState<{ id: string; name: string } | null>(null);
+  const [sharingClient, setSharingClient] = useState<ClientUser | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
@@ -474,10 +476,10 @@ export const DeliverablesPage = () => {
     await fetchCategories();
   };
 
-  const openShareModal = (client: { id: string; name: string }) => {
+  const openShareModal = (client: ClientUser) => {
     setSharingClient(client);
-    setShareUrl(null);
-    setShareExpiresAt(null);
+    setShareUrl(client.shareUrl ?? null);
+    setShareExpiresAt(client.shareTokenExpiresAt ?? null);
   };
 
   const generateShareLink = async () => {
@@ -608,7 +610,7 @@ export const DeliverablesPage = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => openShareModal({ id: deliverable.client!.id, name: deliverable.client!.name })}
+              onClick={() => openShareModal(deliverable.client!)}
               aria-label="Müştərinin paylaşım linki"
               title="Müştərinin paylaşım linki"
             >

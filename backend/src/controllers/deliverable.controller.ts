@@ -170,7 +170,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
         orderBy: [{ year: 'desc' }, { month: 'desc' }],
         include: {
           client: {
-            select: { id: true, name: true, email: true },
+            select: { id: true, name: true, email: true, shareToken: true, shareTokenExpiresAt: true },
           },
           category: true,
         },
@@ -222,6 +222,10 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
           originalUrl: signedOriginalUrl,
+          client: d.client && {
+            ...d.client,
+            shareUrl: d.client.shareToken ? `${process.env.FRONTEND_URL}/share/${d.client.shareToken}` : null,
+          },
         };
       })
     );
