@@ -416,7 +416,7 @@ export const PreviewModal = ({
           <div className="flex-1 min-h-0 overflow-y-auto p-4 custom-scrollbar no-scrollbar hidden md:block">
             {/* Client Comments */}
             {feedbackHistory && !isEditingFeedback && (
-              <div className="flex gap-3 group">
+              <div className="flex gap-3">
                  <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center">
                    {igProfilePic ? (
                      <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover" />
@@ -430,7 +430,7 @@ export const PreviewModal = ({
                      {feedbackHistory}
                    </p>
                  </div>
-                 <div className="flex items-start gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                 <div className="flex items-start gap-2 shrink-0">
                    <button onClick={startEditFeedback} title="Redaktə et" className="hover:opacity-60">
                      <Pencil size={14} />
                    </button>
