@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { uploadDeliverableFile as uploadFilesWithProgress, directUploadDeliverableFile } from '../api/deliverables.api';
-import { Download, Edit2, FileX, Image, MessageCircle, Play, Plus, Search, Trash2, Video, X } from 'lucide-react';
+import { Download, Edit2, FileX, Image, Link2, MessageCircle, Play, Plus, Search, Trash2, Video, X, Copy } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
@@ -287,6 +287,11 @@ export const DeliverablesPage = () => {
   const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
   const [uploadLabel, setUploadLabel] = useState('');
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
+  const [sharingClient, setSharingClient] = useState<{ id: string; name: string } | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [revokingShareLink, setRevokingShareLink] = useState(false);
   const [previewItem, setPreviewItem] = useState<Deliverable | null>(null);
   const [activeTab, setActiveTab] = useState<'files' | 'highlights'>('files');
 
@@ -469,6 +474,36 @@ export const DeliverablesPage = () => {
     await fetchCategories();
   };
 
+  const openShareModal = (client: { id: string; name: string }) => {
+    setSharingClient(client);
+    setShareUrl(null);
+    setShareExpiresAt(null);
+  };
+
+  const generateShareLink = async () => {
+    if (!sharingClient) return;
+    setIsGeneratingLink(true);
+    try {
+      const response = await api.post<ApiEnvelope<{ token: string; url: string; expiresAt: string }>>(
+        `/users/${sharingClient.id}/share-link`,
+      );
+      setShareUrl(response.data.data.url);
+      setShareExpiresAt(response.data.data.expiresAt);
+    } catch (err) {
+      setError(requestErrorMessage(err, 'Link yaradıla bilmədi.'));
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  };
+
+  const confirmRevokeShareLink = async () => {
+    if (!sharingClient) return;
+    await api.delete(`/users/${sharingClient.id}/share-link`);
+    setRevokingShareLink(false);
+    setShareUrl(null);
+    setShareExpiresAt(null);
+  };
+
   const columns: TableColumn<Deliverable>[] = [
     {
       key: 'client',
@@ -569,6 +604,17 @@ export const DeliverablesPage = () => {
           <Button variant="ghost" size="sm" onClick={() => openModal(deliverable)} aria-label="Faylı redaktə et">
             <Edit2 className="h-4 w-4" />
           </Button>
+          {deliverable.client && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => openShareModal({ id: deliverable.client!.id, name: deliverable.client!.name })}
+              aria-label="Müştərinin paylaşım linki"
+              title="Müştərinin paylaşım linki"
+            >
+              <Link2 className="h-4 w-4" />
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={() => setDeleting(deliverable)} aria-label="Faylı sil">
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -905,6 +951,72 @@ export const DeliverablesPage = () => {
               </div>
             </div>
           </Modal>
+
+          {/* ── Share Link Modal ── */}
+          <Modal
+            isOpen={Boolean(sharingClient)}
+            onClose={() => setSharingClient(null)}
+            title={sharingClient ? `${sharingClient.name} — Paylaşım Linki` : 'Paylaşım Linki'}
+            size="sm"
+          >
+            <div className="space-y-4">
+              {shareUrl ? (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-medium text-body">Aktiv link</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        readOnly
+                        value={shareUrl}
+                        className="flex-1 rounded-lg border border-field-border bg-surface-alt px-3 py-2 text-sm text-body outline-none"
+                        onFocus={(e) => e.currentTarget.select()}
+                      />
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => navigator.clipboard.writeText(shareUrl)}
+                        title="Kopyala"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {shareExpiresAt && (
+                      <p className="text-xs text-muted">
+                        Bitmə tarixi: {new Date(shareExpiresAt).toLocaleString('az-AZ')}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex justify-between gap-2 border-t border-edge pt-4">
+                    <Button variant="danger" size="sm" onClick={() => setRevokingShareLink(true)}>
+                      Ləğv et
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={generateShareLink} isLoading={isGeneratingLink}>
+                      Yenilə
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted">
+                    Bu müştərinin bütün layihə fayllarını əhatə edən, login tələb etməyən paylaşım linki yaradılacaq (7 gün etibarlı, istənilən vaxt ləğv edilə bilər).
+                  </p>
+                  <div className="flex justify-end border-t border-edge pt-4">
+                    <Button onClick={generateShareLink} isLoading={isGeneratingLink}>
+                      Link yarat
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </Modal>
+
+          <ConfirmDialog
+            isOpen={revokingShareLink}
+            onClose={() => setRevokingShareLink(false)}
+            onConfirm={confirmRevokeShareLink}
+            title="Paylaşım linkini ləğv et"
+            message="Bu link artıq işləməyəcək. Davam etmək istədiyinizə əminsiniz?"
+          />
 
           {/* ── Background upload progress pill ── */}
           {uploadPhase !== 'idle' && !isModalOpen && (
