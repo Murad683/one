@@ -49,7 +49,15 @@ const resolveFileUrl = (fileUrl: string | null | undefined): string => {
   const url = sanitizeUrl(fileUrl);
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  return `${BACKEND}${url.startsWith('/') ? '' : '/'}${url}`;
+
+  let normalized = url.replace(/\\/g, '/');
+  if (normalized.startsWith('uploads/')) {
+    normalized = normalized.replace('uploads/', '');
+  } else if (normalized.includes('/uploads/')) {
+    normalized = normalized.split('/uploads/').pop() || normalized;
+  }
+
+  return sanitizeUrl(`${BACKEND}/api/v1/uploads/${normalized}`);
 };
 
 const getExt = (fileName: string | null | undefined): string => fileName?.split('.').pop()?.toLowerCase() ?? '';
