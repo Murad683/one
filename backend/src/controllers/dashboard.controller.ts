@@ -220,9 +220,7 @@ export const submitFeedback = async (req: Request, res: Response): Promise<void>
     const updated = await prisma.deliverable.update({
       where: { id: deliverableId },
       data: {
-        clientFeedback: deliverable.clientFeedback
-          ? `${deliverable.clientFeedback}\n\n--- Yeni Rəy ---\n\n${clientFeedback.trim()}`
-          : clientFeedback.trim(),
+        clientFeedback: clientFeedback.trim(),
       },
     });
 
@@ -245,5 +243,37 @@ export const submitFeedback = async (req: Request, res: Response): Promise<void>
   } catch (err) {
     console.error('submitFeedback error:', err);
     sendError(res, 'Rəy göndərilə bilmədi', 500);
+  }
+};
+
+// ─── DELETE /api/v1/dashboard/deliverables/:id/feedback
+export const deleteFeedback = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const deliverableId = req.params.id as string;
+
+    const deliverable = await prisma.deliverable.findFirst({
+      where: { id: deliverableId },
+    });
+
+    if (!deliverable) {
+      sendError(res, 'Çatdırılma tapılmadı', 404);
+      return;
+    }
+
+    if (deliverable.clientId !== userId) {
+      sendError(res, 'Forbidden', 403);
+      return;
+    }
+
+    await prisma.deliverable.update({
+      where: { id: deliverableId },
+      data: { clientFeedback: null },
+    });
+
+    sendSuccess(res, { id: deliverableId, clientFeedback: null });
+  } catch (err) {
+    console.error('deleteFeedback error:', err);
+    sendError(res, 'Rəy silinə bilmədi', 500);
   }
 };

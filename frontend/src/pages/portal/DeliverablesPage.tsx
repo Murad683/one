@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cinematicEasing } from '../../utils/animations';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Download, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 
 interface Deliverable {
   id: string;
@@ -165,6 +165,8 @@ const PreviewModal = ({
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [feedbackHistory, setFeedbackHistory] = useState(item.clientFeedback || '');
+  const [isEditingFeedback, setIsEditingFeedback] = useState(false);
+  const [isDeletingFeedback, setIsDeletingFeedback] = useState(false);
   const [error, setError] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const [showCommentsMobile, setShowCommentsMobile] = useState(false);
@@ -212,11 +214,39 @@ const PreviewModal = ({
       const updated = res.data.clientFeedback;
       setFeedbackHistory(updated);
       setNewMessage('');
+      setIsEditingFeedback(false);
       onFeedbackSent(item.id, updated);
     } catch {
       setError('Rəy göndərilə bilmədi. Yenidən cəhd edin.');
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const startEditFeedback = () => {
+    setNewMessage(feedbackHistory);
+    setIsEditingFeedback(true);
+  };
+
+  const cancelEditFeedback = () => {
+    setNewMessage('');
+    setIsEditingFeedback(false);
+  };
+
+  const handleDeleteFeedback = async () => {
+    if (!window.confirm('Rəyi silmək istədiyinizə əminsiniz?')) return;
+    setIsDeletingFeedback(true);
+    setError('');
+    try {
+      await apiClient.delete(`/dashboard/deliverables/${item.id}/feedback`);
+      setFeedbackHistory('');
+      setNewMessage('');
+      setIsEditingFeedback(false);
+      onFeedbackSent(item.id, '');
+    } catch {
+      setError('Rəy silinə bilmədi. Yenidən cəhd edin.');
+    } finally {
+      setIsDeletingFeedback(false);
     }
   };
 
@@ -379,8 +409,8 @@ const PreviewModal = ({
           {/* Desktop Comments (Scrollable Area) */}
           <div className="flex-1 min-h-0 overflow-y-auto p-4 custom-scrollbar no-scrollbar hidden md:block">
             {/* Client Comments */}
-            {feedbackHistory && (
-              <div className="flex gap-3">
+            {feedbackHistory && !isEditingFeedback && (
+              <div className="flex gap-3 group">
                  <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center">
                    {igProfilePic ? (
                      <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover" />
@@ -393,6 +423,14 @@ const PreviewModal = ({
                      <span className="font-semibold mr-2">{igUsername}</span>
                      {feedbackHistory}
                    </p>
+                 </div>
+                 <div className="flex items-start gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                   <button onClick={startEditFeedback} title="Redaktə et" className="hover:opacity-60">
+                     <Pencil size={14} />
+                   </button>
+                   <button onClick={handleDeleteFeedback} disabled={isDeletingFeedback} title="Sil" className="hover:opacity-60 disabled:opacity-40">
+                     <Trash2 size={14} />
+                   </button>
                  </div>
               </div>
             )}
@@ -445,34 +483,50 @@ const PreviewModal = ({
                <span className="ml-1 cursor-pointer font-normal"> • See translation</span>
              </div>
 
-             {/* Desktop Input */}
-             <div className="hidden md:flex border-t mt-3 p-4 shrink-0 flex-col" style={{ borderColor: 'var(--ig-border)' }}>
-                {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
-                <div className="flex items-center gap-3">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Add a comment..."
-                    disabled={isSending}
-                    className="flex-1 bg-transparent text-sm focus:outline-none"
-                    style={{ color: 'var(--ig-text)' }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleSendFeedback();
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={handleSendFeedback}
-                    disabled={isSending || !newMessage.trim()}
-                    className="text-sm font-semibold transition-opacity disabled:opacity-40 text-blue-500"
-                  >
-                    {isSending ? '...' : 'Post'}
-                  </button>
-                </div>
-             </div>
+             {/* Desktop Input — shown for the first review, or while editing the existing one */}
+             {(!feedbackHistory || isEditingFeedback) && (
+               <div className="hidden md:flex border-t mt-3 p-4 shrink-0 flex-col" style={{ borderColor: 'var(--ig-border)' }}>
+                  {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Add a comment..."
+                      disabled={isSending}
+                      className="flex-1 bg-transparent text-sm focus:outline-none"
+                      style={{ color: 'var(--ig-text)' }}
+                      autoFocus={isEditingFeedback}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSendFeedback();
+                        }
+                        if (e.key === 'Escape' && isEditingFeedback) {
+                          cancelEditFeedback();
+                        }
+                      }}
+                    />
+                    {isEditingFeedback && (
+                      <button
+                        onClick={cancelEditFeedback}
+                        disabled={isSending}
+                        className="text-sm transition-opacity disabled:opacity-40"
+                        style={{ color: 'var(--ig-text-secondary)' }}
+                      >
+                        Ləğv et
+                      </button>
+                    )}
+                    <button
+                      onClick={handleSendFeedback}
+                      disabled={isSending || !newMessage.trim()}
+                      className="text-sm font-semibold transition-opacity disabled:opacity-40 text-blue-500"
+                    >
+                      {isSending ? '...' : isEditingFeedback ? 'Yenilə' : 'Post'}
+                    </button>
+                  </div>
+               </div>
+             )}
           </div>
 
           {/* Mobile bottom padding filler just in case */}
@@ -506,7 +560,7 @@ const PreviewModal = ({
                      </div>
                   </div>
 
-                  {feedbackHistory && (
+                  {feedbackHistory && !isEditingFeedback && (
                     <div className="flex gap-3">
                        <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden bg-gradient-to-tr from-purple-500 to-orange-500 flex items-center justify-center">
                          {igProfilePic ? (
@@ -521,40 +575,64 @@ const PreviewModal = ({
                            {feedbackHistory}
                          </p>
                        </div>
+                       <div className="flex items-start gap-3 shrink-0">
+                         <button onClick={startEditFeedback} title="Redaktə et" className="hover:opacity-60">
+                           <Pencil size={16} />
+                         </button>
+                         <button onClick={handleDeleteFeedback} disabled={isDeletingFeedback} title="Sil" className="hover:opacity-60 disabled:opacity-40">
+                           <Trash2 size={16} />
+                         </button>
+                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="border-t p-3 shrink-0 flex flex-col mb-[env(safe-area-inset-bottom)]" style={{ borderColor: 'var(--ig-border)' }}>
-                   {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
-                   <div className="flex items-center gap-3">
-                     <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--ig-btn-gray-bg)' }}>
-                       {igProfilePic ? <img src={resolveFileUrl(igProfilePic)} alt="avatar" className="w-full h-full object-cover" /> : null}
+                {(!feedbackHistory || isEditingFeedback) && (
+                  <div className="border-t p-3 shrink-0 flex flex-col mb-[env(safe-area-inset-bottom)]" style={{ borderColor: 'var(--ig-border)' }}>
+                     {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+                     <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--ig-btn-gray-bg)' }}>
+                         {igProfilePic ? <img src={resolveFileUrl(igProfilePic)} alt="avatar" className="w-full h-full object-cover" /> : null}
+                       </div>
+                       <input
+                         type="text"
+                         value={newMessage}
+                         onChange={(e) => setNewMessage(e.target.value)}
+                         placeholder="Add a comment..."
+                         disabled={isSending}
+                         className="flex-1 bg-transparent text-sm focus:outline-none"
+                         style={{ color: 'var(--ig-text)' }}
+                         autoFocus={isEditingFeedback}
+                         onKeyDown={(e) => {
+                           if (e.key === 'Enter') {
+                             e.preventDefault();
+                             handleSendFeedback();
+                           }
+                           if (e.key === 'Escape' && isEditingFeedback) {
+                             cancelEditFeedback();
+                           }
+                         }}
+                       />
+                       {isEditingFeedback && (
+                         <button
+                           onClick={cancelEditFeedback}
+                           disabled={isSending}
+                           className="text-sm transition-opacity disabled:opacity-40"
+                           style={{ color: 'var(--ig-text-secondary)' }}
+                         >
+                           Ləğv et
+                         </button>
+                       )}
+                       <button
+                         onClick={handleSendFeedback}
+                         disabled={isSending || !newMessage.trim()}
+                         className="text-sm font-semibold transition-opacity disabled:opacity-40 text-blue-500"
+                       >
+                         {isSending ? '...' : isEditingFeedback ? 'Yenilə' : 'Post'}
+                       </button>
                      </div>
-                     <input
-                       type="text"
-                       value={newMessage}
-                       onChange={(e) => setNewMessage(e.target.value)}
-                       placeholder="Add a comment..."
-                       disabled={isSending}
-                       className="flex-1 bg-transparent text-sm focus:outline-none"
-                       style={{ color: 'var(--ig-text)' }}
-                       onKeyDown={(e) => {
-                         if (e.key === 'Enter') {
-                           e.preventDefault();
-                           handleSendFeedback();
-                         }
-                       }}
-                     />
-                     <button
-                       onClick={handleSendFeedback}
-                       disabled={isSending || !newMessage.trim()}
-                       className="text-sm font-semibold transition-opacity disabled:opacity-40 text-blue-500"
-                     >
-                       {isSending ? '...' : 'Post'}
-                     </button>
-                   </div>
-                </div>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
