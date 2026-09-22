@@ -53,11 +53,6 @@ const resolveFileUrl = (fileUrl: string | null | undefined): string => {
 
 const getExt = (fileName: string | null | undefined): string => fileName?.split('.').pop()?.toLowerCase() ?? '';
 
-const isVideoFile = (mimeType: string | null | undefined, fileName: string | null | undefined): boolean => {
-  if (mimeType?.startsWith('video/')) return true;
-  return ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(getExt(fileName));
-};
-
 const isImageFile = (mimeType: string | null | undefined, fileName: string | null | undefined): boolean => {
   if (mimeType?.startsWith('image/')) return true;
   return ['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'].includes(getExt(fileName));
