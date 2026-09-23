@@ -40,11 +40,10 @@ const PricingCard = ({ pkg, openModal }: { pkg: any, openModal: (pkg: any) => vo
         pkg.isPopular ? 'pt-10' : ''
       }`}
       style={{
-        backgroundColor: pkg.isPopular ? 'var(--card-bg)' : 'var(--card-bg-solid)',
-        borderColor: pkg.isPopular ? 'var(--accent-text)' : 'var(--card-border-strong)',
-        borderTopColor: pkg.isPopular ? 'var(--accent-text)' : 'var(--card-border-top-strong)',
+        backgroundColor: 'var(--card-bg)',
+        borderColor: pkg.isPopular ? 'var(--accent-text)' : 'var(--card-border)',
+        borderTopColor: pkg.isPopular ? 'var(--accent-text)' : 'var(--card-border-top)',
         borderWidth: pkg.isPopular ? '1.5px' : '1px',
-        boxShadow: pkg.isPopular ? undefined : 'var(--card-shadow)',
       }}
     >
       <div

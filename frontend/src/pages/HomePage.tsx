@@ -1,8 +1,7 @@
 import HeroSection from '../components/sections/HeroSection';
-import IntroRiseSection from '../components/sections/IntroRiseSection';
+import MarqueeBanner from '../components/sections/MarqueeBanner';
 import ServicesSection from '../components/sections/ServicesSection';
 import FeaturedPortfolioSection from '../components/sections/FeaturedPortfolioSection';
-import TeamAccordionSection from '../components/sections/TeamAccordionSection';
 import PageTransition from '../components/utils/PageTransition';
 import { useSeo } from '../hooks/useSeo';
 
@@ -17,10 +16,9 @@ const HomePage = () => {
   return (
     <PageTransition>
       <HeroSection />
-      <IntroRiseSection />
+      <MarqueeBanner />
       <ServicesSection />
       <FeaturedPortfolioSection />
-      <TeamAccordionSection />
     </PageTransition>
   );
 };

@@ -75,22 +75,25 @@
   --card-bg: rgba(255, 255, 255, 0.03);
   --card-border: rgba(255, 255, 255, 0.05);
   --card-border-top: rgba(255, 255, 255, 0.10);
-  --card-bg-solid: rgba(255, 255, 255, 0.055);
-  --card-border-strong: rgba(255, 255, 255, 0.12);
-  --card-border-top-strong: rgba(255, 255, 255, 0.18);
-  --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.30);
   --input-bg: rgba(255, 255, 255, 0.05);
   --input-border: rgba(255, 255, 255, 0.10);
   --modal-bg: rgba(18, 18, 18, 0.95);
   --modal-backdrop: rgba(0, 0, 0, 0.80);
   --glow-accent: rgba(163, 230, 53, 0.15);
   --glow-accent-subtle: rgba(163, 230, 53, 0.07);
-  --overlay-hero-from: rgba(0, 0, 0, 0.25);
-  --overlay-hero-via: rgba(0, 0, 0, 0.35);
+  --overlay-hero-from: rgba(0, 0, 0, 0.50);
+  --overlay-hero-via: rgba(0, 0, 0, 0.60);
   --shadow-navbar: 0 10px 40px -10px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
   --shadow-button: 0 4px 12px rgba(0,0,0,0.2), inset 0 0 0 1px rgba(255,255,255,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
   --accent-text: #A3E635;
   --accent-on-accent: #000000;
+  --bg-image: url('/dark-back.webp');
+  /* Heavy veil over --bg-image on <body>. In the normal viewport the fixed
+     GlobalBackground sits on top so this barely bleeds through (~7%); its job
+     is only to stop iOS Safari flashing a flat-black strip past the last
+     viewport — there it reads as near-black with a faint texture instead of a
+     hard black band. */
+  --bg-veil: rgba(10, 10, 10, 0.72);
   --icon-invert: 1;
   
   /* Instagram Profile Variables (Dark) */
@@ -106,7 +109,7 @@
 
 /* ─── Light Theme ───────────────────────────── */
 .light {
-  --bg-primary: #FAF8F4;
+  --bg-primary: #E1EFE7;
   --bg-secondary: #FFFFFF;
   --bg-elevated: rgba(0, 0, 0, 0.03);
   --bg-elevated-hover: rgba(0, 0, 0, 0.06);
@@ -124,22 +127,20 @@
   --card-bg: rgba(255, 255, 255, 0.40);
   --card-border: rgba(0, 0, 0, 0.06);
   --card-border-top: rgba(255, 255, 255, 0.50);
-  --card-bg-solid: rgba(255, 255, 255, 0.65);
-  --card-border-strong: rgba(0, 0, 0, 0.14);
-  --card-border-top-strong: rgba(255, 255, 255, 0.70);
-  --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   --input-bg: rgba(255, 255, 255, 0.50);
   --input-border: rgba(0, 0, 0, 0.10);
-  --modal-bg: rgba(250, 248, 244, 0.97);
+  --modal-bg: rgba(255, 255, 255, 0.97);
   --modal-backdrop: rgba(0, 0, 0, 0.40);
   --glow-accent: rgba(101, 163, 13, 0.12);
   --glow-accent-subtle: rgba(101, 163, 13, 0.06);
   --overlay-hero-from: transparent;
-  --overlay-hero-via: rgba(250, 248, 244, 0.15);
+  --overlay-hero-via: rgba(225, 239, 231, 0.35);
   --shadow-navbar: 0 10px 40px -10px rgba(0,0,0,0.05), inset 0 0 0 1px rgba(255,255,255,0.4), inset 0 1px 0 rgba(255,255,255,0.6);
   --shadow-button: 0 4px 12px rgba(0,0,0,0.05), inset 0 0 0 1px rgba(255,255,255,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
   --accent-text: #65A30D;
   --accent-on-accent: #000000;
+  --bg-image: url('/light-back.webp');
+  --bg-veil: rgba(225, 239, 231, 0.6);
   --icon-invert: 0;
 
   /* Instagram Profile Variables (Light) */
@@ -165,6 +166,16 @@
 @layer base {
   body {
     background-color: var(--bg-primary);
+    /* Base background carried by <body> itself (not only the fixed
+       GlobalBackground layer) so iOS Safari never exposes a flat-black strip
+       past the last viewport. Attachment: fixed matches the fixed layer where
+       supported; where iOS falls back to scroll it simply covers the full
+       page, which is also fine. */
+    background-image: linear-gradient(var(--bg-veil), var(--bg-veil)), var(--bg-image);
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     color: var(--text-primary);
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -175,6 +186,7 @@
   }
 
   html {
+    overflow-x: hidden !important;
     scroll-behavior: smooth;
     width: 100%;
     scrollbar-width: thin;
@@ -206,22 +218,6 @@
   h4 {
     font-family: 'Manrope', 'Plus Jakarta Sans', sans-serif;
   }
-}
-
-/* ─── Lenis Smooth Scroll ─────────────────── */
-/* Standard Lenis boilerplate CSS: Lenis (v1.x) auto-adds the `lenis` class
-   to <html> and toggles `lenis-smooth`/`lenis-stopped`. `scroll-behavior:
-   auto` overrides the native `scroll-behavior: smooth` set on `html` above
-   while Lenis is driving scroll, so the two don't fight each other. */
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
-}
-.lenis.lenis-stopped {
-  overflow: hidden;
 }
 
 /* ─── No Scrollbar Utility ─────────────────── */
@@ -281,24 +277,6 @@ html.lenis body {
 .liquid-glass-warp {
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
   backdrop-filter: url(#glass-distortion) blur(var(--glass-blur)) saturate(160%);
-}
-
-/* ─── Paper Fold-and-Throw Stack (ServicesSection.tsx) ────────── */
-/* GSAP animates rotateX/rotateY on `.paper-card`; these two properties
-   can't be expressed as Tailwind arbitrary values cleanly together, so they
-   live here instead of inline. `backface-visibility: hidden` is cheap
-   insurance against a mirrored-flip flash if rotation angles are ever
-   tuned past 90deg — current values stay well under that. `overflow: hidden`
-   keeps long titles/descriptions from spilling past the card's rounded
-   edge — the ghost numeral is positioned at a positive inset (ServiceCard.tsx)
-   specifically so this doesn't clip it. */
-.stack-3d {
-  perspective: 1400px;
-  transform-style: preserve-3d;
-}
-.paper-card {
-  backface-visibility: hidden;
-  overflow: hidden;
 }
 
 /* Mobile optimizations for performance */

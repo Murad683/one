@@ -4,7 +4,6 @@ import { cinematicEasing } from '../../utils/animations';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Download, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
-import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 
 interface Deliverable {
   id: string;
@@ -266,8 +265,6 @@ export const PreviewModal = ({
     document.body.removeChild(link);
   };
 
-  useLockBodyScroll(true);
-
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -276,9 +273,21 @@ export const PreviewModal = ({
       }
     };
     window.addEventListener('keydown', handleEscape);
+    
+    // Body scroll lock with scroll position preservation
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
 
     return () => {
       window.removeEventListener('keydown', handleEscape);
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      window.scrollTo(0, scrollY);
     };
   }, [onClose, showCommentsMobile]);
 
