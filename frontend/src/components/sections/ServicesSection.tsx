@@ -83,9 +83,9 @@ const ServicesSection = () => {
       });
     }, pinRef);
 
-    const id = setTimeout(() => ScrollTrigger.refresh(), 300);
+    const raf = requestAnimationFrame(() => ScrollTrigger.refresh());
     return () => {
-      clearTimeout(id);
+      cancelAnimationFrame(raf);
       ctx.revert();
     };
   }, [services, reduceMotion]);
@@ -106,7 +106,7 @@ const ServicesSection = () => {
           className="relative rounded-t-[3rem] md:rounded-t-[4rem] overflow-hidden"
         >
           {loading || !services || services.length === 0 ? (
-            <div className="min-h-[40vh]" />
+            <div className="min-h-dvh" />
           ) : reduceMotion ? (
             <div className="max-w-5xl mx-auto px-6 md:px-16 pt-16 pb-16">
               <motion.span

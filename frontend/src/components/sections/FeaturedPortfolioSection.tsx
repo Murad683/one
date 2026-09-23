@@ -76,14 +76,14 @@ const FeaturedPortfolioSection = () => {
       });
     }, pinRef);
 
-    const id = setTimeout(() => ScrollTrigger.refresh(), 300);
+    const raf = requestAnimationFrame(() => ScrollTrigger.refresh());
     return () => {
-      clearTimeout(id);
+      cancelAnimationFrame(raf);
       ctx.revert();
     };
   }, [projects, reduceMotion]);
 
-  if (projectsLoading) return null;
+  if (projectsLoading) return <section className="pt-32 min-h-dvh" style={{ backgroundColor: 'transparent' }} />;
 
   return (
     <section

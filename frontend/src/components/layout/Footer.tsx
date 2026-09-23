@@ -98,7 +98,7 @@ export default function Footer() {
   return (
     <div ref={ref}>
       <motion.footer
-        style={{ y, scale, backgroundColor: '#101114' }}
+        style={{ y, scale, translateZ: 0, willChange: 'transform', backgroundColor: '#101114' }}
         className="relative overflow-hidden rounded-t-[2rem] md:rounded-t-[2.5rem] px-6 md:px-16 pt-16 md:pt-20 pb-10"
       >
         <div

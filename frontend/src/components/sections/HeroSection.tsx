@@ -21,7 +21,7 @@ const BOARD_OFFSET = (BOARD_SIZE - 100) / 2; // % — centers the oversized boar
 // the order (and mixing rotation signs/magnitudes more) is what actually
 // sells "scattered", not the individual positions themselves.
 const CARD_SLOTS = [
-  { top: 20, left: 20, size: 'w-28 md:w-36', rotate: -12, mobile: false },
+  { top: 20, left: 20, size: 'w-28 md:w-36', rotate: -12, mobile: true },
   { top: 38, left: 26, size: 'w-24 md:w-32', rotate: 8, mobile: true },
   { top: 16, left: 66, size: 'w-32 md:w-40', rotate: 9, mobile: false },
   { top: 50, left: 16, size: 'w-28 md:w-36', rotate: -4, mobile: false },
@@ -32,7 +32,7 @@ const CARD_SLOTS = [
   // Hero was clipping its own content, IntroRiseSection just happened to
   // start right after with no visual gap).
   { top: 60, left: 56, size: 'w-28 md:w-32', rotate: -7, mobile: true },
-  { top: 58, left: 76, size: 'w-28 md:w-36', rotate: 5, mobile: false },
+  { top: 58, left: 76, size: 'w-28 md:w-36', rotate: 5, mobile: true },
   { top: 48, left: 78, size: 'w-24 md:w-32', rotate: -6, mobile: false },
 ];
 
@@ -135,7 +135,7 @@ const HeroSection = () => {
     };
   }, [reduceMotion, pointerX, pointerY]);
 
-  if (loading || !settings) return <section className="min-h-screen bg-transparent" />;
+  if (loading || !settings) return <section className="min-h-dvh bg-transparent" />;
 
   // Featured first (admin-curated quality signal), then fill the remainder
   // with the most recent other projects, deduped by id, capped at
@@ -168,7 +168,7 @@ const HeroSection = () => {
 
   return (
     <section
-      className="min-h-screen relative flex flex-col items-center justify-center text-center px-6 overflow-hidden"
+      className="min-h-dvh relative flex flex-col items-center justify-center text-center px-6 overflow-hidden"
       onMouseMove={handlePointerMove}
       onMouseLeave={handlePointerLeave}
     >
@@ -235,7 +235,7 @@ const HeroSection = () => {
             page background here instead makes that boundary the visible
             edge, so it looks intentional either way. */}
         <div
-          className="absolute inset-x-0 bottom-0 h-28 md:h-36 pointer-events-none z-10"
+          className="absolute inset-x-0 bottom-0 h-16 md:h-36 pointer-events-none z-10"
           style={{ background: 'linear-gradient(to bottom, transparent, var(--bg-primary))' }}
           aria-hidden
         />

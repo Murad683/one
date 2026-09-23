@@ -46,7 +46,7 @@ const IntroRiseSection = () => {
   return (
     <div ref={ref}>
       <motion.section
-        style={{ y, scale, backgroundColor: '#101114' }}
+        style={{ y, scale, translateZ: 0, willChange: 'transform', backgroundColor: '#101114' }}
         className="min-h-screen rounded-t-[2rem] md:rounded-t-[2.5rem] px-6 md:px-16 pt-28 pb-24 flex flex-col justify-between"
       >
         <div>
