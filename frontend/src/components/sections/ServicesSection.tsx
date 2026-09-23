@@ -60,7 +60,14 @@ const ServicesSection = () => {
           trigger: pinRef.current,
           start: 'top top',
           end: () => '+=' + window.innerHeight * (cards.length - 0.3),
-          scrub: 0.5,
+          // `true` instead of a numeric lag: Lenis already smooths/inerts the
+          // scroll input (see useSmoothScroll.ts's syncTouch), so a second,
+          // independent lag layer here was fighting it — mid-transition, a
+          // new touch would interrupt Lenis's coast while this scrub was
+          // still easing toward the old target, and the two catching up at
+          // different rates read as a jump right at the Services→Portfolio
+          // boundary.
+          scrub: true,
           pin: pinRef.current,
           anticipatePin: 1,
           invalidateOnRefresh: true,

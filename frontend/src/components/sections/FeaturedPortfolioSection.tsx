@@ -62,7 +62,9 @@ const FeaturedPortfolioSection = () => {
           trigger: pinRef.current,
           start: 'top top',
           end: () => '+=' + window.innerHeight * (cards.length - 0.3),
-          scrub: 0.5,
+          // See ServicesSection.tsx — Lenis (syncTouch) already smooths the
+          // scroll input, so this shouldn't add its own independent lag.
+          scrub: true,
           pin: pinRef.current,
           anticipatePin: 1,
           invalidateOnRefresh: true,
