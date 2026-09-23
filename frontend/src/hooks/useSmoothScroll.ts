@@ -34,7 +34,30 @@ export function useSmoothScroll() {
         easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         smoothWheel: true,
         wheelMultiplier: 0.85,
-        touchMultiplier: 1.6,
+        touchMultiplier: 1,
+        // Lenis leaves touch scrolling to the browser's own native momentum
+        // scroll by default (syncTouch: false) — its RAF loop just observes
+        // `scroll` events rather than driving them, so ScrollTrigger.update
+        // and Framer's scroll-linked transforms end up reacting to whatever
+        // pace iOS's native fling delivers, which is fast, unthrottled, and
+        // completely out of sync with gsap.ticker. That's what read as
+        // "smooth while dragging, choppy after release" — the drag phase's
+        // deltas are small enough to keep up, the momentum phase's aren't.
+        // syncTouch hands touch scrolling to Lenis's own animated loop
+        // (including its own touch-release inertia via touchInertiaExponent/
+        // syncTouchLerp below), so every scroll-driven effect updates on the
+        // same RAF tick as desktop, whether the finger is down or not.
+        syncTouch: true,
+        syncTouchLerp: 0.075,
+        touchInertiaExponent: 1.7,
+        // With syncTouch on, Lenis intercepts touch scroll globally unless a
+        // node opts out — without this, dragging inside any of the app's
+        // internal overflow-y-auto panels (ProjectModal, PackageModal,
+        // ProfileSettingsModal, the portal layout/deliverables list) would
+        // scroll the page behind them instead of the panel's own content.
+        // This makes Lenis auto-detect those nested scrollers instead of
+        // requiring a data-lenis-prevent attribute on each one.
+        allowNestedScroll: true,
       });
       lenis.on('scroll', ScrollTrigger.update);
       lenisInstance = lenis;
