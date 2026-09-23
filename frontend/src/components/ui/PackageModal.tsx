@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Play } from 'lucide-react';
 import { cinematicEasing } from '../../utils/animations';
 import { useTheme } from '../../context/ThemeContext';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 
 interface PackageModalProps {
   isOpen: boolean;
@@ -15,6 +16,8 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
   const backdropRef = useRef<HTMLDivElement>(null);
   const { isDark } = useTheme();
 
+  useLockBodyScroll(isOpen);
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -22,12 +25,10 @@ const PackageModal: React.FC<PackageModalProps> = ({ isOpen, onClose, pkg }) => 
 
     if (isOpen) {
       window.addEventListener('keydown', handleEscape);
-      document.body.classList.add('lock-scroll');
     }
 
     return () => {
       window.removeEventListener('keydown', handleEscape);
-      document.body.classList.remove('lock-scroll');
     };
   }, [isOpen, onClose]);
 

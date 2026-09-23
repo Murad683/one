@@ -28,6 +28,30 @@ export const cockpitItem = {
   },
 };
 
+// Hero wordmark letters — a touch more dramatic than cockpitItem (adds scale)
+// since these are the single largest, most load-bearing glyphs on the page.
+export const letterItem = {
+  hidden: { opacity: 0, y: 28, scale: 0.9 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: cinematicEasing },
+  },
+};
+
+// Hero pinboard cards — settle into place rather than rise, so they read as
+// "placed down" next to the letters "growing up".
+export const cardItem = {
+  hidden: { opacity: 0, y: 20, scale: 0.85 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: cinematicEasing },
+  },
+};
+
 // Page-level enter/exit only. Same easing + shape as before — just shorter, so
 // route changes (with mode="wait") no longer feel like a stall. Content-stagger
 // timings (cinematicTransition / cockpitItem) are untouched.

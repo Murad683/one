@@ -4,6 +4,7 @@ import { NavLink, Link } from 'react-router-dom';
 import { X, Moon, Sun, ChevronRight } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { cinematicEasing } from '../../utils/animations';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -14,16 +15,7 @@ interface MobileMenuProps {
 const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, logoUrl }) => {
   const { toggleTheme, isDark } = useTheme();
 
-  React.useEffect(() => {
-    if (isOpen) {
-      document.body.classList.add('lock-scroll');
-    } else {
-      document.body.classList.remove('lock-scroll');
-    }
-    return () => {
-      document.body.classList.remove('lock-scroll');
-    };
-  }, [isOpen]);
+  useLockBodyScroll(isOpen);
 
   const navLinks = [
     { name: 'ANA SƏHİFƏ', path: '/' },

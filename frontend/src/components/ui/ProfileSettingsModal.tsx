@@ -5,6 +5,7 @@ import { X, Camera, Save, Loader2, UploadCloud } from 'lucide-react';
 import { cinematicEasing } from '../../utils/animations';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../api/client';
+import { useLockBodyScroll } from '../../hooks/useLockBodyScroll';
 
 interface ProfileSettingsModalProps {
   isOpen: boolean;
@@ -83,7 +84,9 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
     }
   }, [isOpen, user]);
 
-  // Escape key & scroll lock
+  useLockBodyScroll(isOpen);
+
+  // Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -91,12 +94,10 @@ const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({ isOpen, onC
 
     if (isOpen) {
       window.addEventListener('keydown', handleEscape);
-      document.body.classList.add('lock-scroll');
     }
 
     return () => {
       window.removeEventListener('keydown', handleEscape);
-      document.body.classList.remove('lock-scroll');
     };
   }, [isOpen, onClose]);
 
