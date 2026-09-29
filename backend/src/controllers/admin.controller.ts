@@ -185,6 +185,7 @@ export const uploadInvoice = async (req: Request, res: Response): Promise<void> 
 export const getAllTickets = async (_req: Request, res: Response): Promise<void> => {
   try {
     const tickets = await prisma.ticket.findMany({
+      where: { hiddenByAdminAt: null },
       orderBy: { createdAt: 'desc' },
       include: {
         user: {
@@ -232,6 +233,34 @@ export const updateTicketStatus = async (req: Request, res: Response): Promise<v
   } catch (err) {
     console.error('updateTicketStatus error:', err);
     sendError(res, 'Bilet statusunu yeniləmək mümkün olmadı', 500);
+  }
+};
+
+// ─── DELETE /api/v1/admin/tickets/:id ──────────
+// Hides the ticket from the admin list only; the client keeps seeing it.
+export const deleteTicket = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) {
+      sendError(res, 'Bilet ID düzgün deyil', 400);
+      return;
+    }
+
+    const ticket = await prisma.ticket.findUnique({ where: { id } });
+    if (!ticket) {
+      sendError(res, 'Bilet tapılmadı', 404);
+      return;
+    }
+
+    await prisma.ticket.update({
+      where: { id },
+      data: { hiddenByAdminAt: new Date() },
+    });
+
+    sendSuccess(res, { id });
+  } catch (err) {
+    console.error('deleteTicket error:', err);
+    sendError(res, 'Bileti silmək mümkün olmadı', 500);
   }
 };
 

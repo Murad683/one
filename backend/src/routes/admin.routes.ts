@@ -6,6 +6,7 @@ import {
   uploadInvoice,
   getAllTickets,
   updateTicketStatus,
+  deleteTicket,
   getUserPayments,
   deletePayment,
   getDashboardStats,
@@ -140,6 +141,7 @@ router.post('/invoices/upload', verifyTokenMiddleware, isAdmin, uploadRateLimite
 
 router.get('/tickets', verifyTokenMiddleware, isAdmin, getAllTickets);
 router.patch('/tickets/:id/status', verifyTokenMiddleware, isAdmin, updateTicketStatus);
+router.delete('/tickets/:id', verifyTokenMiddleware, isAdmin, deleteTicket);
 
 // Payment history routes
 router.get('/payments/user/:userId', verifyTokenMiddleware, isAdmin, getUserPayments);

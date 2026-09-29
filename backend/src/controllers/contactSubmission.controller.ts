@@ -1,17 +1,31 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
 
 // GET /api/v1/contact-submissions
 export const getSubmissions = async (req: Request, res: Response): Promise<void> => {
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+  const q = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 100) : '';
+  const where: Prisma.ContactSubmissionWhereInput = q
+    ? {
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { email: { contains: q, mode: 'insensitive' } },
+          { companyName: { contains: q, mode: 'insensitive' } },
+          { serviceName: { contains: q, mode: 'insensitive' } },
+          { message: { contains: q, mode: 'insensitive' } },
+        ],
+      }
+    : {};
   const [submissions, total] = await Promise.all([
     prisma.contactSubmission.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
     }),
-    prisma.contactSubmission.count(),
+    prisma.contactSubmission.count({ where }),
   ]);
   res.json({ submissions, total, page, limit });
 };

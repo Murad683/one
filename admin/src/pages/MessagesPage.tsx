@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
-import { Mail, MailOpen, Trash2, Eye } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Mail, MailOpen, Trash2, Eye, Search } from 'lucide-react';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import Table from '../components/ui/Table';
 import type { TableColumn } from '../components/ui/Table';
 import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { useMessageStore } from '../store/messageStore';
 
 interface ContactSubmission extends Record<string, unknown> {
@@ -40,25 +42,40 @@ export const MessagesPage = () => {
   const [total, setTotal] = useState(0);
   const limit = 15;
 
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search.trim(), 400);
+  const requestId = useRef(0);
+
   const fetchUnreadCount = useMessageStore((state) => state.fetchUnreadCount);
 
-  const fetchMessages = async () => {
+  const fetchMessages = async (targetPage = page) => {
+    const currentRequest = ++requestId.current;
     setIsLoading(true);
     setError('');
     try {
-      const response = await api.get<SubmissionListResponse>(`/admin/messages?page=${page}&limit=${limit}`);
+      const params = new URLSearchParams({ page: String(targetPage), limit: String(limit) });
+      if (debouncedSearch) params.set('q', debouncedSearch);
+      const response = await api.get<SubmissionListResponse>(`/admin/messages?${params.toString()}`);
+      if (currentRequest !== requestId.current) return;
       setMessages(response.data.submissions);
       setTotal(response.data.total);
     } catch (err) {
+      if (currentRequest !== requestId.current) return;
       setError(requestErrorMessage(err, 'Mesajlar yüklənə bilmədi.'));
     } finally {
-      setIsLoading(false);
+      if (currentRequest === requestId.current) setIsLoading(false);
     }
   };
 
+  // A new search always starts from the first page.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
   useEffect(() => {
     fetchMessages();
-  }, [page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, debouncedSearch]);
 
   const markAsRead = async (message: ContactSubmission) => {
     if (message.isRead) return;
@@ -83,7 +100,10 @@ export const MessagesPage = () => {
     try {
       await api.delete(`/contact-submissions/${deleting.id}`);
       setDeleting(null);
-      await fetchMessages();
+      // Deleting the last item on a page would leave it empty; step back one page.
+      const targetPage = messages.length === 1 && page > 1 ? page - 1 : page;
+      if (targetPage !== page) setPage(targetPage);
+      else await fetchMessages();
       await fetchUnreadCount();
     } catch (err) {
       setError(requestErrorMessage(err, 'Mesaj silinə bilmədi.'));
@@ -145,13 +165,30 @@ export const MessagesPage = () => {
           <p className="mt-1 text-sm text-muted">Müştəri müraciətlərini idarə edin.</p>
         </div>
         <Badge variant="info" className="px-3 py-1 text-sm self-start sm:self-center">
-          Cəmi {total} Mesaj
+          {debouncedSearch ? `Tapıldı: ${total}` : `Cəmi ${total} Mesaj`}
         </Badge>
       </div>
 
       {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-      <Table columns={columns} data={messages} isLoading={isLoading} emptyMessage="Gələnlər qutusu boşdur." />
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+        <Input
+          type="search"
+          name="message-search"
+          placeholder="Ad, e-poçt, şirkət, xidmət və ya mesaj üzrə axtar..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      <Table
+        columns={columns}
+        data={messages}
+        isLoading={isLoading}
+        emptyMessage={debouncedSearch ? 'Axtarışa uyğun mesaj tapılmadı.' : 'Gələnlər qutusu boşdur.'}
+      />
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-4 py-2">
@@ -209,6 +246,8 @@ export const MessagesPage = () => {
         onConfirm={deleteMessage}
         title="Mesajı sil"
         message={`${deleting?.name} tərəfindən göndərilən mesajı silmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz.`}
+        confirmText="Sil"
+        cancelText="Ləğv et"
       />
     </div>
   );

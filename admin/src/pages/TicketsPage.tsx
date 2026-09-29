@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 
 import Table from '../components/ui/Table';
 import type { TableColumn } from '../components/ui/Table';
@@ -8,7 +8,10 @@ import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope } from '../lib/apiHelpers';
 import useToastStore from '../store/useToastStore';
 import Modal from '../components/ui/Modal';
-import { Eye } from 'lucide-react';
+import Button from '../components/ui/Button';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import Input from '../components/ui/Input';
+import { Eye, Search, Trash2 } from 'lucide-react';
 
 interface Ticket extends Record<string, unknown> {
   id: number;
@@ -38,6 +41,10 @@ export const TicketsPage = () => {
   const [error, setError] = useState('');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [deleting, setDeleting] = useState<Ticket | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const fetchTickets = useCallback(async () => {
     setIsLoading(true);
@@ -66,6 +73,34 @@ export const TicketsPage = () => {
       setUpdatingId(null);
     }
   };
+
+  const handleDelete = async () => {
+    if (!deleting) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(`/admin/tickets/${deleting.id}`);
+      addToast('Sorğu silindi.', 'success');
+      setDeleting(null);
+      await fetchTickets();
+    } catch (err) {
+      addToast(requestErrorMessage(err, 'Sorğu silinə bilmədi.'), 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const filteredTickets = useMemo(() => {
+    const q = search.trim().toLocaleLowerCase('az');
+    return tickets.filter((t) => {
+      if (statusFilter && t.status !== statusFilter) return false;
+      if (!q) return true;
+      return [t.user.name, t.user.email, t.subject, t.body].some((v) =>
+        (v ?? '').toLocaleLowerCase('az').includes(q),
+      );
+    });
+  }, [tickets, search, statusFilter]);
+
+  const isFiltering = Boolean(search.trim() || statusFilter);
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString('az-AZ', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -118,6 +153,16 @@ export const TicketsPage = () => {
           >
             <Eye size={16} />
           </button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDeleting(t)}
+            className="text-red-600 hover:bg-red-50"
+            aria-label="Sorğunu sil"
+            title="Sorğunu sil"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       ),
     },
@@ -130,7 +175,47 @@ export const TicketsPage = () => {
         <p className="mt-1 text-sm text-muted">Müştəri dəstək biletlərini idarə edin.</p>
       </div>
       {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-      <Table columns={columns} data={tickets} isLoading={isLoading} emptyMessage="Heç bir dəstək sorğusu tapılmadı." />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+          <Input
+            type="search"
+            name="ticket-search"
+            placeholder="Müştəri, e-poçt, mövzu və ya mesaj üzrə axtar..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="rounded-lg border border-field-border bg-surface px-3 py-2 text-sm text-body"
+          aria-label="Status filtri"
+        >
+          <option value="">Bütün statuslar</option>
+          <option value="OPEN">Açıq</option>
+          <option value="IN_PROGRESS">İcrada</option>
+          <option value="CLOSED">Bağlı</option>
+        </select>
+      </div>
+      <Table
+        columns={columns}
+        data={filteredTickets}
+        isLoading={isLoading}
+        emptyMessage={isFiltering ? 'Axtarışa uyğun sorğu tapılmadı.' : 'Heç bir dəstək sorğusu tapılmadı.'}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(deleting)}
+        onClose={() => setDeleting(null)}
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+        title="Sorğunu sil"
+        message={`"${deleting?.subject ?? ''}" sorğusunu siyahıdan silmək istədiyinizə əminsiniz? Müştəri bu sorğunu öz kabinetində görməyə davam edəcək.`}
+        confirmText="Sil"
+        cancelText="Ləğv et"
+      />
 
       <Modal
         isOpen={!!selectedTicket}
