@@ -1,4 +1,4 @@
-name: Deploy backend to Hetzner
+name: Deploy backend to Contabo
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: hetzner-backend-deploy
+  group: contabo-backend-deploy
   cancel-in-progress: true
 
 jobs:
@@ -20,21 +20,21 @@ jobs:
     steps:
       - name: Deploy over SSH
         env:
-          HETZNER_HOST: ${{ secrets.HETZNER_HOST }}
-          HETZNER_USER: ${{ secrets.HETZNER_USER }}
-          HETZNER_SSH_KEY: ${{ secrets.HETZNER_SSH_KEY }}
+          CONTABO_HOST: ${{ secrets.CONTABO_HOST }}
+          CONTABO_USER: ${{ secrets.CONTABO_USER }}
+          CONTABO_SSH_KEY: ${{ secrets.CONTABO_SSH_KEY }}
         run: |
           set -euo pipefail
 
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           # write key, tolerate CRLF from the secret store, ensure trailing newline
-          printf '%s\n' "$HETZNER_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          printf '%s\n' "$CONTABO_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null || { echo "::error::HETZNER_SSH_KEY is not a valid private key"; exit 1; }
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null || { echo "::error::CONTABO_SSH_KEY is not a valid private key"; exit 1; }
 
           # pin host key (TOFU); accept-new also covers first connect
-          ssh-keyscan -t rsa,ecdsa,ed25519 "$HETZNER_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh-keyscan -t rsa,ecdsa,ed25519 "$CONTABO_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
           timeout 600 ssh \
             -o BatchMode=yes \
@@ -44,4 +44,4 @@ jobs:
             -o ServerAliveInterval=15 \
             -o ServerAliveCountMax=6 \
             -i ~/.ssh/deploy_key \
-            "$HETZNER_USER@$HETZNER_HOST" 'bash /opt/one-agency/deploy.sh'
+            "$CONTABO_USER@$CONTABO_HOST" 'bash /opt/one-agency/deploy.sh'
