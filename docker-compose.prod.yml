@@ -9,6 +9,12 @@
 #
 # Note DATABASE_URL host is "db" (the Docker service name below), not localhost —
 # this is the one value that differs from a bare-metal deployment.
+#
+# IMPORTANT: `${DB_NAME}` etc. below are resolved by the docker compose CLI itself
+# from a `.env` file *next to this compose file* (repo root) — NOT from the
+# `env_file:` entries, which only inject vars into the container's own environment.
+# So a repo-root `.env` with just DB_NAME/DB_USER/DB_PASSWORD (same values as in
+# backend/.env) must also exist on the server for the `db` service to start.
 
 services:
   api:
@@ -42,7 +48,10 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - one_agency_db_data:/var/lib/postgresql/data
+      # postgres:18+ images changed the expected data location — the single mount
+      # point is now /var/lib/postgresql (NOT /var/lib/postgresql/data, which was
+      # correct for 15/16/17). Using the old path makes the image refuse to start.
+      - one_agency_db_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
