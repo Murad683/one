@@ -1,0 +1,55 @@
+# One Agency — production stack (Contabo/Hetzner deploy target)
+#
+# Config comes from backend/.env (created directly on the server, NOT committed).
+# That file must include, in addition to the usual backend vars:
+#   DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@db:5432/<DB_NAME>
+#   DB_NAME=oneagency
+#   DB_USER=oneagency
+#   DB_PASSWORD=<strong random value>
+#
+# Note DATABASE_URL host is "db" (the Docker service name below), not localhost —
+# this is the one value that differs from a bare-metal deployment.
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: one-agency-api
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    ports:
+      - "127.0.0.1:5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/health', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  db:
+    image: postgres:18-alpine
+    container_name: one-agency-db
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - one_agency_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # intentionally no host port mapping — only the api container can reach this DB
+
+volumes:
+  one_agency_db_data:
+    name: one_agency_db_data
