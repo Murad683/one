@@ -3,6 +3,7 @@ import { Plus, Save, X, UploadCloud } from 'lucide-react';
 import Button from '../ui/Button';
 import Combobox from '../ui/Combobox';
 import { api } from '../../lib/api';
+import { useAuthStore } from '../../store/authStore';
 import { requestErrorMessage } from '../../lib/apiHelpers';
 
 interface HighlightItem {
@@ -15,7 +16,7 @@ interface HighlightItem {
 interface ClientUser {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   igHighlights?: { title: string; imageUrl: string }[];
 }
 
@@ -46,6 +47,7 @@ const resolveFileUrl = (fileUrl: string | null | undefined): string => {
 };
 
 export const HighlightsManager: React.FC<HighlightsManagerProps> = ({ clients, onRefreshClients }) => {
+  const isCreator = useAuthStore((state) => state.user?.role === 'CREATOR');
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [highlights, setHighlights] = useState<HighlightItem[]>([]);
   const [newHighlightTitle, setNewHighlightTitle] = useState('');
@@ -141,7 +143,8 @@ export const HighlightsManager: React.FC<HighlightsManagerProps> = ({ clients, o
         }
       }
 
-      await api.patch(`/users/${selectedClientId}`, {
+      // Creators use a narrow endpoint that can only touch igHighlights.
+      await api.patch(isCreator ? `/creator/clients/${selectedClientId}/highlights` : `/users/${selectedClientId}`, {
         igHighlights: finalHighlights,
       });
 

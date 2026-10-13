@@ -40,6 +40,7 @@ export const AdminLayout = () => {
   const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
+  const isCreator = user?.role === 'CREATOR';
   const unreadCount = useMessageStore((state) => state.unreadCount);
   const fetchUnreadCount = useMessageStore((state) => state.fetchUnreadCount);
   const { theme, toggle: toggleTheme } = useThemeStore();
@@ -48,6 +49,9 @@ export const AdminLayout = () => {
   useEffect(() => {
     let isMounted = true;
 
+    // Creators have no access to the messages endpoint.
+    if (isCreator) return;
+
     fetchUnreadCount().catch(() => {
       if (isMounted) useMessageStore.getState().setUnreadCount(0);
     });
@@ -55,7 +59,7 @@ export const AdminLayout = () => {
     return () => {
       isMounted = false;
     };
-  }, [fetchUnreadCount]);
+  }, [fetchUnreadCount, isCreator]);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -130,7 +134,7 @@ export const AdminLayout = () => {
               ONE<span className="text-blue-600">.</span>
             </h2>
             <p className="truncate text-[10px] uppercase tracking-wider text-muted">
-              {user?.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'}
+              {user?.role === 'SUPER_ADMIN' ? 'Super Admin' : user?.role === 'CREATOR' ? 'Creator' : 'Admin'}
             </p>
           </div>
           {/* Desktop theme toggle */}
@@ -140,6 +144,12 @@ export const AdminLayout = () => {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 py-4 scrollbar-minimal">
+          {isCreator ? (
+            <div className="space-y-1">
+              <SidebarLink item={{ icon: FolderOpen, label: 'Layihə Faylları', path: '/deliverables' }} />
+            </div>
+          ) : (
+          <>
           <div className="space-y-1">
             <SidebarLink item={{ icon: LayoutDashboard, label: 'İdarəetmə Paneli', path: '/' }} />
             <SidebarLink item={{ icon: Briefcase, label: 'Portfolio', path: '/portfolio' }} />
@@ -174,6 +184,8 @@ export const AdminLayout = () => {
               ))}
             </div>
           </div>
+          </>
+          )}
         </nav>
 
         <div className="border-t border-edge p-2">

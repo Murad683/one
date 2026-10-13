@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { uploadDeliverableFile as uploadFilesWithProgress, directUploadDeliverableFile } from '../api/deliverables.api';
 import { Download, Edit2, FileX, Image, Link2, MessageCircle, Play, Plus, Search, Trash2, Video, X, Copy } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
+import { useAuthStore } from '../store/authStore';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -28,7 +29,7 @@ type DeliverableStatus = 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED' | 'ARCHIV
 interface ClientUser extends Record<string, unknown> {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   igHighlights?: { title: string; imageUrl: string }[];
   shareUrl?: string | null;
   shareTokenExpiresAt?: string | null;
@@ -296,6 +297,11 @@ export const DeliverablesPage = () => {
   const [revokingShareLink, setRevokingShareLink] = useState(false);
   const [previewItem, setPreviewItem] = useState<Deliverable | null>(null);
   const [activeTab, setActiveTab] = useState<'files' | 'highlights'>('files');
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  // Creators (videographers) get a restricted view: own uploads, no client
+  // emails, no category management; they use /creator/* endpoints for clients.
+  const isCreator = useAuthStore((state) => state.user?.role === 'CREATOR');
+  const shareLinkBase = isCreator ? '/creator/clients' : '/users';
 
   const { register, handleSubmit, reset, control, watch, formState: { errors } } = useForm<DeliverableFormValues>({
     defaultValues,
@@ -323,6 +329,11 @@ export const DeliverablesPage = () => {
   );
 
   const fetchClients = async () => {
+    if (useAuthStore.getState().user?.role === 'CREATOR') {
+      const response = await api.get<ApiEnvelope<ClientUser[]>>('/creator/clients');
+      setClients(response.data.data);
+      return;
+    }
     const response = await api.get<ApiEnvelope<Paginated<ClientUser>>>('/users?role=CLIENT&limit=100');
     setClients(response.data.data.items);
   };
@@ -487,7 +498,7 @@ export const DeliverablesPage = () => {
     setIsGeneratingLink(true);
     try {
       const response = await api.post<ApiEnvelope<{ token: string; url: string; expiresAt: string }>>(
-        `/users/${sharingClient.id}/share-link`,
+        `${shareLinkBase}/${sharingClient.id}/share-link`,
       );
       setShareUrl(response.data.data.url);
       setShareExpiresAt(response.data.data.expiresAt);
@@ -500,7 +511,7 @@ export const DeliverablesPage = () => {
 
   const confirmRevokeShareLink = async () => {
     if (!sharingClient) return;
-    await api.delete(`/users/${sharingClient.id}/share-link`);
+    await api.delete(`${shareLinkBase}/${sharingClient.id}/share-link`);
     setRevokingShareLink(false);
     setShareUrl(null);
     setShareExpiresAt(null);
@@ -653,6 +664,7 @@ export const DeliverablesPage = () => {
         <HighlightsManager clients={clients} onRefreshClients={fetchClients} />
       ) : (
         <>
+          {!isCreator && (
           <section className="space-y-4 pt-2">
             <div>
               <h2 className="text-xl font-semibold text-heading">Fayl Kateqoriyaları (Növlər)</h2>
@@ -711,6 +723,7 @@ export const DeliverablesPage = () => {
               </Button>
             </div>
           </section>
+          )}
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
             <div>
@@ -727,7 +740,7 @@ export const DeliverablesPage = () => {
               <Search className="h-4 w-4 text-faint" />
             </div>
             <Input
-              placeholder="Müştəri adı və ya e-poçt ilə axtarın..."
+              placeholder={isCreator ? 'Müştəri adı ilə axtarın...' : 'Müştəri adı və ya e-poçt ilə axtarın...'}
               className="pl-10"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
@@ -992,7 +1005,12 @@ export const DeliverablesPage = () => {
                     <Button variant="danger" size="sm" onClick={() => setRevokingShareLink(true)}>
                       Ləğv et
                     </Button>
-                    <Button variant="secondary" size="sm" onClick={generateShareLink} isLoading={isGeneratingLink}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={isCreator ? () => setConfirmRegenerate(true) : generateShareLink}
+                      isLoading={isGeneratingLink}
+                    >
                       Yenilə
                     </Button>
                   </div>
@@ -1011,6 +1029,17 @@ export const DeliverablesPage = () => {
               )}
             </div>
           </Modal>
+
+          <ConfirmDialog
+            isOpen={confirmRegenerate}
+            onClose={() => setConfirmRegenerate(false)}
+            onConfirm={async () => {
+              setConfirmRegenerate(false);
+              await generateShareLink();
+            }}
+            title="Paylaşım linkini yenilə"
+            message="Yeni link yaradılacaq və köhnə link işləməyəcək. Kimsə köhnə linki istifadə edirsə, o artıq açılmayacaq. Davam edək?"
+          />
 
           <ConfirmDialog
             isOpen={revokingShareLink}

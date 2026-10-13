@@ -6,7 +6,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'SUPER_ADMIN' | 'CLIENT';
+  role: 'ADMIN' | 'SUPER_ADMIN' | 'CLIENT' | 'CREATOR';
 }
 
 interface ApiEnvelope<T> {
