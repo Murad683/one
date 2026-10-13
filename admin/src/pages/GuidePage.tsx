@@ -531,11 +531,19 @@ export const GuidePage = () => {
               Status sətirdə birbaşa dəyişdirilir (Açıq / İcrada / Bağlı) — seçim edən kimi dərhal tətbiq olunur.
             </li>
             <li>Göz ikonu — sorğunun tam mətnini (müştəri, mövzu, tarix, mesaj) açır.</li>
+            <li>
+              Yuxarıdakı axtarış sahəsi müştəri, e-poçt, mövzu və ya mesaj üzrə, açılan siyahı isə status üzrə
+              (Açıq / İcrada / Bağlı) süzür.
+            </li>
+            <li>
+              Zibil qutusu ikonu — sorğunu <B>admin siyahısından silir (gizlədir)</B>, təsdiq pəncərəsi ilə.
+            </li>
           </ul>
           <Callout tone="warn" title="Diqqət">
             <p>
-              Bu bölmədən müştəriyə <B>cavab yazmaq mümkün deyil</B> — yalnız statusu dəyişdirə və oxuya
-              bilərsiniz. Silmə funksiyası da yoxdur. Cavab lazımdırsa, müştəri ilə başqa kanaldan (e-poçt və s.)
+              Bu bölmədən müştəriyə <B>cavab yazmaq mümkün deyil</B> — yalnız statusu dəyişdirə, oxuya və
+              siyahıdan gizlədə bilərsiniz. Silmək yalnız admin siyahısından gizlədir: müştəri sorğunu öz
+              kabinetində görməyə davam edir. Cavab lazımdırsa, müştəri ilə başqa kanaldan (e-poçt və s.)
               əlaqə saxlanmalıdır.
             </p>
           </Callout>
@@ -546,6 +554,9 @@ export const GuidePage = () => {
           <p>
             Saytın "Əlaqə" formasından göndərilən mesajları idarə edir (portal müraciətlərindən fərqlidir —
             onlar "Sorğular"dadır).
+          </p>
+          <p>
+            Yuxarıdakı axtarış sahəsi ad, e-poçt, şirkət, xidmət və ya mesaj mətni üzrə axtarır.
           </p>
           <Callout tone="info" title="Avtomatik oxundu işarəsi">
             <p>
