@@ -122,7 +122,7 @@ export const MessagesPage = () => {
       key: 'createdAt',
       header: 'Tarix',
       render: (msg) => (
-        <span className={msg.isRead ? 'text-muted' : 'font-semibold text-slate-900'}>
+        <span className={msg.isRead ? 'text-muted' : 'font-semibold text-heading'}>
           {new Date(msg.createdAt).toLocaleDateString()}
         </span>
       ),

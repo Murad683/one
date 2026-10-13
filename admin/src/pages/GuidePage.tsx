@@ -161,18 +161,23 @@ export const GuidePage = () => {
         <Section id="giris" icon={ShieldAlert} num="01" title="Giriş, rollar və menyu">
           <p>
             Admin panelə <Code>/login</Code> ünvanından e-poçt və şifrə ilə daxil olunur. Yalnız rolu{' '}
-            <Code>ADMIN</Code> və ya <Code>SUPER_ADMIN</Code> olan hesablar panelə buraxılır — müştəri (portal)
-            hesabı ilə daxil olmağa cəhd etsəniz, sistem sizi dərhal çıxarıb bildiriş göstərəcək:{' '}
-            <em>"Yalnız admin istifadəçilər bu panelə daxil ola bilər."</em>
+            <Code>ADMIN</Code>, <Code>SUPER_ADMIN</Code> və ya <Code>CREATOR</Code> olan hesablar panelə
+            buraxılır — müştəri (portal) hesabı ilə daxil olmağa cəhd etsəniz, sistem sizi dərhal çıxarıb
+            bildiriş göstərəcək: <em>"Yalnız komanda üzvləri bu panelə daxil ola bilər."</em>
           </p>
-          <Callout tone="info" title="İki rol var">
+          <Callout tone="info" title="Üç rol var">
             <p>
               <B>Admin</B> — gündəlik iş üçün bütün əməliyyat bölmələrinə (Portfolio, Xidmətlər, Paketlər,
               Müştərilər, Layihə Faylları, Sorğular, Mesajlar, Ayarlar) tam giriş var.
             </p>
             <p>
               <B>Super Admin</B> — yuxarıdakı hər şeyə əlavə olaraq, yalnız Super Admin-ə görünən{' '}
-              <B>"Komanda"</B> bölməsindən yeni admin hesabları yarada və silə bilir (Bölmə 11).
+              <B>"Komanda"</B> bölməsindən yeni admin və creator hesabları yarada və silə bilir (Bölmə 11).
+            </p>
+            <p>
+              <B>Creator</B> (videoqraf) — məhdud rol. Panelə girəndə yalnız <B>"Layihə Faylları"</B> bölməsini
+              görür və müştərilərə fayl yükləyə bilir. Ödənişlərə, müştəri e-poçtlarına, mesajlara, ayarlara və
+              digər bölmələrə girişi yoxdur (Bölmə 08-in sonunda ətraflı).
             </p>
           </Callout>
           <p>
@@ -480,7 +485,42 @@ export const GuidePage = () => {
             </li>
           </ul>
 
-          <p>Fayl/Növ silmək — hər ikisi təsdiq pəncərəsi ilə, silinən fayl və ona bağlı məlumatlar həmişəlik itir.</p>
+          <h3 className="pt-2 text-base font-semibold text-heading">Creator (videoqraf) üçün görünüş</h3>
+          <p>
+            Creator rolunda olan istifadəçi eyni "Layihə Faylları" səhifəsini görür, amma məhdud variantda:
+          </p>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>
+              Yükləmə eynidir: <B>"Fayl Əlavə Et"</B> ilə istənilən müştəri üçün yeni fayl yaradıb yükləyə bilər.
+              Müştəri seçiminin altında e-poçt göstərilmir, yalnız ad.
+            </li>
+            <li>
+              Siyahıda <B>yalnız özünün yüklədiyi</B> fayllar görünür. Başqa creator-ın və ya adminin
+              yüklədiyinə baxa, dəyişə və ya silə bilməz.
+            </li>
+            <li>
+              Öz fayllarını redaktə edə (yeni fayl yükləyə, başlıq/müştəri/növ/tarixi dəyişə) və silə bilər.
+              Statusu əl ilə dəyişmək olmur, status yükləmədən sonra avtomatik dəyişir.
+            </li>
+            <li>
+              Müştəri rəy yazanda creator öz faylının yanında <B>"Rəy"</B> işarəsini görür və rəyi oxuya bilir.
+            </li>
+            <li>
+              <B>Önə Çıxanlar</B> və <B>müştərinin paylaşım linki</B> ilə də işləyə bilər (baxmaq, yaratmaq,
+              yeniləmək, ləğv etmək). Linki yeniləmək və ya ləğv etmək köhnə linki dərhal işləməz edir, ona
+              görə sistem əvvəl təsdiq soruşur.
+            </li>
+            <li>Növ (kateqoriya) yarada, adını dəyişə və ya silə bilməz — yalnız mövcud növlərdən seçir.</li>
+          </ul>
+          <Callout tone="info" title="Creator-ın yüklədiyi fayl dərhal görünür">
+            <p>
+              Creator-ın yüklədiyi fayl üçün admin təsdiqi tələb olunmur: emal bitən kimi müştərinin
+              portalında adi qaydada görünür. Nəzarət etmək istəyirsinizsə, "Layihə Faylları" siyahısında bütün
+              faylları (admin kimi) görürsünüz.
+            </p>
+          </Callout>
+
+          <p>Fayl/Növ silmək — hər ikisi təsdiq pəncərəsi ilə, silinən fayl və ona bağlı məlumatlar həmişəlik itir. Təsdiq düyməsinə basandan sonra silmə bitənə qədər düymələr söndürülür və fırlanan işarə görünür — təkrar basmağa ehtiyac yoxdur.</p>
         </Section>
 
         {/* 09 — SORĞULAR */}
@@ -524,17 +564,23 @@ export const GuidePage = () => {
           <Callout tone="warn" title="Yalnız Super Admin">
             <p>Bu bölmə sol menyuda yalnız Super Admin rolunda olan istifadəçilərə görünür.</p>
           </Callout>
-          <p>Panelə giriş edə bilən operator hesablarını (Admin/Super Admin) idarə edir.</p>
+          <p>Panelə giriş edə bilən komanda hesablarını (Admin, Super Admin və Creator) idarə edir.</p>
           <ul className="list-disc space-y-1 pl-5">
             <li>
-              <B>"Yeni Admin"</B> — Ad Soyad, E-poçt, Şifrə (min. 8 simvol) daxil edilir. Yeni yaradılan hesab
-              həmişə adi <B>Admin</B> rolunda olur — bu formadan Super Admin yaratmaq mümkün deyil.
+              <B>"Yeni Üzv"</B> — Rol (Admin və ya Creator), Ad Soyad, E-poçt, Şifrə (min. 8 simvol) daxil
+              edilir. Admin tam idarəetmə hüququ alır, Creator isə yalnız Layihə Faylları bölməsini görür.
+              Bu formadan Super Admin yaratmaq mümkün deyil. Cədvəldə rol rəngli etiketlə göstərilir.
             </li>
             <li>
               Silmək — Super Admin hesabları və özünüzü heç vaxt silə bilməzsiniz (zibil qutusu ikonu belə
-              hesablar üçün göstərilmir). Yalnız adi Admin hesabları silinə bilər.
+              hesablar üçün göstərilmir). Admin və Creator hesabları silinə bilər. Creator silinəndə onun yüklədiyi
+              fayllar silinmir, müştərilər onları görməyə davam edir (yalnız adminlər idarə edir).
             </li>
-            <li>Mövcud adminin adını, e-poçtunu və ya şifrəsini bu bölmədən dəyişmək mümkün deyil.</li>
+            <li>Mövcud üzvün adını, e-poçtunu və ya şifrəsini bu bölmədən dəyişmək mümkün deyil.</li>
+            <li>
+              Təhlükəsizlik: adi Admin yalnız <B>müştəri</B> hesablarını dəyişə və silə bilər. Digər Admin,
+              Creator və Super Admin hesablarına toxuna bilməz — bu əməliyyatlar yalnız Super Admin-dədir.
+            </li>
           </ul>
         </Section>
 
@@ -587,8 +633,13 @@ export const GuidePage = () => {
             digər əlaqə kanalından istifadə edin.
           </FaqItem>
           <FaqItem q="Yeni Super Admin necə yaradıla bilər?">
-            Panel daxilindən mümkün deyil — "Yeni Admin" forması yalnız adi Admin hesabı yaradır. Super
-            Admin rolu yalnız developer tərəfindən verilə bilər.
+            Panel daxilindən mümkün deyil — "Yeni Üzv" forması yalnız Admin və ya Creator hesabı yaradır.
+            Super Admin rolu yalnız developer tərəfindən verilə bilər.
+          </FaqItem>
+          <FaqItem q="Videoqrafa admin hüququ vermədən yükləmə icazəsi necə verə bilərəm?">
+            Komanda → "Yeni Üzv" → Rol: <B>Creator</B> seçin. Creator yalnız Layihə Faylları bölməsini görür
+            və yalnız öz yüklədiyi faylları idarə edə bilir. Girişi bağlamaq üçün həmin hesabı Komanda
+            səhifəsindən silin.
           </FaqItem>
         </Section>
       </div>

@@ -85,7 +85,7 @@ export const AdminManagementPage = () => {
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-hover text-faint">
             <UserIcon className="h-4 w-4" />
           </div>
-          <span className="font-medium text-slate-900">{admin.name}</span>
+          <span className="font-medium text-heading">{admin.name}</span>
         </div>
       ),
     },

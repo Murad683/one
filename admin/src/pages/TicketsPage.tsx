@@ -111,7 +111,7 @@ export const TicketsPage = () => {
       header: 'Müştəri',
       render: (t) => (
         <div>
-          <p className="text-sm font-medium text-slate-900">{t.user.name}</p>
+          <p className="text-sm font-medium text-heading">{t.user.name}</p>
           <p className="text-xs text-muted">{t.user.email}</p>
         </div>
       ),

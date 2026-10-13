@@ -413,7 +413,7 @@ export const UsersPage = () => {
               {
                 key: 'amount',
                 header: 'Məbləğ',
-                render: (p) => <span className="font-medium text-slate-900">{p.amount} AZN</span>,
+                render: (p) => <span className="font-medium text-heading">{p.amount} AZN</span>,
               },
               {
                 key: 'nextPaymentDate',
