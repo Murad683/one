@@ -23,3 +23,6 @@ npm-debug.log*
 .vscode/
 .idea/
 .DS_Store
+
+# Private Claude notes (never commit)
+CLAUDE.local.md
