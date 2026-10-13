@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/deliverable.controller';
 import { verifyTokenMiddleware } from '../middleware/verifyToken.middleware';
-import { isAdmin, isClient } from '../middleware/rbac.middleware';
+import { isAdmin, isAdminOrCreator, isClient } from '../middleware/rbac.middleware';
 import { validate } from '../middleware/validate.middleware';
 import {
   createDeliverableSchema,
@@ -90,7 +90,7 @@ router.get('/my', verifyTokenMiddleware, isClient, ctrl.getMyDeliverables);
  *       403:
  *         description: Forbidden — Admin only
  */
-router.get('/', verifyTokenMiddleware, isAdmin, ctrl.getAllDeliverables);
+router.get('/', verifyTokenMiddleware, isAdminOrCreator, ctrl.getAllDeliverables);
 
 /**
  * @swagger
@@ -131,7 +131,7 @@ router.get('/', verifyTokenMiddleware, isAdmin, ctrl.getAllDeliverables);
  *       404:
  *         description: Client user not found
  */
-router.post('/', verifyTokenMiddleware, isAdmin, validate(createDeliverableSchema), ctrl.createDeliverable);
+router.post('/', verifyTokenMiddleware, isAdminOrCreator, validate(createDeliverableSchema), ctrl.createDeliverable);
 
 /**
  * @swagger
@@ -168,7 +168,7 @@ router.post('/', verifyTokenMiddleware, isAdmin, validate(createDeliverableSchem
 router.patch(
   '/:id/upload',
   verifyTokenMiddleware,
-  isAdmin,
+  isAdminOrCreator,
   uploadRateLimiter,
   ctrl.dynamicUploadMiddleware,
   ctrl.uploadDeliverableFile
@@ -177,21 +177,21 @@ router.patch(
 router.post(
   '/:id/initiate-upload',
   verifyTokenMiddleware,
-  isAdmin,
+  isAdminOrCreator,
   ctrl.initiateDirectUpload
 );
 
 router.post(
   '/:id/finalize-upload',
   verifyTokenMiddleware,
-  isAdmin,
+  isAdminOrCreator,
   ctrl.finalizeDirectUpload
 );
 
 router.post(
   '/:id/initiate-multipart',
   verifyTokenMiddleware,
-  isAdmin,
+  isAdminOrCreator,
   uploadRateLimiter,
   ctrl.initiateMultipartUpload
 );
@@ -199,14 +199,14 @@ router.post(
 router.post(
   '/:id/complete-multipart',
   verifyTokenMiddleware,
-  isAdmin,
+  isAdminOrCreator,
   ctrl.completeMultipartUpload
 );
 
 router.post(
   '/:id/abort-multipart',
   verifyTokenMiddleware,
-  isAdmin,
+  isAdminOrCreator,
   ctrl.abortMultipartUpload
 );
 
@@ -252,7 +252,7 @@ router.patch(
 router.patch(
   '/:id',
   verifyTokenMiddleware,
-  isAdmin,
+  isAdminOrCreator,
   validate(updateDeliverableSchema),
   ctrl.updateDeliverable
 );
@@ -277,6 +277,6 @@ router.patch(
  *       404:
  *         description: Deliverable not found
  */
-router.delete('/:id', verifyTokenMiddleware, isAdmin, ctrl.deleteDeliverable);
+router.delete('/:id', verifyTokenMiddleware, isAdminOrCreator, ctrl.deleteDeliverable);
 
 export default router;

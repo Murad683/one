@@ -22,6 +22,39 @@ import { SAS_UPLOAD_EXPIRY_SECONDS, FILE_SIZE_TOLERANCE_PERCENT, MAX_UPLOAD_SIZE
 // generateVideoThumbnail / generateWebPreview / applyVideoFaststart) moved to
 // ../services/video.service; the transcode concurrency limiter to
 // ../services/mediaQueue — both shared with the showcase-video pipeline.
+
+// ─── Access helpers ───────────────────────────
+// Admins can modify any deliverable; creators only the ones they created.
+const isAdminRole = (role?: string) => role === 'ADMIN' || role === 'SUPER_ADMIN';
+
+export const canModifyDeliverable = (
+  user: { id: string; role: string } | undefined,
+  deliverable: { createdById: string | null }
+): boolean => {
+  if (!user) return false;
+  if (isAdminRole(user.role)) return true;
+  return user.role === 'CREATOR' && deliverable.createdById === user.id;
+};
+
+// Direct/multipart uploads hand storage keys back from the browser. A creator
+// must only reference freshly uploaded deliverable media, never a key that
+// already belongs to another deliverable (which would expose that file).
+const creatorStorageKeysAllowed = async (keys: string[], deliverableId: string): Promise<boolean> => {
+  for (const key of keys) {
+    if (typeof key !== 'string' || key.includes('..') || !/^(videos|designs)\/[^/]+$/.test(key)) {
+      return false;
+    }
+    const used = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "Deliverable"
+      WHERE id <> ${deliverableId}
+        AND (strpos(files::text, ${key}) > 0
+          OR strpos(COALESCE("originalUrl", ''), ${key}) > 0
+          OR strpos(COALESCE("thumbnailUrl", ''), ${key}) > 0)
+      LIMIT 1`;
+    if (used.length > 0) return false;
+  }
+  return true;
+};
 // isHeicFile / decodeHeicToJpegBuffer / optimizeImage live in
 // ../services/image.service.
 
@@ -44,7 +77,7 @@ export const dynamicUploadMiddleware = async (
       return;
     }
 
-    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && deliverable.clientId !== req.user!.id) {
+    if (!canModifyDeliverable(req.user, deliverable)) {
       sendError(res, 'Forbidden', 403);
       return;
     }
@@ -147,6 +180,10 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
     if (month) where.month = month;
     if (status) where.status = status;
 
+    // Creators only see their own uploads and never client emails.
+    const isCreator = req.user!.role === 'CREATOR';
+    if (isCreator) where.createdById = req.user!.id;
+
     if (search) {
       where.OR = [
         {
@@ -154,11 +191,11 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
             name: { contains: search, mode: 'insensitive' },
           },
         },
-        {
+        ...(isCreator ? [] : [{
           client: {
             email: { contains: search, mode: 'insensitive' },
           },
-        },
+        }]),
       ];
     }
 
@@ -224,6 +261,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
           originalUrl: signedOriginalUrl,
           client: d.client && {
             ...d.client,
+            ...(isCreator && { email: undefined }),
             shareUrl: d.client.shareToken ? `${process.env.FRONTEND_URL}/share/${d.client.shareToken}` : null,
           },
         };
@@ -272,8 +310,10 @@ export const createDeliverable = async (req: Request, res: Response): Promise<vo
         month,
         year,
         notes,
-        status: status ?? 'PENDING',
+        // Status is driven by the upload pipeline; creators can't preset it.
+        status: req.user!.role === 'CREATOR' ? 'PENDING' : (status ?? 'PENDING'),
         files: [],
+        createdById: req.user!.id,
       },
     });
 
@@ -295,12 +335,27 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && existing.clientId !== req.user!.id) {
+    if (!canModifyDeliverable(req.user, existing)) {
       sendError(res, 'Forbidden', 403);
       return;
     }
 
-    const { clientId, title, type, categoryId, status, month, year, files, notes } = req.body;
+    const { clientId, title, type, categoryId, month, year, notes } = req.body;
+    let { status, files } = req.body;
+
+    if (req.user!.role === 'CREATOR') {
+      // Creators edit metadata only; files go through the upload endpoints
+      // and status is set by the processing pipeline.
+      status = undefined;
+      files = undefined;
+      if (clientId !== undefined && clientId !== existing.clientId) {
+        const target = await prisma.user.findUnique({ where: { id: clientId }, select: { role: true } });
+        if (!target || target.role !== 'CLIENT') {
+          sendError(res, 'The specified user is not a CLIENT', 400);
+          return;
+        }
+      }
+    }
 
     if (files && Array.isArray(files)) {
       const oldFiles = (existing.files as any[]) || [];
@@ -351,7 +406,7 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
       return;
     }
 
-    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && deliverable.clientId !== req.user!.id) {
+    if (!canModifyDeliverable(req.user, deliverable)) {
       sendError(res, 'Forbidden', 403);
       return;
     }
@@ -653,6 +708,7 @@ export const initiateDirectUpload = async (req: Request, res: Response): Promise
     });
 
     if (!deliverable) { sendError(res, 'Deliverable not found', 404); return; }
+    if (!canModifyDeliverable(req.user, deliverable)) { sendError(res, 'Forbidden', 403); return; }
 
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     const folder = isVideo ? 'videos' : 'designs';
@@ -691,6 +747,7 @@ export const initiateMultipartUpload = async (req: Request, res: Response): Prom
       include: { category: true },
     });
     if (!deliverable) { sendError(res, 'Deliverable not found', 404); return; }
+    if (!canModifyDeliverable(req.user, deliverable)) { sendError(res, 'Forbidden', 403); return; }
 
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     const folder = isVideo ? 'videos' : 'designs';
@@ -715,6 +772,20 @@ export const initiateMultipartUpload = async (req: Request, res: Response): Prom
   }
 };
 
+// Creator-only guard for multipart complete/abort, which otherwise act on the
+// storage key alone. Admin behaviour is unchanged (no extra lookup).
+const creatorMultipartAllowed = async (req: Request, res: Response, storageKey: string): Promise<boolean> => {
+  if (req.user!.role !== 'CREATOR') return true;
+  const id = req.params.id as string;
+  const deliverable = await prisma.deliverable.findUnique({ where: { id }, select: { createdById: true } });
+  if (!deliverable) { sendError(res, 'Deliverable not found', 404); return false; }
+  if (!canModifyDeliverable(req.user, deliverable) || !(await creatorStorageKeysAllowed([storageKey], id))) {
+    sendError(res, 'Forbidden', 403);
+    return false;
+  }
+  return true;
+};
+
 // POST /api/v1/deliverables/:id/complete-multipart
 // Assembles the uploaded parts into a single object. Processing is still kicked
 // off separately by the existing /finalize-upload call.
@@ -734,6 +805,7 @@ export const completeMultipartUpload = async (req: Request, res: Response): Prom
       sendError(res, 'Each part needs a numeric partNumber and an etag', 400);
       return;
     }
+    if (!(await creatorMultipartAllowed(req, res, storageKey))) return;
 
     await completeMultipartUploadStorage(storageKey, uploadId, parts);
     sendSuccess(res, { storageKey });
@@ -752,6 +824,7 @@ export const abortMultipartUpload = async (req: Request, res: Response): Promise
       sendError(res, 'storageKey and uploadId are required', 400);
       return;
     }
+    if (!(await creatorMultipartAllowed(req, res, storageKey))) return;
     try {
       await abortMultipartUploadStorage(storageKey, uploadId);
     } catch (e) {
@@ -778,6 +851,13 @@ export const finalizeDirectUpload = async (req: Request, res: Response): Promise
     });
 
     if (!deliverable) { sendError(res, 'Deliverable not found', 404); return; }
+    if (!canModifyDeliverable(req.user, deliverable)) { sendError(res, 'Forbidden', 403); return; }
+
+    if (req.user!.role === 'CREATOR') {
+      if (!Array.isArray(files)) { sendError(res, 'files array is required', 400); return; }
+      const keys = [...files.map((f: any) => f?.storageKey), ...(thumbnailStorageKey ? [thumbnailStorageKey] : [])];
+      if (!(await creatorStorageKeysAllowed(keys, id))) { sendError(res, 'Forbidden storage key', 403); return; }
+    }
 
     // Paralel blob doğrulaması — bütün fayllar eyni anda yoxlanır
     const verifications = await Promise.all(
@@ -1100,7 +1180,7 @@ export const deleteDeliverable = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    if (req.user!.role !== 'ADMIN' && req.user!.role !== 'SUPER_ADMIN' && existing.clientId !== req.user!.id) {
+    if (!canModifyDeliverable(req.user, existing)) {
       sendError(res, 'Forbidden', 403);
       return;
     }

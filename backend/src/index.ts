@@ -23,6 +23,7 @@ import uploadRoutes from './routes/upload.routes';
 import swaggerRoutes from './routes/swagger.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import adminRoutes from './routes/admin.routes';
+import creatorRoutes from './routes/creator.routes';
 import shareRoutes from './routes/share.routes';
 
 import { sendError } from './utils/response.util';
@@ -134,6 +135,7 @@ apiRouter.use('/uploads', uploadRateLimiter, uploadRoutes);
 apiRouter.use('/dashboard', dashboardRoutes);
 apiRouter.use('/admin', adminRoutes);
 apiRouter.use('/share', shareRoutes);
+apiRouter.use('/creator', creatorRoutes);
 
 app.use('/api/v1', apiRouter);
 

@@ -30,6 +30,7 @@ model User {
   payments     Payment[]
   tickets      Ticket[]
   refreshTokens RefreshToken[]
+  createdDeliverables Deliverable[] @relation("DeliverableCreatedBy")
 }
 
 model Project {
@@ -131,8 +132,11 @@ model Deliverable {
   client         User                 @relation(fields: [clientId], references: [id], onDelete: Cascade)
   category       DeliverableCategory? @relation(fields: [categoryId], references: [id])
   categoryId     String?
+  createdById    String?
+  createdBy      User?                @relation("DeliverableCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([clientId, year, month])
+  @@index([createdById])
 }
 
 model DeliverableCategory {
@@ -238,6 +242,7 @@ enum Role {
   SUPER_ADMIN
   ADMIN
   CLIENT
+  CREATOR
 }
 
 enum DeliverableStatus {

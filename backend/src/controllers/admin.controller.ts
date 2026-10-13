@@ -304,7 +304,7 @@ export const getAdmins = async (_req: Request, res: Response): Promise<void> => 
   try {
     const admins = await prisma.user.findMany({
       where: {
-        role: { in: ['ADMIN', 'SUPER_ADMIN'] },
+        role: { in: ['ADMIN', 'SUPER_ADMIN', 'CREATOR'] },
       },
       select: {
         id: true,
@@ -326,10 +326,16 @@ export const getAdmins = async (_req: Request, res: Response): Promise<void> => 
 // ─── POST /api/v1/admin/team ───────────────────
 export const createAdminUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     if (!name || !email || !password) {
       sendError(res, 'Ad, e-poçt və şifrə mütləqdir', 400);
+      return;
+    }
+
+    // Defaults to ADMIN; CREATOR is the restricted upload-only role.
+    if (role !== undefined && role !== 'ADMIN' && role !== 'CREATOR') {
+      sendError(res, 'Rol ADMIN və ya CREATOR olmalıdır', 400);
       return;
     }
 
@@ -345,7 +351,7 @@ export const createAdminUser = async (req: Request, res: Response): Promise<void
         name,
         email,
         password: hashedPassword,
-        role: 'ADMIN',
+        role: role === 'CREATOR' ? 'CREATOR' : 'ADMIN',
       },
       select: {
         id: true,
