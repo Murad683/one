@@ -32,9 +32,9 @@ export const LoginPage = () => {
       setError('');
       await login(values.email, values.password);
       const user = useAuthStore.getState().user;
-      if (user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN') {
+      if (user?.role !== 'ADMIN' && user?.role !== 'SUPER_ADMIN' && user?.role !== 'CREATOR') {
         useAuthStore.getState().logout();
-        setError('Yalnız admin istifadəçilər bu panelə daxil ola bilər.');
+        setError('Yalnız komanda üzvləri bu panelə daxil ola bilər.');
         return;
       }
       navigate('/', { replace: true });

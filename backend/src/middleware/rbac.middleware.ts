@@ -26,6 +26,21 @@ export const isSuperAdmin = (
   next();
 };
 
+// Admins plus creators (videographers). Routes using this must still check
+// per-record ownership for creators — see canModifyDeliverable.
+export const isAdminOrCreator = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const role = req.user?.role;
+  if (role !== 'ADMIN' && role !== 'SUPER_ADMIN' && role !== 'CREATOR') {
+    sendError(res, 'Forbidden', 403);
+    return;
+  }
+  next();
+};
+
 export const isClient = (
   req: Request,
   res: Response,

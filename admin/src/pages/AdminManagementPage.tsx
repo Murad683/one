@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
+import Select from '../components/ui/Select';
 import Table from '../components/ui/Table';
 import type { TableColumn } from '../components/ui/Table';
 import { api } from '../lib/api';
@@ -16,12 +17,14 @@ interface AdminFormValues {
   name: string;
   email: string;
   password?: string;
+  role: 'ADMIN' | 'CREATOR';
 }
 
 const defaultValues: AdminFormValues = {
   name: '',
   email: '',
   password: '',
+  role: 'ADMIN',
 };
 
 export const AdminManagementPage = () => {
@@ -103,10 +106,12 @@ export const AdminManagementPage = () => {
         <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${
           admin.role === 'SUPER_ADMIN' 
             ? 'bg-purple-50 text-purple-700' 
-            : 'bg-blue-50 text-blue-700'
+            : admin.role === 'CREATOR'
+              ? 'bg-amber-50 text-amber-700'
+              : 'bg-blue-50 text-blue-700'
         }`}>
           <ShieldCheck className="h-3 w-3" />
-          {admin.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'}
+          {admin.role === 'SUPER_ADMIN' ? 'Super Admin' : admin.role === 'CREATOR' ? 'Creator' : 'Admin'}
         </span>
       ),
     },
@@ -141,11 +146,11 @@ export const AdminManagementPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-heading">Komanda İdarəetməsi</h1>
-          <p className="mt-1 text-sm text-muted">Sistem administratorlarını idarə edin.</p>
+          <p className="mt-1 text-sm text-muted">Sistem administratorlarını və creator-ları (videoqrafları) idarə edin.</p>
         </div>
         <Button onClick={openModal} className="w-full sm:w-auto">
           <Plus className="h-4 w-4" />
-          Yeni Admin
+          Yeni Üzv
         </Button>
       </div>
 
@@ -166,9 +171,17 @@ export const AdminManagementPage = () => {
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title="Yeni Admin Əlavə Et"
+        title="Yeni Komanda Üzvü Əlavə Et"
       >
         <form onSubmit={handleSubmit(createAdmin)} className="space-y-4 pt-2">
+          <Select
+            label="Rol"
+            options={[
+              { value: 'ADMIN', label: 'Admin (tam idarəetmə)' },
+              { value: 'CREATOR', label: 'Creator (yalnız layihə faylları yükləyir)' },
+            ]}
+            {...register('role')}
+          />
           <Input 
             label="Ad Soyad" 
             placeholder="Məs: Əli Məmmədov"
@@ -204,7 +217,7 @@ export const AdminManagementPage = () => {
               Ləğv Et
             </Button>
             <Button type="submit" isLoading={isSaving}>
-              Admin Yarat
+              Hesab Yarat
             </Button>
           </div>
         </form>

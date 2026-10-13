@@ -79,7 +79,9 @@ router.get('/:folder/:file', conditionalVerifyToken, async (req, res) => {
       } else if (['avatars', 'images', 'thumbnails', 'highlights'].includes(folder)) {
         isOwner = true; 
       } else if (['videos', 'designs'].includes(folder)) {
-        const deliverables = await prisma.deliverable.findMany({ where: { clientId: userId } });
+        // Clients see files of their own deliverables; creators those they uploaded.
+        const ownerFilter = userRole === 'CREATOR' ? { createdById: userId } : { clientId: userId };
+        const deliverables = await prisma.deliverable.findMany({ where: ownerFilter });
         for (const d of deliverables) {
           if (typeof d.files === 'string' && d.files.includes(file)) isOwner = true;
           if (Array.isArray(d.files) && JSON.stringify(d.files).includes(file)) isOwner = true;

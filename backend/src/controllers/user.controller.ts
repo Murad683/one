@@ -65,6 +65,12 @@ export const updateUser = async (req: Request, res: Response) => {
       return sendError(res, 'Forbidden', 403);
     }
 
+    // Regular admins may only manage client accounts (and their own);
+    // staff accounts are Super Admin territory.
+    if (req.user!.role === 'ADMIN' && existing.role !== 'CLIENT' && req.user!.id !== id) {
+      return sendError(res, 'Forbidden', 403);
+    }
+
     const { name, email, password, isActive, igHighlights } = req.body;
     const data: {
       name?: string;
@@ -114,8 +120,15 @@ export const deleteUser = async (req: Request, res: Response) => {
       return sendError(res, 'Forbidden', 403);
     }
 
-    // Prevent deleting the last admin or yourself if necessary?
-    // For now, following the "hard-delete" instruction.
+    if (req.user!.id === id) {
+      return sendError(res, 'You cannot delete your own account', 403);
+    }
+
+    // Regular admins may only delete client accounts.
+    if (req.user!.role === 'ADMIN' && existing.role !== 'CLIENT') {
+      return sendError(res, 'Forbidden', 403);
+    }
+
     await prisma.user.delete({ where: { id } });
 
     return res.status(204).send();
