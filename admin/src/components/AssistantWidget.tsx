@@ -1,0 +1,252 @@
+import { useEffect, useRef, useState } from 'react';
+import type { KeyboardEvent } from 'react';
+import axios from 'axios';
+import { Bot, Loader2, RotateCcw, Send, X } from 'lucide-react';
+import { askAssistant } from '../api/assistant.api';
+import type { AssistantMessage } from '../api/assistant.api';
+import { useAuthStore } from '../store/authStore';
+
+const MAX_INPUT = 1000;
+const MAX_HISTORY = 12; // must match the backend limit
+
+const SUGGESTIONS: Record<'staff' | 'creator', string[]> = {
+  staff: [
+    'Müştəriyə paketi necə təyin edim?',
+    'Portfolio-ya video necə yükləyim?',
+    'Ayarlarda dəyişiklik niyə yadda qalmadı?',
+  ],
+  creator: [
+    'Müştəri üçün fayl necə yükləyirəm?',
+    'Müştərinin rəyini harada görürəm?',
+    'Fayl niyə "Gözləmədə" qalıb?',
+  ],
+};
+
+interface ChatItem extends AssistantMessage {
+  isError?: boolean;
+}
+
+// Renders the model's text as React nodes (never as HTML): **bold** and
+// "- " / "* " bullets are supported, everything else is plain text.
+const renderInline = (text: string) =>
+  text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith('**') && part.endsWith('**') && part.length > 4 ? (
+      <strong key={i} className="font-semibold">
+        {part.slice(2, -2)}
+      </strong>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  );
+
+const FormattedText = ({ text }: { text: string }) => (
+  <div className="space-y-1.5">
+    {text.split('\n').map((line, i) => {
+      const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+      if (bullet) {
+        return (
+          <div key={i} className="flex gap-2">
+            <span aria-hidden="true">•</span>
+            <span>{renderInline(bullet[1])}</span>
+          </div>
+        );
+      }
+      if (!line.trim()) return <div key={i} className="h-1" />;
+      return <div key={i}>{renderInline(line)}</div>;
+    })}
+  </div>
+);
+
+const errorText = (err: unknown): string => {
+  if (axios.isAxiosError(err)) {
+    const message = err.response?.data?.message;
+    if (typeof message === 'string' && message) return message;
+  }
+  return 'Köməkçiyə qoşulmaq alınmadı. Bir az sonra yenidən cəhd edin.';
+};
+
+export const AssistantWidget = () => {
+  const role = useAuthStore((state) => state.user?.role);
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState<ChatItem[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight });
+  }, [items, loading, open]);
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
+
+  const suggestions = SUGGESTIONS[role === 'CREATOR' ? 'creator' : 'staff'];
+
+  const send = async (raw: string) => {
+    const content = raw.trim();
+    if (!content || loading) return;
+
+    const next: ChatItem[] = [...items, { role: 'user', content }];
+    setItems(next);
+    setInput('');
+    setLoading(true);
+
+    try {
+      // Error bubbles are UI-only and never sent back to the model.
+      const history = next.filter((m) => !m.isError).slice(-MAX_HISTORY);
+      const reply = await askAssistant(history.map(({ role: r, content: c }) => ({ role: r, content: c })));
+      setItems((prev) => [...prev, { role: 'assistant', content: reply }]);
+    } catch (err) {
+      setItems((prev) => [...prev, { role: 'assistant', content: errorText(err), isError: true }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      void send(input);
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <>
+      {open && (
+        <div
+          role="dialog"
+          aria-label="Admin köməkçisi"
+          className="fixed bottom-20 left-4 z-40 flex h-[32rem] max-h-[calc(100vh-7rem)] w-[24rem] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-edge bg-surface shadow-2xl md:left-64"
+        >
+          <div className="flex items-center gap-3 border-b border-edge px-4 py-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 ring-1 ring-inset ring-blue-500/20">
+              <Bot className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-heading">Köməkçi</p>
+              <p className="text-[11px] text-muted">Panelin istifadəsi barədə suallar</p>
+            </div>
+            {items.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setItems([])}
+                disabled={loading}
+                className="rounded-lg p-1.5 text-muted transition hover:bg-surface-hover hover:text-heading disabled:opacity-50"
+                aria-label="Yeni söhbət"
+                title="Yeni söhbət"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="rounded-lg p-1.5 text-muted transition hover:bg-surface-hover hover:text-heading"
+              aria-label="Bağla"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4 text-sm">
+            {items.length === 0 && (
+              <div className="space-y-3">
+                <div className="rounded-2xl rounded-tl-sm bg-surface-alt px-3.5 py-2.5 text-body">
+                  Salam! Mən admin panelin istifadəsi ilə bağlı suallara cavab verirəm. Nə öyrənmək istəyirsiniz?
+                </div>
+                <div className="flex flex-col gap-2">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => void send(s)}
+                      className="rounded-xl border border-edge px-3 py-2 text-left text-xs text-muted transition hover:bg-surface-hover hover:text-heading"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {items.map((m, i) => (
+              <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
+                <div
+                  className={[
+                    'max-w-[88%] rounded-2xl px-3.5 py-2.5 leading-relaxed',
+                    m.role === 'user'
+                      ? 'rounded-tr-sm bg-blue-600 text-white'
+                      : m.isError
+                        ? 'rounded-tl-sm border border-red-500/30 bg-red-500/10 text-red-600'
+                        : 'rounded-tl-sm bg-surface-alt text-body',
+                  ].join(' ')}
+                >
+                  {m.role === 'user' || m.isError ? (
+                    <span className="whitespace-pre-wrap break-words">{m.content}</span>
+                  ) : (
+                    <FormattedText text={m.content} />
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {loading && (
+              <div className="flex justify-start">
+                <div className="flex items-center gap-2 rounded-2xl rounded-tl-sm bg-surface-alt px-3.5 py-2.5 text-muted">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Yazır...
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-edge p-3">
+            <div className="flex items-end gap-2">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={onKeyDown}
+                maxLength={MAX_INPUT}
+                rows={1}
+                placeholder="Sualınızı yazın..."
+                aria-label="Sualınız"
+                className="max-h-28 min-h-[2.5rem] flex-1 resize-none rounded-xl border border-edge bg-page px-3 py-2 text-sm text-heading outline-none transition placeholder:text-faint focus:border-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => void send(input)}
+                disabled={loading || !input.trim()}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Göndər"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="mt-2 text-[10px] leading-snug text-faint">
+              Köməkçi səhv edə bilər. Vacib əməliyyatlardan əvvəl təlimat səhifəsinə baxın.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="fixed bottom-4 left-4 z-40 flex h-12 items-center gap-2 rounded-full bg-blue-600 px-4 text-sm font-medium text-white shadow-lg transition hover:bg-blue-700 md:left-64"
+        aria-label={open ? 'Köməkçini bağla' : 'Köməkçini aç'}
+        aria-expanded={open}
+      >
+        <Bot className="h-5 w-5" />
+        <span className="hidden sm:inline">Kömək</span>
+      </button>
+    </>
+  );
+};
+
+export default AssistantWidget;

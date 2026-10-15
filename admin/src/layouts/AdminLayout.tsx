@@ -22,6 +22,7 @@ import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useMessageStore } from '../store/messageStore';
 import { useThemeStore } from '../store/themeStore';
+import { AssistantWidget } from '../components/AssistantWidget';
 
 interface NavItem {
   icon: LucideIcon;
@@ -206,6 +207,8 @@ export const AdminLayout = () => {
           <Outlet />
         </div>
       </main>
+
+      <AssistantWidget />
     </div>
   );
 };

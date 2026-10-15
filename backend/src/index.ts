@@ -24,6 +24,7 @@ import swaggerRoutes from './routes/swagger.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import adminRoutes from './routes/admin.routes';
 import creatorRoutes from './routes/creator.routes';
+import assistantRoutes from './routes/assistant.routes';
 import shareRoutes from './routes/share.routes';
 
 import { sendError } from './utils/response.util';
@@ -136,6 +137,7 @@ apiRouter.use('/dashboard', dashboardRoutes);
 apiRouter.use('/admin', adminRoutes);
 apiRouter.use('/share', shareRoutes);
 apiRouter.use('/creator', creatorRoutes);
+apiRouter.use('/assistant', assistantRoutes);
 
 app.use('/api/v1', apiRouter);
 

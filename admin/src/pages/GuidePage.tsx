@@ -189,6 +189,15 @@ export const GuidePage = () => {
             <B>Mesajlar</B> menyu bəndinin yanında qırmızı rəqəm görsəniz — bu, oxunmamış sayt mesajlarının
             sayıdır (Bölmə 10).
           </p>
+          <Callout tone="info" title="Köməkçi (Kömək düyməsi)">
+            <p>
+              Sol aşağıdakı mavi <B>"Kömək"</B> düyməsi çat pəncərəsini açır. Orada panelin necə işlədiyi barədə
+              Azərbaycan dilində sual yaza bilərsiniz (məsələn "Müştəriyə paketi necə təyin edim?"). Köməkçi
+              yalnız bu təlimata əsasən <B>izah edir</B> — panelə heç bir əməliyyat icra etmir. Səhv edə bilər,
+              vacib əməliyyatlardan əvvəl bu səhifəyə baxın. Söhbət yalnız brauzerdə qalır, səhifəni yeniləyəndə
+              silinir. Sual limiti var (dəqiqədə 6, gündə 100 sual).
+            </p>
+          </Callout>
         </Section>
 
         {/* 02 — DASHBOARD */}
