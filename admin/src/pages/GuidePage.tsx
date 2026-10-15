@@ -192,7 +192,9 @@ export const GuidePage = () => {
           <Callout tone="info" title="Köməkçi (Kömək düyməsi)">
             <p>
               Sol aşağıdakı mavi <B>"Kömək"</B> düyməsi çat pəncərəsini açır. Orada panelin necə işlədiyi barədə
-              Azərbaycan dilində sual yaza bilərsiniz (məsələn "Müştəriyə paketi necə təyin edim?"). Köməkçi
+              Azərbaycan dilində sual yaza bilərsiniz (məsələn "Müştəriyə paketi necə təyin edim?"). Tez-tez
+              verilən suallar <B>hazır düymələr</B> kimi göstərilir və cavabı dərhal verir; digər suallara
+              süni intellekt (AI) cavab verir və cavabın altında <B>"AI cavabı"</B> yazılır. Köməkçi
               yalnız bu təlimata əsasən <B>izah edir</B> — panelə heç bir əməliyyat icra etmir. Səhv edə bilər,
               vacib əməliyyatlardan əvvəl bu səhifəyə baxın. Söhbət yalnız brauzerdə qalır, səhifəni yeniləyəndə
               silinir. Sual limiti var (dəqiqədə 6, gündə 100 sual).
