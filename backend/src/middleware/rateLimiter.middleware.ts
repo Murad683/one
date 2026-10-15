@@ -55,6 +55,51 @@ export const uploadRateLimiter = rateLimit({
   skip: (req) => req.method === 'OPTIONS',
 });
 
+// Help assistant: limited per signed-in user (these routes run after auth),
+// plus a shared cap so one Gemini API key's quota can't be exhausted by all
+// users together.
+const assistantUserKey = (req: Request): string => req.user?.id ?? clientKey(req);
+
+export const assistantRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 6, // 6 questions per user per minute
+  keyGenerator: assistantUserKey,
+  message: {
+    success: false,
+    message: 'Çox tez-tez sual verirsiniz, bir az gözləyin.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
+});
+
+export const assistantDailyLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24 hours
+  max: 100, // 100 questions per user per day
+  keyGenerator: assistantUserKey,
+  message: {
+    success: false,
+    message: 'Bu gün üçün sual limiti doldu, sabah yenidən cəhd edin.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
+});
+
+export const assistantGlobalLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // 10 questions per minute across all users
+  keyGenerator: () => 'assistant-global',
+  validate: { keyGeneratorIpFallback: false },
+  message: {
+    success: false,
+    message: 'Köməkçi hazırda məşğuldur, bir az sonra yenidən cəhd edin.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
+});
+
 export const contactRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 5, // 5 contact requests per IP per minute
