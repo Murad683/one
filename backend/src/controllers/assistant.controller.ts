@@ -5,6 +5,7 @@ import {
   askAssistant,
   isAssistantConfigured,
   AssistantBusyError,
+  AssistantUnavailableError,
 } from '../services/assistant.service';
 
 const MAX_MESSAGE_CHARS = 1000;
@@ -48,6 +49,13 @@ export const chat = async (req: Request, res: Response): Promise<void> => {
       sendError(res, 'Köməkçi hazırda məşğuldur, bir az sonra yenidən cəhd edin', 429);
       return;
     }
-    sendError(res, 'Köməkçi cavab verə bilmədi, bir az sonra yenidən cəhd edin', 502);
+    // Never answer with 502/504: Cloudflare replaces those origin responses with
+    // its own error page (no CORS headers), which the browser reports as a CORS
+    // failure and hides our message.
+    if (err instanceof AssistantUnavailableError) {
+      sendError(res, 'Köməkçi hazırda yüklüdür, bir az sonra yenidən cəhd edin', 503);
+      return;
+    }
+    sendError(res, 'Köməkçi cavab verə bilmədi, bir az sonra yenidən cəhd edin', 500);
   }
 };
