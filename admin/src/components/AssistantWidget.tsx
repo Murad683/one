@@ -64,6 +64,7 @@ export const AssistantWidget = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showAllFaq, setShowAllFaq] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -71,6 +72,51 @@ export const AssistantWidget = () => {
     const el = listRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight });
   }, [items, loading, open]);
+
+  // Keep scrolling inside the panel. When nothing under the pointer can scroll
+  // any further in the wheel's direction, swallow the event so it doesn't
+  // "chain" to the page behind. (React's onWheel is passive, so this needs a
+  // native non-passive listener.)
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!open || !dialog) return;
+
+    const canScroll = (start: EventTarget | null, dy: number): boolean => {
+      let el = start instanceof HTMLElement ? start : null;
+      while (el) {
+        const { overflowY } = window.getComputedStyle(el);
+        if ((overflowY === 'auto' || overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
+          if (dy < 0 && el.scrollTop > 0) return true;
+          if (dy > 0 && Math.ceil(el.scrollTop + el.clientHeight) < el.scrollHeight) return true;
+        }
+        if (el === dialog) break;
+        el = el.parentElement;
+      }
+      return false;
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      if (!canScroll(e.target, e.deltaY)) e.preventDefault();
+    };
+
+    dialog.addEventListener('wheel', onWheel, { passive: false });
+    return () => dialog.removeEventListener('wheel', onWheel);
+  }, [open]);
+
+  // On phones the panel covers most of the screen, so freeze the page behind
+  // it while it is open (touch scrolling can't be intercepted like the wheel).
+  useEffect(() => {
+    if (!open || !window.matchMedia('(max-width: 767px)').matches) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const previous = { html: html.style.overflow, body: body.style.overflow };
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    return () => {
+      html.style.overflow = previous.html;
+      body.style.overflow = previous.body;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -124,9 +170,10 @@ export const AssistantWidget = () => {
     <>
       {open && (
         <div
+          ref={dialogRef}
           role="dialog"
           aria-label="Admin köməkçisi"
-          className="fixed bottom-20 left-4 z-40 flex h-[32rem] max-h-[calc(100vh-7rem)] w-[24rem] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-edge bg-surface shadow-2xl md:left-64"
+          className="fixed bottom-20 left-4 z-40 flex h-[32rem] max-h-[calc(100vh-7rem)] w-[24rem] max-w-[calc(100vw-2rem)] flex-col overflow-hidden overscroll-contain rounded-2xl border border-edge bg-surface shadow-2xl md:left-64"
         >
           <div className="flex items-center gap-3 border-b border-edge px-4 py-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 ring-1 ring-inset ring-blue-500/20">
@@ -158,7 +205,7 @@ export const AssistantWidget = () => {
             </button>
           </div>
 
-          <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4 text-sm">
+          <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4 text-sm">
             {items.length === 0 && (
               <div className="space-y-3">
                 <div className="rounded-2xl rounded-tl-sm bg-surface-alt px-3.5 py-2.5 text-body">
