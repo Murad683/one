@@ -5,17 +5,28 @@ export interface ChatMessage {
   content: string;
 }
 
+// Gemini asked us to slow down (HTTP 429).
 export class AssistantBusyError extends Error {}
+// Gemini was temporarily unavailable/overloaded (5xx, timeout) even after retries.
+export class AssistantUnavailableError extends Error {}
+// Anything else (bad key, bad model name, empty answer...): not worth retrying.
 export class AssistantFailedError extends Error {}
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-const REQUEST_TIMEOUT_MS = 25_000;
+const PER_ATTEMPT_TIMEOUT_MS = 15_000;
+const TOTAL_TIMEOUT_MS = 32_000; // the admin client gives up at 40 s
+const RETRY_DELAYS_MS = [800, 1800];
 
 // Overridable without a code change: "gemini-flash-latest" is Google's alias
 // for the current Flash model, so a retired model name can't break the feature.
 const getModel = (): string => process.env.GEMINI_MODEL || 'gemini-flash-latest';
+// Tried on the last attempt when the primary model keeps failing transiently.
+const getFallbackModel = (): string => process.env.GEMINI_FALLBACK_MODEL || 'gemini-flash-lite-latest';
 
 export const isAssistantConfigured = (): boolean => Boolean(process.env.GEMINI_API_KEY);
+
+const isTransientStatus = (status: number): boolean => status === 500 || status === 503 || status === 504;
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const roleNote = (role: string): string => {
   if (role === 'CREATOR') {
@@ -57,45 +68,68 @@ export const askAssistant = async (role: string, messages: ChatMessage[]): Promi
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new AssistantFailedError('GEMINI_API_KEY is not configured');
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const body = JSON.stringify({
+    systemInstruction: { parts: [{ text: buildSystemPrompt(role) }] },
+    contents: messages.map((m) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    })),
+    generationConfig: { temperature: 0.3, maxOutputTokens: 900 },
+  });
 
-  try {
-    // The key goes in a header (not the URL) so it never ends up in access logs.
-    const response = await fetch(`${GEMINI_BASE}/${encodeURIComponent(getModel())}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      signal: controller.signal,
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: buildSystemPrompt(role) }] },
-        contents: messages.map((m) => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content }],
-        })),
-        generationConfig: { temperature: 0.3, maxOutputTokens: 900 },
-      }),
-    });
+  // Attempt plan: primary, primary again, then the fallback model (if different).
+  const primary = getModel();
+  const fallback = getFallbackModel();
+  const plan = [primary, primary, ...(fallback && fallback !== primary ? [fallback] : [])];
 
-    if (response.status === 429) throw new AssistantBusyError('Gemini rate limit');
-    if (!response.ok) {
+  const deadline = Date.now() + TOTAL_TIMEOUT_MS;
+
+  for (let attempt = 0; attempt < plan.length; attempt++) {
+    if (attempt > 0) await sleep(RETRY_DELAYS_MS[Math.min(attempt - 1, RETRY_DELAYS_MS.length - 1)]);
+    const remaining = deadline - Date.now();
+    if (remaining < 3_000) break;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), Math.min(PER_ATTEMPT_TIMEOUT_MS, remaining));
+
+    try {
+      // The key goes in a header (not the URL) so it never ends up in access logs.
+      const response = await fetch(`${GEMINI_BASE}/${encodeURIComponent(plan[attempt])}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        signal: controller.signal,
+        body,
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as GeminiResponse;
+        const text = (data.candidates?.[0]?.content?.parts ?? [])
+          .map((p) => p.text ?? '')
+          .join('')
+          .trim();
+        if (!text) throw new AssistantFailedError('Empty Gemini response');
+        return text;
+      }
+
       // Log the status only: never the request (it holds the key) or the full body.
-      console.error(`[assistant] Gemini request failed with status ${response.status}`);
-      throw new AssistantFailedError(`Gemini returned ${response.status}`);
+      console.error(`[assistant] Gemini ${plan[attempt]} returned status ${response.status} (attempt ${attempt + 1}/${plan.length})`);
+      if (response.status === 429) throw new AssistantBusyError('Gemini rate limit');
+      if (!isTransientStatus(response.status)) throw new AssistantFailedError(`Gemini returned ${response.status}`);
+      // transient: fall through to the next attempt
+    } catch (err) {
+      if (
+        err instanceof AssistantBusyError ||
+        err instanceof AssistantFailedError ||
+        err instanceof AssistantUnavailableError
+      ) {
+        throw err;
+      }
+      // Timeout / network error: treat as transient.
+      console.error(`[assistant] Gemini request error (${err instanceof Error ? err.name : 'unknown'}), attempt ${attempt + 1}/${plan.length}`);
+    } finally {
+      clearTimeout(timer);
     }
-
-    const data = (await response.json()) as GeminiResponse;
-    const text = (data.candidates?.[0]?.content?.parts ?? [])
-      .map((p) => p.text ?? '')
-      .join('')
-      .trim();
-
-    if (!text) throw new AssistantFailedError('Empty Gemini response');
-    return text;
-  } catch (err) {
-    if (err instanceof AssistantBusyError || err instanceof AssistantFailedError) throw err;
-    console.error('[assistant] Gemini request error:', err instanceof Error ? err.name : 'unknown');
-    throw new AssistantFailedError('Gemini request error');
-  } finally {
-    clearTimeout(timer);
   }
+
+  throw new AssistantUnavailableError('Gemini unavailable after retries');
 };
