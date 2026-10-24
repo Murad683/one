@@ -400,7 +400,11 @@ export const GuidePage = () => {
           </p>
 
           <Callout tone="warn" title="Müştərini silmək">
-            <p>Bu əməliyyat geri qaytarıla bilməz — müştəri hesabı və ona bağlı məlumatlar həmişəlik silinir.</p>
+            <p>
+              Bu əməliyyat geri qaytarıla bilməz — müştəri hesabı, ona bağlı məlumatlar və{' '}
+              <B>onun bütün videoları və faylları</B> (Layihə Faylları, 720p nüsxələr, kover şəkilləri) yaddaşdan
+              həmişəlik silinir. Silməzdən əvvəl lazımi faylları endirdiyinizdən əmin olun.
+            </p>
           </Callout>
         </Section>
 
@@ -531,7 +535,12 @@ export const GuidePage = () => {
             </p>
           </Callout>
 
-          <p>Fayl/Növ silmək — hər ikisi təsdiq pəncərəsi ilə, silinən fayl və ona bağlı məlumatlar həmişəlik itir. Təsdiq düyməsinə basandan sonra silmə bitənə qədər düymələr söndürülür və fırlanan işarə görünür — təkrar basmağa ehtiyac yoxdur.</p>
+          <p>
+            Faylı əvəz etmək — redaktə pəncərəsindən yeni fayl seçib saxlasanız, yeni fayl hazır olan kimi köhnə
+            fayl, onun 720p nüsxəsi və köhnə kover şəkli yaddaşdan silinir. Yeni kover yükləməsəniz, yeni videodan
+            avtomatik kover yaradılır. Emal uğursuz olsa, köhnə fayl toxunulmaz qalır.
+          </p>
+          <p>Fayl/Növ silmək — hər ikisi təsdiq pəncərəsi ilə, silinən fayl (bütün nüsxələri və koveri ilə) və ona bağlı məlumatlar həmişəlik itir. Təsdiq düyməsinə basandan sonra silmə bitənə qədər düymələr söndürülür və fırlanan işarə görünür — təkrar basmağa ehtiyac yoxdur.</p>
         </Section>
 
         {/* 09 — SORĞULAR */}
