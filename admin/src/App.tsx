@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ShowcaseUploadProvider } from './context/ShowcaseUploadContext';
+import { DeliverableUploadProvider } from './context/DeliverableUploadContext';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { RequireAuth, RequireAdmin } from './components/guards/RequireAuth';
 import { AdminLayout } from './layouts/AdminLayout';
@@ -57,7 +58,9 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <ShowcaseUploadProvider>
-      <RouterProvider router={router} />
+      <DeliverableUploadProvider>
+        <RouterProvider router={router} />
+      </DeliverableUploadProvider>
     </ShowcaseUploadProvider>
   );
 }
