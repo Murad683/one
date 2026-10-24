@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { hashPassword } from '../utils/password.util';
+import { collectDeliverableKeys, deleteUnreferencedDeliverableKeys } from '../services/upload.service';
 
 const SHARE_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -129,9 +130,20 @@ export const deleteUser = async (req: Request, res: Response) => {
       return sendError(res, 'Forbidden', 403);
     }
 
+    // Collect the client's files first: deleting the user cascades to their
+    // deliverable rows, after which the keys could no longer be found.
+    const deliverables = await prisma.deliverable.findMany({
+      where: { clientId: id },
+      select: { files: true, thumbnailUrl: true, originalUrl: true },
+    });
+    const keys = deliverables.flatMap(collectDeliverableKeys);
+
     await prisma.user.delete({ where: { id } });
 
-    return res.status(204).send();
+    res.status(204).send();
+    // Storage cleanup runs after the response; a failure only leaves orphans.
+    void deleteUnreferencedDeliverableKeys(keys);
+    return;
   } catch (error) {
     return sendError(res, 'Error deleting user', 500, error);
   }

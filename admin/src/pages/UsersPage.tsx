@@ -392,7 +392,7 @@ export const UsersPage = () => {
           }
         }}
         title="Müştərini sil"
-        message={`${deleting?.name} adlı müştərini silmək istədiyinizə əminsiniz? Bu əməliyyat geri qaytarıla bilməz.`}
+        message={`${deleting?.name} adlı müştəri VƏ ONUN BÜTÜN VİDEOLARI, FAYLLARI həmişəlik silinəcək. Bu əməliyyat geri qaytarıla bilməz. Davam etmək istədiyinizə əminsiniz?`}
       />
 
       {/* Payment History Modal */}

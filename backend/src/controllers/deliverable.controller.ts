@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloadUrlForDownload, cleanupOrphanFiles, getPresignedUploadUrl, getBlobProperties, downloadBlobToFile, createMultipartUpload, getMultipartUploadUrls, completeMultipartUpload as completeMultipartUploadStorage, abortMultipartUpload as abortMultipartUploadStorage } from '../services/upload.service';
+import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloadUrlForDownload, collectDeliverableKeys, deleteUnreferencedDeliverableKeys, getPresignedUploadUrl, getBlobProperties, downloadBlobToFile, createMultipartUpload, getMultipartUploadUrls, completeMultipartUpload as completeMultipartUploadStorage, abortMultipartUpload as abortMultipartUploadStorage } from '../services/upload.service';
 import { uploadSiteMediaWithThumbnail } from '../middleware/upload.middleware';
 import { optimizeImage } from '../services/image.service';
 import {
@@ -357,13 +357,6 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
       }
     }
 
-    if (files && Array.isArray(files)) {
-      const oldFiles = (existing.files as any[]) || [];
-      const oldUrls = oldFiles.map((f: any) => f.url);
-      const newUrls = files.map((f: any) => f.url);
-      await cleanupOrphanFiles(oldUrls, newUrls);
-    }
-
     const updated = await prisma.deliverable.update({
       where: { id },
       data: {
@@ -384,6 +377,12 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
         category: true,
       },
     });
+
+    // Files dropped from the list (and their 720p previews) are deleted only
+    // now that the row no longer points at them.
+    if (files && Array.isArray(files)) {
+      await deleteUnreferencedDeliverableKeys(collectDeliverableKeys({ files: existing.files }));
+    }
 
     sendSuccess(res, updated);
   } catch (err) {
@@ -453,14 +452,12 @@ const processDeliverableBackground = async (
   customThumbnailFile?: Express.Multer.File | null
 ) => {
   const startTime = Date.now();
+  // Keys stored by this run. If the run fails they are deleted again; the old
+  // files are only removed after the row points at the new ones.
+  const createdKeys: string[] = [];
   try {
     const oldFiles = (deliverable.files as any[]) || [];
     const isUpdatingVideo = uploadedFiles.length > 0;
-
-    if (isUpdatingVideo) {
-      const oldUrls = oldFiles.map((f: any) => f.url);
-      await cleanupOrphanFiles(oldUrls, []);
-    }
 
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     const folder = isVideo ? 'videos' : 'designs';
@@ -477,6 +474,7 @@ const processDeliverableBackground = async (
       try {
         const thumbResult = await processAndStoreFile(customThumbnailFile, 'thumbnails');
         newThumbnailUrl = thumbResult.url;
+        createdKeys.push(thumbResult.url);
         console.log('[Thumb Debug] Custom thumbnail uploaded. thumbnailUrl:', newThumbnailUrl);
       } catch (thumbError) {
         console.error('[Thumb Debug] Custom thumbnail upload error:', thumbError);
@@ -492,8 +490,9 @@ const processDeliverableBackground = async (
       // --- AUTO THUMBNAIL GENERATION (only if no custom thumbnail) ---
       const isVideoByDb = deliverable.category?.isVideo === true || deliverable.type === 'VIDEO';
       const isVideoByMime = file.mimetype?.startsWith('video/') === true;
-      const hasExistingThumbnail = !!deliverable.thumbnailUrl;
-      const shouldGenerateThumb = !newThumbnailUrl && !hasExistingThumbnail && (isVideoByDb || isVideoByMime) && (!!file.path || !!file.buffer);
+      // A replaced video gets a fresh cover from the new file (as the direct
+      // upload path does); the old cover is deleted after the row is updated.
+      const shouldGenerateThumb = !newThumbnailUrl && (isVideoByDb || isVideoByMime) && (!!file.path || !!file.buffer);
 
       if (shouldGenerateThumb) {
         let tempVideoPath: string | undefined;
@@ -528,6 +527,7 @@ const processDeliverableBackground = async (
 
             const thumbResult = await processAndStoreFile(thumbMulterFile, 'thumbnails');
             newThumbnailUrl = thumbResult.url;
+            createdKeys.push(thumbResult.url);
             console.log('[Thumb Debug] Auto-generated thumbnail. thumbnailUrl:', newThumbnailUrl);
           }
         } catch (thumbError) {
@@ -581,6 +581,7 @@ const processDeliverableBackground = async (
               };
               const previewResult = await processAndStoreFile(previewMulterFile, 'previews');
               previewUrl = previewResult.url;
+              createdKeys.push(previewResult.url);
             } catch (previewError) {
               console.error('[Video Debug] Preview upload error:', previewError);
             }
@@ -602,6 +603,7 @@ const processDeliverableBackground = async (
         const optimized = await optimizeImage(file.path);
         const fallbackDims = optimized ? null : await getMediaDimensions(file.path, false);
         const originalUploadResult = await processAndStoreFile(file, folder);
+        createdKeys.push(originalUploadResult.url);
 
         if (optimized) {
           optimizedTempPath = optimized.path;
@@ -619,6 +621,7 @@ const processDeliverableBackground = async (
             path: optimized.path,
           };
           result = await processAndStoreFile(optimizedMulterFile, folder);
+          createdKeys.push(result.url);
           if (!dimensionsCaptured) {
             newWidth = optimized.width;
             newHeight = optimized.height;
@@ -645,6 +648,7 @@ const processDeliverableBackground = async (
           dimensionsCaptured = true;
         }
         result = await processAndStoreFile(file, folder);
+        createdKeys.push(result.url);
       }
 
       if (optimizedTempPath) {
@@ -678,7 +682,6 @@ const processDeliverableBackground = async (
     });
 
     console.log(`[Video Debug] Deliverable ${id} processed successfully in ${processingDuration}s`);
-
   } catch (err) {
     console.error(`[Video Debug] Background processing failed for ${id}:`, err);
     await prisma.deliverable.update({
@@ -686,8 +689,15 @@ const processDeliverableBackground = async (
       data: {
         status: 'FAILED',
       },
-    });
+    }).catch(() => {});
+    // The row still points at the old files; drop only what this run stored.
+    await deleteUnreferencedDeliverableKeys(createdKeys);
+    return;
   }
+
+  // The row now points at the new files: remove the superseded ones (old video,
+  // its 720p preview, old cover, old image original). Keys still in use are kept.
+  await deleteUnreferencedDeliverableKeys(collectDeliverableKeys(deliverable));
 };
 
 // POST /api/v1/deliverables/:id/initiate-upload
@@ -887,6 +897,11 @@ export const finalizeDirectUpload = async (req: Request, res: Response): Promise
         data: { status: 'FAILED' },
       });
       sendError(res, 'File size mismatch detected. Upload may be corrupted.', 400);
+      // The raw uploads are unusable and never referenced; the admin re-uploads.
+      await deleteUnreferencedDeliverableKeys([
+        ...verifications.map((v: any) => v.storageKey),
+        ...(thumbnailStorageKey ? [thumbnailStorageKey] : []),
+      ]);
       return;
     }
 
@@ -922,6 +937,12 @@ const processDirectUploadBackground = async (
 ) => {
   const startTime = Date.now();
   const tempFilesToCleanup: string[] = [];
+  // The browser uploaded these raw objects; processing re-stores them under new
+  // keys, so the raw ones are never referenced and must be deleted afterwards.
+  // A custom cover uploaded the same way IS stored as-is, so it is kept.
+  const rawKeys = files.map((f) => f.storageKey).filter((k) => k && k !== customThumbnailStorageKey);
+  // Keys stored by this run, deleted again if the run fails.
+  const createdKeys: string[] = [];
 
   try {
 
@@ -971,6 +992,7 @@ const processDirectUploadBackground = async (
           };
           const thumbResult = await processAndStoreFile(thumbMulterFile, 'thumbnails');
           newThumbnailUrl = thumbResult.url;
+          createdKeys.push(thumbResult.url);
         }
       }
 
@@ -1006,6 +1028,7 @@ const processDirectUploadBackground = async (
             };
             const previewResult = await processAndStoreFile(previewMulterFile, 'previews');
             previewUrl = previewResult.url;
+            createdKeys.push(previewResult.url);
           }
         }
       }
@@ -1035,6 +1058,7 @@ const processDirectUploadBackground = async (
           path: currentFilePath,
         };
         const originalUploadResult = await processAndStoreFile(originalMulterFile, folder);
+        createdKeys.push(originalUploadResult.url);
 
         if (optimized) {
           tempFilesToCleanup.push(optimized.path);
@@ -1052,6 +1076,7 @@ const processDirectUploadBackground = async (
             path: optimized.path,
           };
           result = await processAndStoreFile(optimizedMulterFile, folder);
+          createdKeys.push(result.url);
           if (!dimensionsCaptured) {
             newWidth = optimized.width;
             newHeight = optimized.height;
@@ -1092,6 +1117,7 @@ const processDirectUploadBackground = async (
           path: currentFilePath,
         };
         result = await processAndStoreFile(uploadMulterFile, folder);
+        createdKeys.push(result.url);
       }
 
       newFileObjects.push({
@@ -1104,11 +1130,6 @@ const processDirectUploadBackground = async (
     }
 
     const processingDuration = Math.floor((Date.now() - startTime) / 1000);
-
-    // Bütün yeni fayllar uğurla yükləndikdən sonra köhnə faylları silirik
-    const oldFiles = (deliverable.files as any[]) || [];
-    const oldUrls = oldFiles.map((f: any) => f.url);
-    await cleanupOrphanFiles(oldUrls, []);
 
     await prisma.deliverable.update({
       where: { id },
@@ -1127,12 +1148,23 @@ const processDirectUploadBackground = async (
 
     console.log(`[Direct Upload] Deliverable ${id} processed successfully in ${processingDuration}s`);
 
+    // The row now points at the new files: remove the superseded ones (old
+    // video, its 720p preview, old cover, old image original) and the raw
+    // browser uploads. Keys still in use are kept.
+    await deleteUnreferencedDeliverableKeys([...collectDeliverableKeys(deliverable), ...rawKeys]);
   } catch (err) {
     console.error(`[Direct Upload] Background processing failed for ${id}:`, err);
     await prisma.deliverable.update({
       where: { id },
       data: { status: 'FAILED' },
-    });
+    }).catch(() => {});
+    // The row still points at the old files; drop only what this run stored,
+    // plus the raw uploads (and an unused custom cover) — the admin re-uploads.
+    await deleteUnreferencedDeliverableKeys([
+      ...createdKeys,
+      ...rawKeys,
+      ...(customThumbnailStorageKey ? [customThumbnailStorageKey] : []),
+    ]);
   } finally {
     // Bütün temp faylları sil — hətta FFmpeg xəta versə belə
     for (const tempFile of tempFilesToCleanup) {
@@ -1185,13 +1217,10 @@ export const deleteDeliverable = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Delete files from storage if exist
-    const oldFiles = (existing.files as any[]) || [];
-    const oldUrls = oldFiles.map((f: any) => f.url);
-    await cleanupOrphanFiles(oldUrls, []);
-
-    // Hard delete the record
+    // Hard delete the record first, then every file it pointed at (video, 720p
+    // preview, cover, image original). If the row delete fails, nothing is lost.
     await prisma.deliverable.delete({ where: { id } });
+    await deleteUnreferencedDeliverableKeys(collectDeliverableKeys(existing));
 
     res.status(204).send();
   } catch (err) {

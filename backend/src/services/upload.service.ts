@@ -1,5 +1,6 @@
 import { storageProvider } from './storage/storage.factory';
 import { UploadResult } from './storage/storage.interface';
+import prisma from '../utils/prisma';
 
 // How long a signed read/display URL stays valid. Default 1 day so a portal
 // tab left open for hours (or overnight) doesn't start returning 403s on its
@@ -47,20 +48,63 @@ export function extractStorageKey(keyOrUrl: string | null | undefined): string {
   return keyStr;
 }
 
+// Deletes every key in oldUrls that is not also in newUrls. Keys are compared
+// in normalized form so the same object written as a URL in one place and as a
+// bare key in another is never deleted by mistake.
 export async function cleanupOrphanFiles(oldUrls: string[], newUrls: string[]): Promise<void> {
-  const oldSet = new Set(oldUrls);
-  const newSet = new Set(newUrls);
-  
+  const keep = new Set(newUrls.map(extractStorageKey).filter(Boolean));
+  const seen = new Set<string>();
+
   for (const url of oldUrls) {
-    if (!newSet.has(url)) {
-      try {
-        await deleteFile(url);
-        console.log(`Cleaned up orphan file: ${url}`);
-      } catch (err) {
-        console.warn(`Failed to clean up orphan file ${url}:`, err);
-      }
+    const key = extractStorageKey(url);
+    if (!key || keep.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    try {
+      await deleteFile(url);
+      console.log(`Cleaned up orphan file: ${url}`);
+    } catch (err) {
+      console.warn(`Failed to clean up orphan file ${url}:`, err);
     }
   }
+}
+
+// Every storage key a deliverable row points at: each file plus its 720p
+// preview, the cover image and (for images) the untouched original.
+export function collectDeliverableKeys(row: {
+  files?: unknown;
+  thumbnailUrl?: string | null;
+  originalUrl?: string | null;
+}): string[] {
+  const files = Array.isArray(row.files) ? (row.files as Array<{ url?: unknown; previewUrl?: unknown }>) : [];
+  const keys = [
+    ...files.flatMap((f) => [f?.url, f?.previewUrl]),
+    row.thumbnailUrl,
+    row.originalUrl,
+  ].filter((k): k is string => typeof k === 'string' && k.length > 0);
+  return [...new Set(keys)];
+}
+
+// Deletes the given keys from storage, skipping any key a deliverable still
+// points at. Call it only AFTER the database reflects the change (new files
+// saved, row updated or deleted): then the worst a failure here can do is
+// leave an orphan behind, never break a live record. Never throws.
+export async function deleteUnreferencedDeliverableKeys(keys: string[]): Promise<void> {
+  const unused: string[] = [];
+  for (const key of new Set(keys.map(extractStorageKey).filter(Boolean))) {
+    try {
+      const used = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT id FROM "Deliverable"
+        WHERE strpos(files::text, ${key}) > 0
+          OR strpos(COALESCE("originalUrl", ''), ${key}) > 0
+          OR strpos(COALESCE("thumbnailUrl", ''), ${key}) > 0
+        LIMIT 1`;
+      if (used.length === 0) unused.push(key);
+      else console.warn(`[Storage cleanup] Kept ${key}: still referenced by deliverable ${used[0].id}`);
+    } catch (err) {
+      console.warn(`[Storage cleanup] Kept ${key}: reference check failed`, err);
+    }
+  }
+  await cleanupOrphanFiles(unused, []);
 }
 
 export async function getPresignedUploadUrl(folder: string, fileName: string, mimeType: string, expiresInSeconds?: number) {

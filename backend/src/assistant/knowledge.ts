@@ -42,7 +42,7 @@ Yeni müştəri: Ad Soyad və E-poçt məcburi. Şifrə yeni müştəri üçün 
 Müştəri şifrəsini dəyişmək: müştərini redaktə edin və Şifrə sahəsinə yeni şifrə yazın.
 Ödəniş əlavə etmək: sətirdəki "+" ikonu /payments/new səhifəsinə aparır (müştəri əvvəlcədən seçilir). Sahələr: Müştəri, Məbləğ (AZN, məcburi), Ödəniş tarixi (dəyişəndə növbəti ödəniş tarixi avtomatik bir ay sonraya təyin olunur, əl ilə dəyişmək olar), Qaimə (yalnız PDF), Admin qeydi (daxili, müştəriyə göstərilmir).
 Ödəniş tarixçəsi: cədvəldəki ödəniş sayı rəqəminə klikləyin; bütün ödənişlər açılır, hər sətirdə silmək düyməsi var.
-Müştərini silmək geri qaytarıla bilməz: hesab və ona bağlı məlumatlar həmişəlik silinir.
+Müştərini silmək geri qaytarıla bilməz: hesab, ona bağlı məlumatlar və onun BÜTÜN videoları və faylları (Layihə Faylları, 720p nüsxələr, kover şəkilləri) yaddaşdan həmişəlik silinir. Silməzdən əvvəl lazımi faylları endirmək tövsiyə olunur.
 
 === LAYİHƏ FAYLLARI (DELİVERABLES) ===
 Müştərilərə aylıq təhvil verilən foto/video fayllarını idarə edir. İki tab: "Layihə Faylları" və "Önə Çıxanlar (Highlights)".
@@ -52,7 +52,8 @@ Fayllar cədvəli: axtarış ad/e-poçt üzrə işləyir. Status 5 cür: Gözlə
 Yükləmə: mətn saxlanandan sonra pəncərə bağlanır, fayllar arxa planda yüklənir, sağ alt küncdə irəliləyiş göstəricisi görünür. 50 MB-dan böyük videolar birbaşa yaddaşa (S3), 20 MB-dan böyüklər hissə-hissə (multipart) yüklənir; şəbəkə kəsilsə avtomatik təkrar cəhd edir. Vacib: bu bölmədəki yükləmə göstəricisi yalnız "Layihə Faylları" səhifəsində aktivdir. Yükləmə bitənə qədər başqa səhifəyə keçməyin, tabı bağlamayın. (Portfolio/Paketlər videosundan fərqli olaraq.)
 Fayla baxmaq: cədvəldə başlığa klikləyin, tam ekran önizləmə açılır; birdən çox fayl varsa aşağıdakı zolaqla keçid edilir; "Yüklə" orijinalı endirir; bağlamaq üçün × və ya Esc.
 Önə Çıxanlar (Instagram Highlights): müştəri seçdikdən sonra onun portalındakı dairəvi ikonlar idarə olunur. Hər müştəri üçün maksimum 20. Yeni highlight: şəkil seçin + başlıq (maks. 30 simvol) → "Siyahıya Əlavə Et". Bu düymə faylı yükləmir, yalnız siyahıya əlavə edir. Faktiki yükləmə və saxlama səhifənin "Yadda Saxla" düyməsi ilə olur; basmasanız dəyişikliklər itir.
-Silmək (fayl və ya növ) təsdiq pəncərəsi ilə, həmişəlik silinir. Təsdiqdən sonra düymələr söndürülür və fırlanan işarə görünür; təkrar basmaq lazım deyil.
+Faylı əvəz etmək: redaktə pəncərəsindən yeni fayl seçib saxlayanda, yeni fayl hazır olan kimi köhnə fayl, onun 720p nüsxəsi və köhnə kover yaddaşdan silinir. Yeni kover yüklənməsə, yeni videodan avtomatik kover yaradılır. Emal uğursuz olsa köhnə fayl toxunulmaz qalır.
+Silmək (fayl və ya növ) təsdiq pəncərəsi ilə, faylın bütün nüsxələri və koveri ilə birlikdə həmişəlik silinir. Təsdiqdən sonra düymələr söndürülür və fırlanan işarə görünür; təkrar basmaq lazım deyil.
 Creator üçün görünüş: yalnız bu səhifəni görür. İstənilən müştəri üçün "Fayl Əlavə Et" ilə fayl yükləyə bilər (müştərinin yalnız adı görünür, e-poçt yox). Siyahıda yalnız özünün yüklədiyi fayllar görünür; başqasının faylına baxa, dəyişə, silə bilməz. Öz fayllarını redaktə edə (yeni fayl, başlıq, müştəri, növ, tarix) və silə bilər. Statusu əl ilə dəyişə bilməz, status yükləmədən sonra avtomatik dəyişir. Müştəri rəy yazanda öz faylının yanında "Rəy" işarəsini görür. Önə Çıxanlar və müştərinin paylaşım linki ilə də işləyə bilər; linki yeniləmək və ya ləğv etmək köhnə linki dərhal işləməz edir, ona görə sistem əvvəl təsdiq soruşur. Növ (kateqoriya) yarada, adını dəyişə və silə bilməz. Creator-ın yüklədiyi fayl üçün admin təsdiqi tələb olunmur, emal bitən kimi müştərinin portalında görünür.
 
 === SORĞULAR (TİCKETS) ===
