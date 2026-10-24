@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { uploadDeliverableFile as uploadFilesWithProgress, directUploadDeliverableFile } from '../api/deliverables.api';
+import { useDeliverableUpload } from '../context/deliverableUpload';
 import { Download, Edit2, FileX, Image, Link2, MessageCircle, Play, Plus, Search, Trash2, Video, X, Copy } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuthStore } from '../store/authStore';
@@ -16,7 +16,6 @@ import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
 import { HighlightsManager } from '../components/deliverables/HighlightsManager';
-import { DIRECT_UPLOAD_THRESHOLD_BYTES } from '../constants';
 
 const isStalePending = (deliverable: Partial<Deliverable>) => {
   if (deliverable.status !== 'PENDING' || !deliverable.createdAt) return false;
@@ -286,9 +285,8 @@ export const DeliverablesPage = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
-  const [uploadLabel, setUploadLabel] = useState('');
+  // Uploads run in an app-level context so they survive leaving this page.
+  const upload = useDeliverableUpload();
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
   const [sharingClient, setSharingClient] = useState<ClientUser | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -371,17 +369,6 @@ export const DeliverablesPage = () => {
     fetchDeliverables();
   }, [searchQuery]);
 
-  // Warn before leaving the tab while a background upload is still running.
-  useEffect(() => {
-    if (uploadPhase !== 'uploading') return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [uploadPhase]);
-
   const openModal = (deliverable?: Deliverable) => {
     setEditing(deliverable || null);
     setSelectedFiles([]);
@@ -401,8 +388,6 @@ export const DeliverablesPage = () => {
 
   const saveDeliverable = async (values: DeliverableFormValues) => {
     setIsSaving(true);
-    setUploadProgress(0);
-    setUploadPhase('idle');
     setError('');
     try {
       const date = new Date(values.date);
@@ -429,41 +414,19 @@ export const DeliverablesPage = () => {
         return;
       }
 
-      // The record exists — hand the (potentially long) upload to a background
-      // task and free the modal so the admin can keep working.
-      setUploadLabel(
-        filesToUpload.length === 1
-          ? filesToUpload[0].name
-          : filesToUpload.length > 1
-            ? `${filesToUpload.length} fayl`
-            : (thumbToUpload?.name ?? 'Fayl'),
-      );
-      setUploadPhase('uploading');
-      setUploadProgress(0);
+      // The record exists — hand the (potentially long) upload to the app-level
+      // background task and free the modal so the admin can keep working, even
+      // on other pages.
+      // Refetch when it finishes or fails (a no-op if the admin left the page;
+      // the list is fetched again on return).
+      upload.start(deliverableId, filesToUpload, thumbToUpload, () => {
+        fetchDeliverables();
+      });
       setIsModalOpen(false);
       setIsSaving(false);
-
-      const isLargeVideo = filesToUpload.some(
-        f => f.type.startsWith('video/') && f.size > DIRECT_UPLOAD_THRESHOLD_BYTES,
-      );
-      const runUpload = isLargeVideo ? directUploadDeliverableFile : uploadFilesWithProgress;
-
-      try {
-        await runUpload(deliverableId, filesToUpload, (percent) => {
-          setUploadProgress(percent);
-        }, thumbToUpload);
-        setUploadPhase('done');
-        setUploadProgress(100);
-        await fetchDeliverables();
-        window.setTimeout(() => setUploadPhase('idle'), 4000);
-      } catch (uploadErr) {
-        setUploadPhase('error');
-        setError(requestErrorMessage(uploadErr, 'Fayl yüklənə bilmədi.'));
-        await fetchDeliverables();
-      }
+      await fetchDeliverables();
     } catch (err) {
       setError(requestErrorMessage(err, 'Fayl yadda saxlanıla bilmədi.'));
-      setUploadPhase('idle');
       setIsSaving(false);
     }
   };
@@ -818,7 +781,7 @@ export const DeliverablesPage = () => {
                 </div>
               )}
               <Input
-                label={editing && editing.files?.length > 0 ? 'Yeni fayllar əlavə et' : 'Fayllar (Birdən çox seçə bilərsiniz)'}
+                label={editing && editing.files?.length > 0 ? 'Faylı əvəz et' : 'Fayllar (Birdən çox seçə bilərsiniz)'}
                 type="file"
                 multiple
                 onChange={(event) => {
@@ -827,6 +790,11 @@ export const DeliverablesPage = () => {
                   }
                 }}
               />
+              {editing && editing.files?.length > 0 && (
+                <p className="-mt-2 text-xs text-muted">
+                  Yeni fayl seçsəniz, yuxarıdakı mövcud fayllar yeni fayl hazır olan kimi silinəcək (əlavə olunmur).
+                </p>
+              )}
               <Input
                 label="Tarix"
                 type="date"
@@ -880,26 +848,6 @@ export const DeliverablesPage = () => {
                       ? 'Yeni kover seçsəniz, mövcud kover əvəz olunacaq.'
                       : 'Əgər yüklənməsə, videonun içindən avtomatik çəkiləcək.'}
                   </p>
-                </div>
-              )}
-              {/* Upload Progress Bar */}
-              {uploadPhase !== 'idle' && (
-                <div className="space-y-2 rounded-lg bg-surface-alt p-3 border border-edge">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-body">
-                      {uploadPhase === 'uploading' ? 'Yüklənir...' : 'Emal olunur...'}
-                    </span>
-                    {uploadPhase === 'uploading' && (
-                      <span className="tabular-nums text-muted">{uploadProgress}%</span>
-                    )}
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                    <div
-                      className={`h-full rounded-full transition-all duration-300 bg-gray-900`}
-                      style={uploadPhase === 'uploading' ? { width: `${uploadProgress}%` } : undefined}
-                    />
-                  </div>
-
                 </div>
               )}
               <div className="flex justify-end gap-3 border-t border-edge pt-4">
@@ -1049,47 +997,6 @@ export const DeliverablesPage = () => {
             message="Bu link artıq işləməyəcək. Davam etmək istədiyinizə əminsiniz?"
           />
 
-          {/* ── Background upload progress pill ── */}
-          {uploadPhase !== 'idle' && !isModalOpen && (
-            <div className="fixed bottom-4 right-4 z-50 w-[320px] max-w-[calc(100vw-2rem)] rounded-xl border border-edge bg-surface shadow-lg p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-body">
-                    {uploadPhase === 'uploading' && 'Yüklənir…'}
-                    {uploadPhase === 'done' && 'Yükləndi ✓'}
-                    {uploadPhase === 'error' && 'Yükləmə uğursuz oldu'}
-                  </p>
-                  <p className="truncate text-xs text-muted">{uploadLabel}</p>
-                </div>
-                {uploadPhase === 'uploading' ? (
-                  <span className="tabular-nums text-xs font-medium text-muted">{uploadProgress}%</span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setUploadPhase('idle')}
-                    className="text-xs text-muted hover:text-body"
-                    aria-label="Bağla"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              {uploadPhase === 'uploading' && (
-                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
-                  <div
-                    className="h-full rounded-full bg-gray-900 transition-all duration-300"
-                    style={{ width: `${uploadProgress}%` }}
-                  />
-                </div>
-              )}
-              {uploadPhase === 'uploading' && (
-                <p className="mt-2 text-[11px] text-muted">
-                  Panel-də başqa işlərlə məşğul ola bilərsiniz — yükləmə arxa planda davam edir.
-                  Bu vərəqi <span className="font-medium">bağlamayın və yeniləməyin</span>.
-                </p>
-              )}
-            </div>
-          )}
         </>
       )}
     </div>

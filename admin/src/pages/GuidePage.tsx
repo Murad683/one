@@ -466,11 +466,11 @@ export const GuidePage = () => {
               hissə-hissə (multipart, paralel) yüklənir — bu, böyük fayllar üçün daha etibarlıdır və şəbəkə
               kəsilsə avtomatik təkrar cəhd edir.
             </p>
-            <Callout tone="warn" title="Vacib fərq">
+            <Callout tone="warn" title="Vacib">
               <p>
-                Portfolio/Paketlər bölmələrindəki video yükləməsindən fərqli olaraq, bu bölmədəki yükləmə
-                göstəricisi <B>yalnız "Layihə Faylları" səhifəsində</B> aktivdir. Yükləmə davam edərkən başqa
-                admin səhifəsinə keçməyin — səhifəni tərk etməyin, yükləmə bitənə qədər bu bölmədə qalın.
+                Yükləmə davam edərkən panelin <B>başqa səhifələrinə keçə bilərsiniz</B> — irəliləyiş göstəricisi
+                küncdə qalır və yükləmə arxa planda davam edir. Amma brauzer tabını <B>bağlamayın və
+                yeniləməyin</B> (F5): bu, yükləməni dayandırır və faylı yenidən yükləmək lazım olur.
               </p>
             </Callout>
           </Callout>
@@ -536,7 +536,7 @@ export const GuidePage = () => {
           </Callout>
 
           <p>
-            Faylı əvəz etmək — redaktə pəncərəsindən yeni fayl seçib saxlasanız, yeni fayl hazır olan kimi köhnə
+            Faylı əvəz etmək — redaktə pəncərəsində <B>"Faylı əvəz et"</B> sahəsindən yeni fayl seçib saxlasanız, yeni fayl hazır olan kimi köhnə
             fayl, onun 720p nüsxəsi və köhnə kover şəkli yaddaşdan silinir. Yeni kover yükləməsəniz, yeni videodan
             avtomatik kover yaradılır. Emal uğursuz olsa, köhnə fayl toxunulmaz qalır.
           </p>
@@ -639,9 +639,9 @@ export const GuidePage = () => {
         {/* 13 — DİQQƏT */}
         <Section id="diqqet" icon={AlertTriangle} num="13" title="Diqqət ediləcək məqamlar (xülasə)">
           <FaqItem q='Video/fayl yükləyirəm, "Yükləmə davam edir" görürəm — nə etməliyəm?'>
-            Portfolio və Paketlər bölmələrindəki video yükləməsi bütün panel boyunca davam edir, başqa
-            səhifəyə keçə bilərsiniz. Amma "Layihə Faylları" bölməsindəki fayl yükləməsi yalnız həmin
-            səhifədə aktivdir — yükləmə bitənə qədər həmin səhifədə qalın, tabı bağlamayın.
+            Portfolio, Paketlər və Layihə Faylları yükləmələri bütün panel boyunca davam edir — başqa
+            səhifəyə keçə bilərsiniz. Yalnız brauzer tabını bağlamayın və yeniləməyin (F5), yoxsa yükləmə
+            dayanır.
           </FaqItem>
           <FaqItem q='Paketi "Ən Populyar" etdim, köhnəsi niyə hələ də görünür?'>
             Sistem avtomatik söndürmür — əvvəlki "Ən Populyar" paketi əl ilə tapıb söndürməlisiniz, əks
