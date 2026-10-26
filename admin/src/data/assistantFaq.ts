@@ -30,7 +30,7 @@ export const STAFF_FAQ: FaqEntry[] = [
   },
   {
     q: 'Müştəri üçün fayl necə yükləyirəm?',
-    a: 'Layihə Faylları bölməsində **Yeni Fayl** düyməsi:\n1. Başlıq, Müştəri, Növ və Tarixi doldurun (hamısı məcburidir).\n2. Faylları seçin (bir neçə ola bilər). Video kateqoriyasında kover şəkli də seçmək olar.\n3. Saxlayın, fayllar arxa planda yüklənir.\n**Vacib:** başqa səhifəyə keçə bilərsiniz, amma yükləmə bitənə qədər tabı bağlamayın və yeniləməyin.',
+    a: 'Layihə Faylları bölməsində **Yeni Fayl** düyməsi:\n1. Başlıq, Müştəri, Növ və Tarixi doldurun (hamısı məcburidir).\n2. Faylları seçin (bir neçə ola bilər). Video kateqoriyasında kover şəkli də seçmək olar.\n3. Saxlayın, fayllar arxa planda yüklənir.\nEyni anda ən çox 3 yükləmə ola bilər, hər birinin öz faiz kartı var.\n**Vacib:** başqa səhifəyə keçə bilərsiniz, amma yükləmə bitənə qədər tabı bağlamayın və yeniləməyin.',
   },
   {
     q: 'Ayarlarda dəyişiklik niyə yadda qalmadı?',
@@ -58,7 +58,7 @@ export const STAFF_FAQ: FaqEntry[] = [
 export const CREATOR_FAQ: FaqEntry[] = [
   {
     q: 'Müştəri üçün fayl necə yükləyirəm?',
-    a: 'Layihə Faylları səhifəsində **Fayl Əlavə Et** düyməsi:\n1. Başlıq, Müştəri, Növ və Tarixi doldurun (hamısı məcburidir).\n2. Faylları seçin (bir neçə ola bilər). Video kateqoriyasında kover şəkli də seçmək olar.\n3. Saxlayın, fayllar arxa planda yüklənir.\n**Vacib:** başqa səhifəyə keçə bilərsiniz, amma yükləmə bitənə qədər tabı bağlamayın və yeniləməyin.',
+    a: 'Layihə Faylları səhifəsində **Fayl Əlavə Et** düyməsi:\n1. Başlıq, Müştəri, Növ və Tarixi doldurun (hamısı məcburidir).\n2. Faylları seçin (bir neçə ola bilər). Video kateqoriyasında kover şəkli də seçmək olar.\n3. Saxlayın, fayllar arxa planda yüklənir.\nEyni anda ən çox 3 yükləmə ola bilər, hər birinin öz faiz kartı var.\n**Vacib:** başqa səhifəyə keçə bilərsiniz, amma yükləmə bitənə qədər tabı bağlamayın və yeniləməyin.',
   },
   {
     q: 'Müştərinin rəyini harada görürəm?',
