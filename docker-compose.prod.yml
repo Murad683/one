@@ -23,6 +23,10 @@ services:
       dockerfile: Dockerfile
     container_name: one-agency-api
     restart: unless-stopped
+    # Heavy ffmpeg transcodes must never starve the other stacks on this VPS
+    # (n8n bot, Leyla, Lisenziya): cap the API at 3 of 4 cores and 5.5 GB of 8 GB.
+    cpus: 3
+    mem_limit: 5632m
     env_file:
       - ./backend/.env
     ports:
