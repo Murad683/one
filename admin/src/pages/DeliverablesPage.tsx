@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useDeliverableUpload } from '../context/deliverableUpload';
+import { MAX_PARALLEL_UPLOADS, useDeliverableUpload } from '../context/deliverableUpload';
 import { Download, Edit2, FileX, Image, Link2, MessageCircle, Play, Plus, Search, Trash2, Video, X, Copy } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuthStore } from '../store/authStore';
@@ -387,6 +387,15 @@ export const DeliverablesPage = () => {
   };
 
   const saveDeliverable = async (values: DeliverableFormValues) => {
+    // The record is created before the upload starts, so refuse here (not after
+    // the POST) when all upload slots are taken — otherwise a file-less
+    // "Gözləmədə" record would be left behind.
+    if ((selectedFiles.length > 0 || selectedThumbnail) && !upload.canStart) {
+      setError(
+        `Eyni anda ən çox ${MAX_PARALLEL_UPLOADS} yükləmə ola bilər. Əvvəlkilərdən biri bitəndən sonra yenidən yadda saxlayın.`,
+      );
+      return;
+    }
     setIsSaving(true);
     setError('');
     try {

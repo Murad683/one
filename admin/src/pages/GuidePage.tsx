@@ -462,6 +462,11 @@ export const GuidePage = () => {
               alt küncdə irəliləyiş göstəricisi görünür.
             </p>
             <p>
+              Eyni anda <B>ən çox 3 yükləmə</B> göndərə bilərsiniz: hər birinin öz kartı və öz faizi olur, biri
+              bitəndə yalnız öz kartı bağlanır. 4-cü yükləməni başlatmaq üçün əvvəlkilərdən birinin bitməsini
+              gözləyin.
+            </p>
+            <p>
               50 MB-dan böyük videolar birbaşa yaddaş sisteminə (S3) yüklənir; 20 MB-dan böyük olanlar isə
               hissə-hissə (multipart, paralel) yüklənir — bu, böyük fayllar üçün daha etibarlıdır və şəbəkə
               kəsilsə avtomatik təkrar cəhd edir.
