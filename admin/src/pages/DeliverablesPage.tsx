@@ -285,6 +285,9 @@ export const DeliverablesPage = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  // Errors from saving the form are shown inside the modal: the page-level banner
+  // sits behind the modal overlay and would go unnoticed.
+  const [modalError, setModalError] = useState('');
   // Uploads run in an app-level context so they survive leaving this page.
   const upload = useDeliverableUpload();
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
@@ -371,6 +374,7 @@ export const DeliverablesPage = () => {
 
   const openModal = (deliverable?: Deliverable) => {
     setEditing(deliverable || null);
+    setModalError('');
     setSelectedFiles([]);
     setSelectedThumbnail(null);
     reset(
@@ -391,13 +395,14 @@ export const DeliverablesPage = () => {
     // the POST) when all upload slots are taken — otherwise a file-less
     // "Gözləmədə" record would be left behind.
     if ((selectedFiles.length > 0 || selectedThumbnail) && !upload.canStart) {
-      setError(
+      setModalError(
         `Eyni anda ən çox ${MAX_PARALLEL_UPLOADS} yükləmə ola bilər. Əvvəlkilərdən biri bitəndən sonra yenidən yadda saxlayın.`,
       );
       return;
     }
     setIsSaving(true);
     setError('');
+    setModalError('');
     try {
       const date = new Date(values.date);
       const payload = {
@@ -435,7 +440,7 @@ export const DeliverablesPage = () => {
       setIsSaving(false);
       await fetchDeliverables();
     } catch (err) {
-      setError(requestErrorMessage(err, 'Fayl yadda saxlanıla bilmədi.'));
+      setModalError(requestErrorMessage(err, 'Fayl yadda saxlanıla bilmədi.'));
       setIsSaving(false);
     }
   };
@@ -857,6 +862,11 @@ export const DeliverablesPage = () => {
                       ? 'Yeni kover seçsəniz, mövcud kover əvəz olunacaq.'
                       : 'Əgər yüklənməsə, videonun içindən avtomatik çəkiləcək.'}
                   </p>
+                </div>
+              )}
+              {modalError && (
+                <div role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  {modalError}
                 </div>
               )}
               <div className="flex justify-end gap-3 border-t border-edge pt-4">
