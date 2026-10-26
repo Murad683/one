@@ -1217,12 +1217,17 @@ export const deleteDeliverable = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Hard delete the record first, then every file it pointed at (video, 720p
-    // preview, cover, image original). If the row delete fails, nothing is lost.
+    // Hard delete the record first, answer immediately, then remove every file it
+    // pointed at (video, 720p preview, cover, image original) in the background:
+    // object-storage calls can take many seconds and the admin should not wait.
+    // If the row delete fails, nothing is lost; if the cleanup fails, the files
+    // are only orphaned in storage (never shown anywhere) and the error is logged.
     await prisma.deliverable.delete({ where: { id } });
-    await deleteUnreferencedDeliverableKeys(collectDeliverableKeys(existing));
-
     res.status(204).send();
+
+    void deleteUnreferencedDeliverableKeys(collectDeliverableKeys(existing)).catch((cleanupErr) => {
+      console.error(`deleteDeliverable cleanup failed for ${id}:`, cleanupErr);
+    });
   } catch (err) {
     console.error('deleteDeliverable error:', err);
     sendError(res, 'Failed to delete deliverable', 500);
