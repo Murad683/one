@@ -155,6 +155,8 @@ export const buildDeliverableListQuery = (
     default:
       orderBy = [{ createdAt: order }, { id: order }];
   }
+  // Rows whose video files were deleted by the retention rule always go last.
+  orderBy.unshift({ mediaDeletedAt: { sort: 'asc', nulls: 'first' } });
 
   return { where, orderBy, page, limit, skip };
 };

@@ -19,6 +19,8 @@ import * as crypto from 'crypto';
 import { SAS_UPLOAD_EXPIRY_SECONDS, FILE_SIZE_TOLERANCE_PERCENT, MAX_UPLOAD_SIZE_BYTES, MULTIPART_PART_SIZE_BYTES, MULTIPART_MAX_PARTS } from '../config/upload.constants';
 import { isProcessingBusy, PROCESSING_BUSY_MESSAGE } from '../utils/deliverableStatus';
 import { buildDeliverableListQuery } from '../utils/deliverableList';
+import { CLIENT_VISIBLE_WHERE, isRetentionLocked, presentForAdmin, presentForClient, RETENTION_LOCKED_MESSAGE } from '../utils/retention';
+import { stampFirstReady } from '../services/retention.service';
 
 // Video helpers (getVideoHeight / getVideoRotationDegrees / getMediaDimensions /
 // generateVideoThumbnail / generateWebPreview / applyVideoFaststart) moved to
@@ -84,6 +86,11 @@ export const dynamicUploadMiddleware = async (
       return;
     }
 
+    if (isRetentionLocked(deliverable)) {
+      sendError(res, RETENTION_LOCKED_MESSAGE, 409);
+      return;
+    }
+
     // Set the subfolder based on category isVideo flag or legacy type
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     req.uploadSubfolder = isVideo ? 'videos' : 'designs';
@@ -103,7 +110,7 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
     const year = req.query.year ? parseInt(req.query.year as string) : undefined;
     const month = req.query.month ? parseInt(req.query.month as string) : undefined;
 
-    const where: Record<string, unknown> = { clientId };
+    const where: Record<string, unknown> = { clientId, ...CLIENT_VISIBLE_WHERE };
     if (year) where.year = year;
     if (month) where.month = month;
 
@@ -152,7 +159,7 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
           }
         }
 
-        return { ...d, files: filesWithSignedUrls, thumbnailUrl: signedThumbnailUrl, originalUrl: signedOriginalUrl };
+        return presentForClient({ ...d, files: filesWithSignedUrls, thumbnailUrl: signedThumbnailUrl, originalUrl: signedOriginalUrl });
       })
     );
 
@@ -226,7 +233,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
           }
         }
 
-        return {
+        return presentForAdmin({
           ...d,
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
@@ -236,7 +243,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
             ...(isCreator && { email: undefined }),
             shareUrl: d.client.shareToken ? `${process.env.FRONTEND_URL}/share/${d.client.shareToken}` : null,
           },
-        };
+        });
       })
     );
 
@@ -329,6 +336,11 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
       }
     }
 
+    if (files !== undefined && isRetentionLocked(existing)) {
+      sendError(res, RETENTION_LOCKED_MESSAGE, 409);
+      return;
+    }
+
     const updated = await prisma.deliverable.update({
       where: { id },
       data: {
@@ -355,6 +367,8 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
     if (files && Array.isArray(files)) {
       await deleteUnreferencedDeliverableKeys(collectDeliverableKeys({ files: existing.files }));
     }
+
+    if (updated.status === 'READY') await stampFirstReady(id);
 
     sendSuccess(res, updated);
   } catch (err) {
@@ -386,6 +400,11 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
     // output. (The multipart body is only in memory here, nothing to clean up.)
     if (isProcessingBusy(deliverable)) {
       sendError(res, PROCESSING_BUSY_MESSAGE, 409);
+      return;
+    }
+
+    if (isRetentionLocked(deliverable)) {
+      sendError(res, RETENTION_LOCKED_MESSAGE, 409);
       return;
     }
 
@@ -661,6 +680,7 @@ const processDeliverableBackground = async (
     });
 
     console.log(`[Video Debug] Deliverable ${id} processed successfully in ${processingDuration}s`);
+    await stampFirstReady(id);
   } catch (err) {
     console.error(`[Video Debug] Background processing failed for ${id}:`, err);
     await prisma.deliverable.update({
@@ -699,6 +719,7 @@ export const initiateDirectUpload = async (req: Request, res: Response): Promise
     if (!deliverable) { sendError(res, 'Deliverable not found', 404); return; }
     if (!canModifyDeliverable(req.user, deliverable)) { sendError(res, 'Forbidden', 403); return; }
     if (isProcessingBusy(deliverable)) { sendError(res, PROCESSING_BUSY_MESSAGE, 409); return; }
+    if (isRetentionLocked(deliverable)) { sendError(res, RETENTION_LOCKED_MESSAGE, 409); return; }
 
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     const folder = isVideo ? 'videos' : 'designs';
@@ -739,6 +760,7 @@ export const initiateMultipartUpload = async (req: Request, res: Response): Prom
     if (!deliverable) { sendError(res, 'Deliverable not found', 404); return; }
     if (!canModifyDeliverable(req.user, deliverable)) { sendError(res, 'Forbidden', 403); return; }
     if (isProcessingBusy(deliverable)) { sendError(res, PROCESSING_BUSY_MESSAGE, 409); return; }
+    if (isRetentionLocked(deliverable)) { sendError(res, RETENTION_LOCKED_MESSAGE, 409); return; }
 
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     const folder = isVideo ? 'videos' : 'designs';
@@ -850,11 +872,15 @@ export const finalizeDirectUpload = async (req: Request, res: Response): Promise
       if (!(await creatorStorageKeysAllowed(keys, id))) { sendError(res, 'Forbidden storage key', 403); return; }
     }
 
-    // Another upload for this row is still being processed. Refuse, and drop the
-    // raw objects this request just uploaded: nothing references them, and
+    // Another upload for this row is still being processed, or the video has
+    // expired. Refuse, and drop the raw objects this request just uploaded:
+    // nothing references them, and
     // deleteUnreferencedDeliverableKeys keeps any key a row still points at.
-    if (isProcessingBusy(deliverable)) {
-      sendError(res, PROCESSING_BUSY_MESSAGE, 409);
+    const lockedMessage = isProcessingBusy(deliverable)
+      ? PROCESSING_BUSY_MESSAGE
+      : isRetentionLocked(deliverable) ? RETENTION_LOCKED_MESSAGE : null;
+    if (lockedMessage) {
+      sendError(res, lockedMessage, 409);
       if (Array.isArray(files)) {
         await deleteUnreferencedDeliverableKeys([
           ...files.map((f: any) => f?.storageKey).filter(Boolean),
@@ -1142,6 +1168,7 @@ const processDirectUploadBackground = async (
     });
 
     console.log(`[Direct Upload] Deliverable ${id} processed successfully in ${processingDuration}s`);
+    await stampFirstReady(id);
 
     // The row now points at the new files: remove the superseded ones (old
     // video, its 720p preview, old cover, old image original) and the raw
@@ -1188,6 +1215,8 @@ export const updateStatus = async (req: Request, res: Response): Promise<void> =
       where: { id },
       data: { status: req.body.status },
     });
+
+    if (updated.status === 'READY') await stampFirstReady(id);
 
     sendSuccess(res, updated);
   } catch (err) {

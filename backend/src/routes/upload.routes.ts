@@ -5,6 +5,7 @@ import { isAdmin } from '../middleware/rbac.middleware';
 import { uploadImage } from '../middleware/upload.middleware';
 import { getSecureDownloadUrl } from '../services/upload.service';
 import prisma from '../utils/prisma';
+import { CLIENT_VISIBLE_WHERE } from '../utils/retention';
 
 const router = Router();
 
@@ -79,8 +80,8 @@ router.get('/:folder/:file', conditionalVerifyToken, async (req, res) => {
       } else if (['avatars', 'images', 'thumbnails', 'highlights'].includes(folder)) {
         isOwner = true; 
       } else if (['videos', 'designs'].includes(folder)) {
-        // Clients see files of their own deliverables; creators those they uploaded.
-        const ownerFilter = userRole === 'CREATOR' ? { createdById: userId } : { clientId: userId };
+        // Clients see files of their own deliverables (not expired ones); creators those they uploaded.
+        const ownerFilter = userRole === 'CREATOR' ? { createdById: userId } : { clientId: userId, ...CLIENT_VISIBLE_WHERE };
         const deliverables = await prisma.deliverable.findMany({ where: ownerFilter });
         for (const d of deliverables) {
           if (typeof d.files === 'string' && d.files.includes(file)) isOwner = true;

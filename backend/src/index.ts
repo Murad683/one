@@ -31,6 +31,7 @@ import { sendError } from './utils/response.util';
 import { ensureUploadDirs } from './utils/ensureUploadDir';
 import { globalRateLimiter, contactRateLimiter, uploadRateLimiter } from './middleware/rateLimiter.middleware';
 import { xssSanitize } from './middleware/xss.middleware';
+import { startRetentionScheduler } from './jobs/retention';
 
 // Bootstrap
 ensureUploadDirs();
@@ -160,6 +161,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 // â”€â”€â”€ Start Server â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.listen(PORT, () => {
   console.log(`ðŸš€ Server running on http://localhost:${PORT}`);
+  startRetentionScheduler();
 });
 
 export default app;
