@@ -22,7 +22,7 @@ const REPLACE_BLOCKED: FaqEntry = {
 
 const FIND_FILES: FaqEntry = {
   q: 'Faylı necə tez tapım? (axtarış, filtr, sıralama)',
-  a: 'Layihə Faylları cədvəlində:\n- **Axtarış** qutusu müştəri adı, e-poçt və fayl başlığı üzrə işləyir.\n- **Sıralamaq** üçün sütun başlığına basın (ikinci basış istiqaməti dəyişir).\n- **Süzmək** üçün başlıqdakı kiçik **huni ikonuna** basın: Müştəri, Növ, Status, Ay/İl, Əlavə olunub. Status hunisində Gözləmədə qalıb və Müştəri rəyi var da var, Əlavə olunub hunisində Bu gün, Son 7 gün, Bu ay.\n- Aktiv filtrlər çip kimi görünür, **Hamısını təmizlə** ilə silinir.\n- Aşağıda **Səhifədə** (50, 100, 150, 200). Telefonda **Filtr / Sırala** düyməsi.',
+  a: 'Layihə Faylları cədvəlində:\n- **Axtarış** qutusu müştəri adı, e-poçt və fayl başlığı üzrə işləyir.\n- **Sıralamaq** üçün sütun başlığına basın (ikinci basış istiqaməti dəyişir).\n- **Süzmək** üçün başlıqdakı kiçik **huni ikonuna** basın: Müştəri, Növ, Status, Əlavə olunub. Status hunisində Gözləmədə qalıb və Müştəri rəyi var da var, Əlavə olunub hunisində Bu gün, Son 7 gün, Bu ay.\n- Aktiv filtrlər çip kimi görünür, **Hamısını təmizlə** ilə silinir.\n- Aşağıda **Səhifədə** (50, 100, 150, 200). Telefonda **Filtr / Sırala** düyməsi.',
 };
 
 export const STAFF_FAQ: FaqEntry[] = [

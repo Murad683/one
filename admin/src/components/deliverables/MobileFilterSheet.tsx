@@ -71,7 +71,6 @@ export const MobileFilterSheet = ({
           <Select label="Müştəri" value={filters.clientId} onChange={(event) => onFiltersChange({ clientId: event.target.value })} options={clientOptions} />
           <Select label="Növ" value={filters.categoryId} onChange={(event) => onFiltersChange({ categoryId: event.target.value })} options={categoryOptions} />
           <Select label="Status" value={filters.status} onChange={(event) => onFiltersChange({ status: event.target.value })} options={statusOptions} />
-          <Input label="Ay / İl (iş ayı)" type="month" value={filters.month} onChange={(event) => onFiltersChange({ month: event.target.value })} />
           <div className="space-y-2">
             <p className="text-sm font-medium text-body">Əlavə olunub</p>
             <div className="flex flex-wrap gap-2">
