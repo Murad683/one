@@ -2,9 +2,12 @@ import type { ReactNode } from 'react';
 
 export interface TableColumn<T> {
   key: keyof T | string;
-  header: string;
+  /** Plain text, or a node (e.g. a sortable header with a filter icon). */
+  header: ReactNode;
   render?: (row: T) => ReactNode;
   hideOnMobile?: boolean;
+  /** Announced to screen readers on a sortable column. */
+  ariaSort?: 'ascending' | 'descending' | 'none';
 }
 
 interface TableProps<T extends object> {
@@ -13,6 +16,8 @@ interface TableProps<T extends object> {
   isLoading?: boolean;
   emptyMessage?: string;
   rowClassName?: (row: T) => string;
+  /** Lighter header (no tinted band, small muted caps). Off by default. */
+  minimal?: boolean;
 }
 
 export const Table = <T extends object>({
@@ -21,17 +26,21 @@ export const Table = <T extends object>({
   isLoading = false,
   emptyMessage = 'No records found.',
   rowClassName,
+  minimal = false,
 }: TableProps<T>) => (
   <div className="overflow-hidden rounded-xl border border-edge bg-surface">
     <div className="overflow-x-auto scrollbar-minimal">
       <table className="min-w-full divide-y divide-edge text-left text-sm">
-        <thead className="bg-surface-alt">
+        <thead className={minimal ? 'bg-transparent' : 'bg-surface-alt'}>
           <tr>
             {columns.map((column) => (
               <th
                 key={String(column.key)}
+                aria-sort={column.ariaSort}
                 className={[
-                  'px-3 sm:px-4 py-3 font-semibold text-body whitespace-nowrap text-xs sm:text-sm',
+                  minimal
+                    ? 'px-3 sm:px-4 py-2.5 font-medium text-muted whitespace-nowrap text-xs'
+                    : 'px-3 sm:px-4 py-3 font-semibold text-body whitespace-nowrap text-xs sm:text-sm',
                   column.hideOnMobile ? 'hidden sm:table-cell' : '',
                 ].join(' ')}
               >

@@ -424,13 +424,16 @@ export const GuidePage = () => {
 
           <h3 className="pt-2 text-base font-semibold text-heading">Fayllar cədvəli</h3>
           <p>
-            Cədvəlin üstündəki panel faylı tez tapmaq üçündür: axtarış qutusu <B>müştəri adı, e-poçt və fayl
-            başlığı</B> üzrə axtarır (creator e-poçtla axtara bilmir). Altında <B>Müştəri, Növ, Status və Ay / İl</B>{' '}
-            filtrləri var; <B>"Daha çox filtr"</B> bölməsində faylın əlavə olunduğu günə görə tarix aralığı (Bu gün,
-            Son 7 gün, Bu ay düymələri), "Gözləmədə qalıb" və "Müştəri rəyi var" seçimləri yerləşir. <B>"Təmizlə"</B>{' '}
-            düyməsi hamısını sıfırlayır. <B>Sıralama</B> menyusundan yeni/köhnə, müştəri, başlıq və ya status üzrə
-            seçə bilərsiniz. Cədvəl səhifələnir: defolt 50 sətir, <B>Sətir sayı</B> ilə 50, 100, 150 və ya 200 seçilir;
-            "Ay/İl"in altında faylın əlavə olunma günü yazılır. Status sütununda 5 mümkün vəziyyət var:
+            Cədvəlin üstündəki axtarış qutusu <B>müştəri adı, e-poçt və fayl başlığı</B> üzrə axtarır (creator
+            e-poçtla axtara bilmir). <B>Sıralamaq</B> üçün istənilən sütun başlığına basın (Müştəri, Başlıq, Növ,
+            Status, Ay/İl, Əlavə olunub): ikinci basış istiqaməti dəyişir, aktiv sütunda ox görünür. <B>Süzmək</B>{' '}
+            üçün Müştəri, Növ, Status, Ay/İl və Əlavə olunub başlıqlarındakı kiçik huni ikonuna basın (aktiv filtrdə ikon
+            mavi olur). Status hunisində "Gözləmədə qalıb" və "Müştəri rəyi var" da var, Əlavə olunub hunisində tarix
+            aralığı və Bu gün, Son 7 gün, Bu ay düymələri. Aktiv filtrlər cədvəlin üstündə çip kimi görünür, ✕ ilə
+            tək-tək, "Hamısını təmizlə" ilə hamısı silinir. Cədvəlin altında "Səhifədə" ilə sətir sayını (50, 100, 150,
+            200) və Əvvəlki/Növbəti düymələrini seçirsiniz. Telefonda başlıqlar gizlidir, ona görə axtarışın yanındakı{' '}
+            <B>"Filtr / Sırala"</B> düyməsi eyni seçimləri açır. Emal müddətini (məs. "Emal müddəti: 3 dəq 10 san")
+            görmək üçün Status nişanının üzərinə gətirin. Status sütununda 5 mümkün vəziyyət var:
           </p>
           <div className="my-3 flex flex-wrap gap-2">
             <Badge variant="warning">Gözləmədə</Badge>
