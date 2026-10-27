@@ -6,7 +6,7 @@
  */
 
 const STATUSES = ['PENDING', 'PROCESSING', 'READY', 'FAILED', 'ARCHIVED'] as const;
-const SORTS = ['createdAt', 'client', 'title', 'status'] as const;
+const SORTS = ['createdAt', 'client', 'title', 'status', 'category', 'month'] as const;
 
 export const DEFAULT_LIMIT = 12;
 export const MAX_LIMIT = 200;
@@ -142,6 +142,15 @@ export const buildDeliverableListQuery = (
     case 'status':
       // Postgres sorts enums by declaration order: PENDING, PROCESSING, READY, ...
       orderBy = [{ status: order }, { createdAt: 'desc' }, { id: 'desc' }];
+      break;
+    case 'category':
+      // Files without a category follow Postgres' default NULL order (last when
+      // ascending, first when descending).
+      orderBy = [{ category: { name: order } }, { createdAt: 'desc' }, { id: 'desc' }];
+      break;
+    case 'month':
+      // The work month ("Ay/İl" column): year first, then month.
+      orderBy = [{ year: order }, { month: order }, { createdAt: 'desc' }, { id: 'desc' }];
       break;
     default:
       orderBy = [{ createdAt: order }, { id: order }];
