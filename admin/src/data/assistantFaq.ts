@@ -30,6 +30,11 @@ const VIDEO_RETENTION: FaqEntry = {
   a: 'Video ilk dəfə **Hazırdır** olandan **60 gün** sonra müştəridən gizlənir, daha **7 gün** sonra faylları (video, 720p, kover) serverdən birdəfəlik silinir.\n- Faylı əvəz etmək müddəti uzatmır. Şəkil və dizayn faylları silinmir.\n- Statusun altında qalan gün yazılır, silinəndən sonra sətir solğun olur: "Fayl silinib (tarix)". Onları Status hunisindəki **Saxlama müddəti** seçimi ilə süzə bilərsiniz.\n- Gizlədilmiş videoya yeni fayl yükləmək olmur, yeni qeyd yaradın.\n- Silinən fayl geri qayıtmır: müştəriyə vaxtında endirməyi xatırladın.',
 };
 
+const NOTICE_MAIL: FaqEntry = {
+  q: 'Müştəriyə silinmə xəbərdarlığı necə gedir?',
+  a: 'Videonun müştəridən gizlənməsinə **7 gün** və **1 gün** qalmış müştərinin e-poçtuna mail gedir (gündə ən çox bir mail, bir neçə video bir mailə yığılır).\n- E-poçt **@ourneweye.com** və ya real deyilsə mail getmir. Müştərilər siyahısında e-poçtun altında "Real e-poçt deyil" yazılır.\n- Real e-poçtu **Müştərilər** bölməsində qələm ikonu ilə yazın. Şifrə xanasını boş buraxın. Müştərini **silməyin**, bütün faylları silinər.\n- Mail çatmasa e-poçtun altında qırmızı "Mail çatmadı" çıxır, e-poçtu düzəldin.\n- E-poçt kiçik hərflə saxlanır, girişdə hərf fərq etmir.',
+};
+
 export const STAFF_FAQ: FaqEntry[] = [
   {
     q: 'Müştəriyə paketi necə təyin edim?',
@@ -71,6 +76,7 @@ export const STAFF_FAQ: FaqEntry[] = [
   FIND_FILES,
   REPLACE_BLOCKED,
   VIDEO_RETENTION,
+  NOTICE_MAIL,
 ];
 
 export const CREATOR_FAQ: FaqEntry[] = [

@@ -5,6 +5,7 @@ import { sendSuccess, sendError } from '../utils/response.util';
 import { hashPassword } from '../utils/password.util';
 import { collectDeliverableKeys, deleteUnreferencedDeliverableKeys } from '../services/upload.service';
 import { EMAIL_IN_USE_MESSAGE, isUniqueViolation, looksLikeEmail, normalizeEmail } from '../utils/email';
+import { canReceiveNotices } from '../utils/notices';
 
 const SHARE_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -37,13 +38,15 @@ export const getUsers = async (req: Request, res: Response) => {
           igHighlights: true,
           shareToken: true,
           shareTokenExpiresAt: true,
+          emailBouncedAt: true,
         },
       }),
       prisma.user.count({ where }),
     ]);
 
     return sendSuccess(res, {
-      items,
+      // canReceiveNotices: a real, working mailbox of an active client (utils/notices.ts)
+      items: items.map((u) => ({ ...u, canReceiveNotices: canReceiveNotices(u) })),
       total,
       page: pageNumber,
       limit: limitNumber,
@@ -80,6 +83,7 @@ export const updateUser = async (req: Request, res: Response) => {
       password?: string;
       isActive?: boolean;
       igHighlights?: any;
+      emailBouncedAt?: null;
     } = {};
 
     if (name !== undefined) data.name = name;
@@ -95,6 +99,8 @@ export const updateUser = async (req: Request, res: Response) => {
         }
       }
       data.email = normalized;
+      // A new address starts clean: the old one's bounce says nothing about it.
+      if (normalized !== existing.email) data.emailBouncedAt = null;
     }
     if (isActive !== undefined) data.isActive = isActive;
     if (igHighlights !== undefined) data.igHighlights = igHighlights;
@@ -112,6 +118,7 @@ export const updateUser = async (req: Request, res: Response) => {
         createdAt: true,
         updatedAt: true,
         igHighlights: true,
+        emailBouncedAt: true,
       },
     });
 

@@ -45,6 +45,18 @@ export const retentionNote = (d: RetentionFields, now: number = Date.now()): Ret
   return null;
 };
 
+/** Days before the hiding date from which a missing real e-mail is flagged in the list. */
+export const NO_MAIL_WARNING_DAYS = 14;
+
+/**
+ * True when the video is about to leave the portal but its client has no real
+ * mailbox (utils/notices.ts on the server), so no warning mail can reach them.
+ */
+export const needsRealEmail = (d: RetentionFields, clientCanReceiveNotices: boolean | undefined, now: number = Date.now()): boolean => {
+  if (clientCanReceiveNotices !== false || !d.expiresAt || d.hiddenAt || d.mediaDeletedAt) return false;
+  return daysUntil(d.expiresAt, now) <= NO_MAIL_WARNING_DAYS;
+};
+
 /** Why no new file may be uploaded into this row (the server refuses too, 409). */
 export const retentionLockReason = (d: RetentionFields | null): string | null => {
   if (!d) return null;

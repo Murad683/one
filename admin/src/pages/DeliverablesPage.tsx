@@ -41,7 +41,7 @@ import {
   type DeliverableFilters,
   type SortKey,
 } from '../lib/deliverableList';
-import { retentionLockReason, retentionNote } from '../lib/retention';
+import { needsRealEmail, retentionLockReason, retentionNote } from '../lib/retention';
 
 const isStalePending = (deliverable: Partial<Deliverable>) => {
   if (deliverable.status !== 'PENDING' || !deliverable.createdAt) return false;
@@ -66,6 +66,8 @@ interface ClientUser extends Record<string, unknown> {
   igHighlights?: { title: string; imageUrl: string }[];
   shareUrl?: string | null;
   shareTokenExpiresAt?: string | null;
+  /** The client has a real mailbox, so the retention warnings reach them. */
+  canReceiveNotices?: boolean;
 }
 
 interface DeliverableCategory extends Record<string, unknown> {
@@ -715,6 +717,14 @@ export const DeliverablesPage = () => {
             )}
             {deliverable.status === 'PROCESSING' && (
               <span className="text-[10px] text-faint italic ml-1">Emal gedir, 1–5 dəqiqə çəkə bilər.</span>
+            )}
+            {!isCreator && needsRealEmail(deliverable, deliverable.client?.canReceiveNotices) && (
+              <span
+                className="text-[10px] ml-1 text-red-600"
+                title="Bu müştərinin e-poçtu real deyil (və ya mail çatmır), ona görə silinmə xəbərdarlığı gedə bilməz. Müştərilər bölməsində real e-poçtu yazın."
+              >
+                Müştərinin real e-poçtu yoxdur, xəbərdarlıq getməyəcək
+              </span>
             )}
             {retention && (
               <span

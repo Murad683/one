@@ -1,5 +1,7 @@
 import { getRetentionMode } from '../utils/retention';
 import { runRetention } from '../services/retention.service';
+import { runNotices } from '../services/notice.service';
+import { getMailMode } from '../utils/notices';
 
 const HOUR_MS = 60 * 60 * 1000;
 const FIRST_RUN_DELAY_MS = 2 * 60 * 1000;
@@ -14,6 +16,13 @@ const tick = async (): Promise<void> => {
     await runRetention({ stamp: true, act: mode === 'on' });
   } catch (err) {
     console.error('[Retention] run failed:', err);
+  }
+  // Warning mails (own mode switch, MAIL_MODE). A failure here never affects the retention run above.
+  try {
+    const mailMode = getMailMode();
+    if (mailMode !== 'off') await runNotices({ act: mailMode === 'on' });
+  } catch (err) {
+    console.error('[Notices] run failed:', err);
   } finally {
     running = false;
   }
@@ -21,7 +30,7 @@ const tick = async (): Promise<void> => {
 
 /** Runs the retention rule hourly inside the API (first run shortly after boot). */
 export const startRetentionScheduler = (): void => {
-  console.log(`[Retention] mode: ${getRetentionMode()}`);
+  console.log(`[Retention] mode: ${getRetentionMode()}, mail mode: ${getMailMode()}`);
   setTimeout(() => void tick(), FIRST_RUN_DELAY_MS).unref();
   setInterval(() => void tick(), HOUR_MS).unref();
 };
