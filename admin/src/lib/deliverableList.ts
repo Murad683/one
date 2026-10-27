@@ -14,7 +14,17 @@ export interface DeliverableFilters {
   /** "Gözləmədə qalıb": PENDING for more than 2 hours. */
   stale: boolean;
   hasFeedback: boolean;
+  /** Video retention stage (backend/src/utils/retention.ts), or '' for all. */
+  retention: RetentionFilter;
 }
+
+export type RetentionFilter = '' | 'expiring' | 'hidden' | 'deleted';
+
+export const RETENTION_FILTER_OPTIONS: { value: Exclude<RetentionFilter, ''>; label: string }[] = [
+  { value: 'expiring', label: 'Silinəcək' },
+  { value: 'hidden', label: 'Müştəridən gizlədilib' },
+  { value: 'deleted', label: 'Faylı silinib' },
+];
 
 export const emptyFilters: DeliverableFilters = {
   clientId: '',
@@ -25,6 +35,7 @@ export const emptyFilters: DeliverableFilters = {
   to: '',
   stale: false,
   hasFeedback: false,
+  retention: '',
 };
 
 // Keys the backend accepts for `sort` (backend/src/utils/deliverableList.ts).
@@ -96,7 +107,7 @@ export const formatAddedDay = (iso?: string | null): string => {
 
 /** How many filters are set (the date range counts once). The search box is separate. */
 export const countActiveFilters = (f: DeliverableFilters): number =>
-  [f.clientId, f.categoryId, f.status, f.month].filter(Boolean).length +
+  [f.clientId, f.categoryId, f.status, f.month, f.retention].filter(Boolean).length +
   (f.from || f.to ? 1 : 0) +
   (f.stale ? 1 : 0) +
   (f.hasFeedback ? 1 : 0);
@@ -125,6 +136,7 @@ export const buildListParams = ({ page, pageSize, sort, search, filters }: ListP
   if (filters.to) params.set('to', filters.to);
   if (filters.stale) params.set('stale', '1');
   if (filters.hasFeedback) params.set('hasFeedback', '1');
+  if (filters.retention) params.set('retention', filters.retention);
   return params;
 };
 
@@ -162,6 +174,10 @@ export const describeFilters = (f: DeliverableFilters, ctx: ChipContext): Filter
   }
   if (f.stale) chips.push({ id: 'stale', label: 'Gözləmədə qalıb', clear: { stale: false } });
   if (f.hasFeedback) chips.push({ id: 'feedback', label: 'Müştəri rəyi var', clear: { hasFeedback: false } });
+  if (f.retention) {
+    const label = RETENTION_FILTER_OPTIONS.find((o) => o.value === f.retention)?.label ?? f.retention;
+    chips.push({ id: 'retention', label: `Saxlama: ${label}`, clear: { retention: '' } });
+  }
   if (/^\d{4}-\d{2}$/.test(f.month)) {
     const [y, m] = f.month.split('-');
     chips.push({ id: 'month', label: `Ay/İl: ${parseInt(m, 10)}/${y}`, clear: { month: '' } });

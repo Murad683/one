@@ -428,7 +428,8 @@ export const GuidePage = () => {
             e-poçtla axtara bilmir). <B>Sıralamaq</B> üçün istənilən sütun başlığına basın (Müştəri, Başlıq, Növ,
             Status, Əlavə olunub): ikinci basış istiqaməti dəyişir, aktiv sütunda ox görünür. <B>Süzmək</B>{' '}
             üçün Müştəri, Növ, Status və Əlavə olunub başlıqlarındakı kiçik huni ikonuna basın (aktiv filtrdə ikon
-            mavi olur). Status hunisində "Gözləmədə qalıb" və "Müştəri rəyi var" da var, Əlavə olunub hunisində tarix
+            mavi olur). Status hunisində "Gözləmədə qalıb", "Müştəri rəyi var" və "Saxlama müddəti" (Silinəcək, Müştəridən
+            gizlədilib, Faylı silinib) da var, Əlavə olunub hunisində tarix
             aralığı və Bu gün, Son 7 gün, Bu ay düymələri. Aktiv filtrlər cədvəlin üstündə çip kimi görünür, ✕ ilə
             tək-tək, "Hamısını təmizlə" ilə hamısı silinir. Cədvəlin altında "Səhifədə" ilə sətir sayını (50, 100, 150,
             200) və Əvvəlki/Növbəti düymələrini seçirsiniz. Telefonda başlıqlar gizlidir, ona görə axtarışın yanındakı{' '}
@@ -460,7 +461,8 @@ export const GuidePage = () => {
             silinir. Faylı əvəz etmək müddəti uzatmır, saat ilk "Hazırdır" anından sayılır. Şəkil və dizayn faylları
             silinmir. Statusun altında kiçik yazı vəziyyəti göstərir: "X gün sonra silinəcək", sonra "Müştəridən
             gizlədilib · fayllar X gün sonra silinir", sonda sətir solğun olur və "Fayl silinib (tarix)" yazılır. Belə
-            sətirlər siyahının sonunda görünür. Qeydin özü (başlıq, müştəri, rəy) qalır.
+            sətirlər siyahının sonunda görünür, ayrıca tapmaq üçün Status hunisindəki "Saxlama müddəti" seçimindən
+            istifadə edin. Qeydin özü (başlıq, müştəri, rəy) qalır.
           </p>
           <Callout tone="warn" title="Gizlədilmiş videoya yeni fayl yüklənmir">
             <p>

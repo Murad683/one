@@ -7,7 +7,6 @@
 
 const STATUSES = ['PENDING', 'PROCESSING', 'READY', 'FAILED', 'ARCHIVED'] as const;
 const SORTS = ['createdAt', 'client', 'title', 'status', 'category', 'month'] as const;
-
 export const DEFAULT_LIMIT = 12;
 export const MAX_LIMIT = 200;
 // Same 2 h rule as isStalePending in admin/src/pages/DeliverablesPage.tsx.
@@ -108,6 +107,17 @@ export const buildDeliverableListQuery = (
   if (flag(query.hasFeedback)) {
     and.push({ clientFeedback: { not: null } });
     and.push({ NOT: { clientFeedback: '' } });
+  }
+
+  // Video retention stages (utils/retention.ts): counting down, hidden from the
+  // client, files deleted.
+  const retention = text(query.retention);
+  if (retention === 'expiring') {
+    and.push({ expiresAt: { not: null } }, { hiddenAt: null }, { mediaDeletedAt: null });
+  } else if (retention === 'hidden') {
+    and.push({ hiddenAt: { not: null } }, { mediaDeletedAt: null });
+  } else if (retention === 'deleted') {
+    and.push({ mediaDeletedAt: { not: null } });
   }
 
   const isCreator = user.role === 'CREATOR';

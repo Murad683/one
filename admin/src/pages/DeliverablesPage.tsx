@@ -664,7 +664,7 @@ export const DeliverablesPage = () => {
       header: headerFor(
         'status',
         'Status',
-        <ColumnFilter label="Status" active={Boolean(filters.status || filters.stale || filters.hasFeedback)} width={300}>
+        <ColumnFilter label="Status" active={Boolean(filters.status || filters.stale || filters.hasFeedback || filters.retention)} width={300}>
           {(close) => <StatusFilterPanel statusLabels={statusLabels} filters={filters} onChange={updateFilters} close={close} />}
         </ColumnFilter>,
       ),
