@@ -18,6 +18,7 @@ import * as os from 'os';
 import * as crypto from 'crypto';
 import { SAS_UPLOAD_EXPIRY_SECONDS, FILE_SIZE_TOLERANCE_PERCENT, MAX_UPLOAD_SIZE_BYTES, MULTIPART_PART_SIZE_BYTES, MULTIPART_MAX_PARTS } from '../config/upload.constants';
 import { isProcessingBusy, PROCESSING_BUSY_MESSAGE } from '../utils/deliverableStatus';
+import { buildDeliverableListQuery } from '../utils/deliverableList';
 
 // Video helpers (getVideoHeight / getVideoRotationDegrees / getMediaDimensions /
 // generateVideoThumbnail / generateWebPreview / applyVideoFaststart) moved to
@@ -165,47 +166,17 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
 // GET /api/v1/deliverables (Admin only)
 export const getAllDeliverables = async (req: Request, res: Response): Promise<void> => {
   try {
-    const page = Math.max(1, parseInt(req.query.page as string) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 12));
-    const skip = (page - 1) * limit;
-
-    const clientId = req.query.clientId as string | undefined;
-    const year = req.query.year ? parseInt(req.query.year as string) : undefined;
-    const month = req.query.month ? parseInt(req.query.month as string) : undefined;
-    const status = req.query.status as string | undefined;
-    const search = req.query.search as string | undefined;
-
-    const where: any = {};
-    if (clientId) where.clientId = clientId;
-    if (year) where.year = year;
-    if (month) where.month = month;
-    if (status) where.status = status;
-
-    // Creators only see their own uploads and never client emails.
+    // Filters, sort, search and paging live in utils/deliverableList.ts. Creators
+    // only see their own uploads and never client emails (enforced there).
     const isCreator = req.user!.role === 'CREATOR';
-    if (isCreator) where.createdById = req.user!.id;
-
-    if (search) {
-      where.OR = [
-        {
-          client: {
-            name: { contains: search, mode: 'insensitive' },
-          },
-        },
-        ...(isCreator ? [] : [{
-          client: {
-            email: { contains: search, mode: 'insensitive' },
-          },
-        }]),
-      ];
-    }
+    const { where, orderBy, page, limit, skip } = buildDeliverableListQuery(req.query, req.user!);
 
     const [items, total] = await Promise.all([
       prisma.deliverable.findMany({
-        where,
+        where: where as any,
         skip,
         take: limit,
-        orderBy: [{ year: 'desc' }, { month: 'desc' }],
+        orderBy: orderBy as any,
         include: {
           client: {
             select: { id: true, name: true, email: true, shareToken: true, shareTokenExpiresAt: true },
@@ -213,7 +184,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
           category: true,
         },
       }),
-      prisma.deliverable.count({ where }),
+      prisma.deliverable.count({ where: where as any }),
     ]);
 
     // Sign URLs in files array
