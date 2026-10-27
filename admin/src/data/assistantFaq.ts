@@ -32,7 +32,7 @@ const VIDEO_RETENTION: FaqEntry = {
 
 const NOTICE_MAIL: FaqEntry = {
   q: 'Müştəriyə silinmə xəbərdarlığı necə gedir?',
-  a: 'Videonun müştəridən gizlənməsinə **7 gün** və **1 gün** qalmış müştərinin e-poçtuna mail gedir (gündə ən çox bir mail, bir neçə video bir mailə yığılır).\n- E-poçt **@ourneweye.com** və ya real deyilsə mail getmir. Müştərilər siyahısında e-poçtun altında "Real e-poçt deyil" yazılır.\n- Real e-poçtu **Müştərilər** bölməsində qələm ikonu ilə yazın. Şifrə xanasını boş buraxın. Müştərini **silməyin**, bütün faylları silinər.\n- Mail çatmasa e-poçtun altında qırmızı "Mail çatmadı" çıxır, e-poçtu düzəldin.\n- E-poçt kiçik hərflə saxlanır, girişdə hərf fərq etmir.',
+  a: 'Video silinməzdən **3 gün** əvvəl müştərinin e-poçtuna bir mail gedir (silinmə vaxtları 5 gün yaxın olan videolar bir mailə yığılır, gündə ən çox bir mail).\n- E-poçt **@ourneweye.com** və ya real deyilsə mail getmir. Müştərilər siyahısında e-poçtun altında "Real e-poçt deyil" yazılır.\n- Real e-poçtu **Müştərilər** bölməsində qələm ikonu ilə yazın. Şifrə xanasını boş buraxın. Müştərini **silməyin**, bütün faylları silinər.\n- Mail çatmasa e-poçtun altında qırmızı "Mail çatmadı" çıxır, e-poçtu düzəldin.\n- E-poçt kiçik hərflə saxlanır, girişdə hərf fərq etmir.',
 };
 
 export const STAFF_FAQ: FaqEntry[] = [

@@ -143,8 +143,8 @@ model Deliverable {
   expiresAt      DateTime?
   hiddenAt       DateTime?
   mediaDeletedAt DateTime?
-  notice7SentAt  DateTime?
-  notice1SentAt  DateTime?
+  notice7SentAt  DateTime?  // the warning mail covering this video went out (was the 7-day flag; there is a single warning now)
+  notice1SentAt  DateTime?  // unused since the single warning (kept: columns are never dropped on deploy)
 
   @@index([clientId, year, month])
   @@index([createdById])

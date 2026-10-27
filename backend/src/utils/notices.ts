@@ -2,15 +2,19 @@
  * Retention notice mails: who may receive them and when one is due. Pure (no
  * database, no network) so every rule can be unit-tested.
  *
- * A video is hidden from the client at `expiresAt` (utils/retention.ts) and its
- * files are deleted a week later. The client can only download until it is
- * hidden, so the warnings are counted to that moment: 7 days and 1 day before.
+ * A video leaves the portal at `expiresAt` (utils/retention.ts). The client can
+ * only download until then, so the single warning is counted to that moment:
+ * NOTICE_DAYS before it. One mail also covers the videos that follow within
+ * NOTICE_GROUP_DAYS, so a client with many videos gets few mails (the Resend
+ * plan has a limit).
  */
 import { getRetentionMode } from './retention';
 import { normalizeEmail } from './email';
 
-export const NOTICE_FIRST_DAYS = 7;
-export const NOTICE_LAST_DAYS = 1;
+/** The warning goes out when the video has this many Baku days (or fewer) left. */
+export const NOTICE_DAYS = 3;
+/** ...and it also lists every other unwarned video leaving within this many days after the first one. */
+export const NOTICE_GROUP_DAYS = 5;
 /** Mails go out only in the Baku working day: 10:00 up to (not including) 20:00. */
 export const SEND_HOUR_FROM = 10;
 export const SEND_HOUR_TO = 20;
@@ -76,23 +80,25 @@ export interface NoticeVideo {
   expiresAt: Date | null;
   hiddenAt: Date | null;
   mediaDeletedAt: Date | null;
+  /** Set when the warning mail covering this video went out (the column was the 7-day flag before the single warning). */
   notice7SentAt: Date | null;
-  notice1SentAt: Date | null;
 }
 
-export type NoticeLevel = 7 | 1;
-
 /**
- * Which warning (if any) this video needs now. The 1-day warning wins when both
- * are due (a client added late): the video then gets both marked as sent.
+ * The videos one warning mail should list now, or [] when none is due. A video
+ * is due when at most NOTICE_DAYS Baku days are left; the mail then also takes
+ * every unwarned video leaving within NOTICE_GROUP_DAYS after the soonest one.
+ * Already hidden, deleted, warned or past videos never qualify (a past one is
+ * hidden by the retention job and a warning would be too late).
  */
-export const dueNotice = (video: NoticeVideo, now: Date): NoticeLevel | null => {
-  if (!video.expiresAt || video.hiddenAt || video.mediaDeletedAt) return null;
-  const left = bakuDaysLeft(video.expiresAt, now);
-  if (left < 0) return null; // already past: the retention job hides it, a warning would be too late
-  if (left <= NOTICE_LAST_DAYS && !video.notice1SentAt) return 1;
-  if (left <= NOTICE_FIRST_DAYS && !video.notice7SentAt) return 7;
-  return null;
+export const selectNoticeBatch = <T extends NoticeVideo>(videos: T[], now: Date): T[] => {
+  const open = videos
+    .filter((v) => v.expiresAt && !v.hiddenAt && !v.mediaDeletedAt && !v.notice7SentAt)
+    .map((v) => ({ video: v, left: bakuDaysLeft(v.expiresAt as Date, now) }))
+    .filter((v) => v.left >= 0);
+  const soonest = Math.min(...open.map((v) => v.left));
+  if (open.length === 0 || soonest > NOTICE_DAYS) return [];
+  return open.filter((v) => v.left <= soonest + NOTICE_GROUP_DAYS).map((v) => v.video);
 };
 
 /** Mailing is allowed once per client per Baku day. */

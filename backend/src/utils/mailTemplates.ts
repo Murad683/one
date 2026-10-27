@@ -3,7 +3,7 @@
  * Pure: every function returns { subject, html, text }. Video titles come from
  * admins and are HTML-escaped. Dates are Baku calendar days (DD.MM.YYYY).
  */
-import { bakuDay, bakuHour } from './notices';
+import { NOTICE_DAYS, bakuDay, bakuHour } from './notices';
 
 export interface MailContent {
   subject: string;
@@ -64,14 +64,14 @@ export const infoMail = (clientName: string, portalUrl: string): MailContent => 
       'Bildirişlər bu ünvana gələcək',
       `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Salam, ${name}.</p>
 <p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Portalda yerləşdirilən videoların saxlanma müddəti <strong>60 gündür</strong>. Bu müddət bitəndə video portaldan birdəfəlik silinir.</p>
-<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Siz videoları vaxtında endirə bilməyiniz üçün silinməzdən əvvəl bu e-poçt ünvanına xəbərdarlıq göndərəcəyik (7 gün və 1 gün əvvəl).</p>
+<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Siz videoları vaxtında endirə bilməyiniz üçün silinməzdən əvvəl bu e-poçt ünvanına xəbərdarlıq göndərəcəyik (silinməsinə ${NOTICE_DAYS} gün qalmış).</p>
 <p style="margin:0;font-size:15px;line-height:1.6;">Portalın giriş ünvanı da bu e-poçtdur.</p>${button(portalUrl, 'Portala daxil ol')}`,
     ),
     text: `Salam, ${clientName}.
 
 Portalda yerləşdirilən videoların saxlanma müddəti 60 gündür. Bu müddət bitəndə video portaldan birdəfəlik silinir.
 
-Videoları vaxtında endirə bilməyiniz üçün silinməzdən əvvəl bu e-poçt ünvanına xəbərdarlıq göndərəcəyik (7 gün və 1 gün əvvəl). Portalın giriş ünvanı da bu e-poçtdur.
+Videoları vaxtında endirə bilməyiniz üçün silinməzdən əvvəl bu e-poçt ünvanına xəbərdarlıq göndərəcəyik (silinməsinə ${NOTICE_DAYS} gün qalmış). Portalın giriş ünvanı da bu e-poçtdur.
 
 Portal: ${portalUrl}
 
@@ -79,15 +79,14 @@ Bu mail avtomatik göndərilib, ona cavab verməyin.`,
   };
 };
 
-/** The 7-day / 1-day warning. `items` is sorted by the date they leave the portal. */
+/** The warning mail (one per group of videos). `items` are listed by the date they leave the portal. */
 export const noticeMail = (clientName: string, items: NoticeItem[], portalUrl: string): MailContent => {
   const sorted = [...items].sort((a, b) => a.expiresAt.getTime() - b.expiresAt.getTime());
   const soonest = Math.min(...sorted.map((i) => i.daysLeft));
   const urgent = soonest <= 1;
   const many = sorted.length > 1;
-  const subject = urgent
-    ? `${BRAND}: ${many ? 'videolarınız' : 'videonuz'} ${soonest <= 0 ? 'bu gün' : 'sabah'} silinəcək`
-    : `${BRAND}: ${many ? 'videolarınız' : 'videonuz'} ${soonest} gün sonra silinəcək`;
+  // With several videos only the first one is that close, so the subject says "one of your videos".
+  const subject = `${BRAND}: ${many ? 'videolarınızdan biri' : 'videonuz'} ${daysWord(soonest)} silinəcək`;
   const heading = urgent ? 'Videoları bu gün endirin' : 'Videoların saxlanma müddəti bitir';
   const name = escapeHtml(clientName);
 
