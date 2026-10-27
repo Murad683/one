@@ -23,6 +23,9 @@ import { useAuthStore } from '../store/authStore';
 import { useMessageStore } from '../store/messageStore';
 import { useThemeStore } from '../store/themeStore';
 import { AssistantWidget } from '../components/AssistantWidget';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import { useDeliverableUpload } from '../context/deliverableUpload';
+import { useShowcaseUpload } from '../context/ShowcaseUploadContext';
 
 interface NavItem {
   icon: LucideIcon;
@@ -46,6 +49,12 @@ export const AdminLayout = () => {
   const fetchUnreadCount = useMessageStore((state) => state.fetchUnreadCount);
   const { theme, toggle: toggleTheme } = useThemeStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  // Logging out mid-upload can cut it short (beforeunload only guards closing or
+  // reloading the tab, not this button), so ask first.
+  const deliverableUploads = useDeliverableUpload().activeCount;
+  const showcaseUploading = useShowcaseUpload().phase === 'uploading';
+  const uploadRunning = deliverableUploads > 0 || showcaseUploading;
 
   useEffect(() => {
     let isMounted = true;
@@ -67,9 +76,17 @@ export const AdminLayout = () => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const handleLogout = () => {
+  const performLogout = () => {
     logout();
     navigate('/login', { replace: true });
+  };
+
+  const handleLogout = () => {
+    if (uploadRunning) {
+      setConfirmLogout(true);
+      return;
+    }
+    performLogout();
   };
 
   const ThemeToggle = ({ className = '' }: { className?: string }) => (
@@ -209,6 +226,15 @@ export const AdminLayout = () => {
       </main>
 
       <AssistantWidget />
+      <ConfirmDialog
+        isOpen={confirmLogout}
+        onClose={() => setConfirmLogout(false)}
+        onConfirm={performLogout}
+        title="Yükləmə gedir"
+        message="Yükləmə hələ bitməyib. Çıxsanız yükləmə dayana bilər. Yenə də çıxmaq istəyirsiniz?"
+        confirmText="Çıx"
+        cancelText="Qal"
+      />
     </div>
   );
 };

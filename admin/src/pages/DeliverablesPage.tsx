@@ -23,6 +23,14 @@ const isStalePending = (deliverable: Partial<Deliverable>) => {
   return Date.now() - createdTime > 2 * 60 * 60 * 1000;
 };
 
+// A file still being processed must not be replaced: the server rejects it too
+// (409). A PROCESSING row untouched for 2 h is treated as stuck, so replacing it
+// is allowed again — same threshold as isStalePending.
+const isProcessingBusy = (deliverable: Partial<Deliverable> | null) => {
+  if (!deliverable || deliverable.status !== 'PROCESSING' || !deliverable.updatedAt) return false;
+  return Date.now() - new Date(deliverable.updatedAt).getTime() < 2 * 60 * 60 * 1000;
+};
+
 type DeliverableStatus = 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED' | 'ARCHIVED';
 
 interface ClientUser extends Record<string, unknown> {
@@ -57,6 +65,7 @@ interface Deliverable extends Record<string, unknown> {
   clientFeedback?: string | null;
   processingDuration?: number | null;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 interface DeliverableFormValues {
@@ -572,10 +581,14 @@ export const DeliverablesPage = () => {
                 </button>
               )}
             </div>
-            {deliverable.processingDuration && deliverable.status === 'READY' && (
+            {/* `> 0`, not truthiness: a 0 s duration (photos) would render a stray "0". */}
+            {(deliverable.processingDuration ?? 0) > 0 && deliverable.status === 'READY' && (
               <span className="text-[10px] text-faint italic ml-1">
-                Emal: {Math.floor(deliverable.processingDuration / 60)}d {deliverable.processingDuration % 60}s
+                Emal: {Math.floor(deliverable.processingDuration! / 60)}d {deliverable.processingDuration! % 60}s
               </span>
+            )}
+            {deliverable.status === 'PROCESSING' && (
+              <span className="text-[10px] text-faint italic ml-1">Emal gedir, 1–5 dəqiqə çəkə bilər.</span>
             )}
           </div>
         )
@@ -798,12 +811,18 @@ export const DeliverablesPage = () => {
                 label={editing && editing.files?.length > 0 ? 'Faylı əvəz et' : 'Fayllar (Birdən çox seçə bilərsiniz)'}
                 type="file"
                 multiple
+                disabled={isProcessingBusy(editing)}
                 onChange={(event) => {
                   if (event.target.files) {
                     setSelectedFiles(Array.from(event.target.files));
                   }
                 }}
               />
+              {isProcessingBusy(editing) && (
+                <p className="-mt-2 text-xs text-amber-500">
+                  Bu faylın emalı gedir. Emal bitəndən sonra faylı əvəz edə bilərsiniz.
+                </p>
+              )}
               {editing && editing.files?.length > 0 && (
                 <p className="-mt-2 text-xs text-muted">
                   Yeni fayl seçsəniz, yuxarıdakı mövcud fayllar yeni fayl hazır olan kimi silinəcək (əlavə olunmur).
@@ -852,6 +871,7 @@ export const DeliverablesPage = () => {
                   <Input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
+                    disabled={isProcessingBusy(editing)}
                     onChange={(event) => {
                       const file = event.target.files?.[0] || null;
                       setSelectedThumbnail(file);

@@ -15,6 +15,11 @@ const UPLOAD_PENDING: FaqEntry = {
   a: 'Fayl 2 saatdan çox **Gözləmədə** qalarsa, adətən yükləmə uğursuz olub.\n- Faylı redaktə edin, yeni fayl seçin və yadda saxlayın.\n- Davam edərsə developerlə əlaqə saxlayın.',
 };
 
+const REPLACE_BLOCKED: FaqEntry = {
+  q: 'Faylı niyə əvəz edə bilmirəm, "Hazırlanır" yazılıb?',
+  a: 'Yüklənən fayl emal olunur (1–5 dəqiqə), bu müddətdə eyni faylı yenidən yükləmək olmur və fayl seçimi söndürülür.\n- Status **Hazırdır** olandan sonra faylı əvəz edin.\n- Yükləmə gedərkən hesabdan çıxmayın, **Çıxış** basanda panel xəbərdarlıq edir.\n- 2 saatdan çox **Hazırlanır** qalarsa, yenidən yükləmək olar.',
+};
+
 export const STAFF_FAQ: FaqEntry[] = [
   {
     q: 'Müştəriyə paketi necə təyin edim?',
@@ -53,6 +58,7 @@ export const STAFF_FAQ: FaqEntry[] = [
     a: 'Xeyr. Sorğular və Mesajlar bölmələri yalnız oxumaq və status dəyişmək üçündür, cavab yazmaq olmur.\nMüştəri ilə e-poçt və ya başqa kanaldan əlaqə saxlayın.',
   },
   UPLOAD_PENDING,
+  REPLACE_BLOCKED,
 ];
 
 export const CREATOR_FAQ: FaqEntry[] = [
@@ -65,6 +71,7 @@ export const CREATOR_FAQ: FaqEntry[] = [
     a: 'Müştəri sizin yüklədiyiniz fayla rəy yazanda, faylın yanında mavi **Rəy** çipi görünür. Üzərinə klikləyəndə müştərinin yazdığı mətn açılır.',
   },
   UPLOAD_PENDING,
+  REPLACE_BLOCKED,
   {
     q: 'Yüklədiyim faylı necə dəyişim və ya silim?',
     a: 'Cədvəldə öz faylınızı redaktə edə (yeni fayl, başlıq, müştəri, növ, tarix) və silə bilərsiniz.\n- Silmə təsdiq pəncərəsi ilə olur və geri qaytarılmır.\n- Statusu əl ilə dəyişmək olmur, yükləmədən sonra avtomatik dəyişir.',
