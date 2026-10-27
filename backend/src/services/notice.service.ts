@@ -192,13 +192,14 @@ export async function sendSamples(to: string, mailer: Mailer = sendMail, now: Da
     ['bir neçə video', noticeMail('Nümunə Müştəri', [item(1, 3), item(2, 5), item(3, 8)], url)],
   ];
   const sent: string[] = [];
-  for (const [label, content] of samples) {
+  for (const [index, [label, content]] of samples.entries()) {
     await mailer({
       to: normalizeEmail(to),
       subject: `[NÜMUNƏ] ${content.subject}`,
       html: content.html,
       text: content.text,
-      idempotencyKey: `sample-${label}-${Date.now()}`,
+      // The key is an HTTP header value: plain ASCII only (the label has Azerbaijani letters and spaces).
+      idempotencyKey: `sample-${index + 1}-${Date.now()}`,
     });
     sent.push(label);
   }
