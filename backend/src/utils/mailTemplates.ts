@@ -63,13 +63,13 @@ export const infoMail = (clientName: string, portalUrl: string): MailContent => 
     html: layout(
       'Bildirişlər bu ünvana gələcək',
       `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Salam, ${name}.</p>
-<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Portalda yerləşdirilən videoların saxlanma müddəti <strong>60 gündür</strong>. Bu müddət bitəndə video portaldan gizlədilir və bir həftə sonra birdəfəlik silinir.</p>
+<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Portalda yerləşdirilən videoların saxlanma müddəti <strong>60 gündür</strong>. Bu müddət bitəndə video portaldan birdəfəlik silinir.</p>
 <p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Siz videoları vaxtında endirə bilməyiniz üçün silinməzdən əvvəl bu e-poçt ünvanına xəbərdarlıq göndərəcəyik (7 gün və 1 gün əvvəl).</p>
 <p style="margin:0;font-size:15px;line-height:1.6;">Portalın giriş ünvanı da bu e-poçtdur.</p>${button(portalUrl, 'Portala daxil ol')}`,
     ),
     text: `Salam, ${clientName}.
 
-Portalda yerləşdirilən videoların saxlanma müddəti 60 gündür. Bu müddət bitəndə video portaldan gizlədilir və bir həftə sonra birdəfəlik silinir.
+Portalda yerləşdirilən videoların saxlanma müddəti 60 gündür. Bu müddət bitəndə video portaldan birdəfəlik silinir.
 
 Videoları vaxtında endirə bilməyiniz üçün silinməzdən əvvəl bu e-poçt ünvanına xəbərdarlıq göndərəcəyik (7 gün və 1 gün əvvəl). Portalın giriş ünvanı da bu e-poçtdur.
 
@@ -86,8 +86,8 @@ export const noticeMail = (clientName: string, items: NoticeItem[], portalUrl: s
   const urgent = soonest <= 1;
   const many = sorted.length > 1;
   const subject = urgent
-    ? `${BRAND}: ${many ? 'videolarınız' : 'videonuz'} ${soonest <= 0 ? 'bu gün' : 'sabah'} portaldan gizlədilir`
-    : `${BRAND}: ${many ? 'videolarınız' : 'videonuz'} ${soonest} gün sonra portaldan gizlədilir`;
+    ? `${BRAND}: ${many ? 'videolarınız' : 'videonuz'} ${soonest <= 0 ? 'bu gün' : 'sabah'} silinəcək`
+    : `${BRAND}: ${many ? 'videolarınız' : 'videonuz'} ${soonest} gün sonra silinəcək`;
   const heading = urgent ? 'Videoları bu gün endirin' : 'Videoların saxlanma müddəti bitir';
   const name = escapeHtml(clientName);
 
@@ -99,25 +99,25 @@ export const noticeMail = (clientName: string, items: NoticeItem[], portalUrl: s
     .join('');
 
   const lead = urgent
-    ? 'Aşağıdakı videoların portalda görünmə müddəti bitmək üzrədir. Bundan sonra video <strong>portaldan gizlədilir, yükləmək mümkün olmur</strong> və bir həftə sonra birdəfəlik silinir.'
-    : 'Aşağıdakı videoların portalda görünmə müddəti tezliklə bitir. Həmin vaxtdan sonra video <strong>portaldan gizlədilir, yükləmək mümkün olmur</strong> və bir həftə sonra birdəfəlik silinir.';
+    ? 'Aşağıdakı videoların saxlanma müddəti bitmək üzrədir. Göstərilən vaxtdan sonra video <strong>birdəfəlik silinir, yükləmək və geri qaytarmaq mümkün olmur</strong>.'
+    : 'Aşağıdakı videoların saxlanma müddəti tezliklə bitir. Həmin vaxtdan sonra video <strong>birdəfəlik silinir, yükləmək və geri qaytarmaq mümkün olmur</strong>.';
 
   const html = layout(
     heading,
     `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Salam, ${name}.</p>
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">${lead}</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;">${rows}</table>
-<p style="margin:12px 0 0;font-size:15px;line-height:1.6;">Videoları saxlamaq istəyirsinizsə, <strong>göstərilən vaxta qədər</strong> portaldan endirin. Silinmiş videoları geri qaytarmaq mümkün olmur.</p>${button(portalUrl, 'Portala daxil ol')}`,
+<p style="margin:12px 0 0;font-size:15px;line-height:1.6;">Videoları saxlamaq istəyirsinizsə, <strong>göstərilən vaxta qədər</strong> portaldan endirin.</p>${button(portalUrl, 'Portala daxil ol')}`,
   );
 
   const list = sorted.map((i) => `- ${i.title}: ${formatDeadline(i.expiresAt)} (${daysWord(i.daysLeft)})`).join('\n');
   const text = `Salam, ${clientName}.
 
-${urgent ? 'Aşağıdakı videoların portalda görünmə müddəti bitmək üzrədir.' : 'Aşağıdakı videoların portalda görünmə müddəti tezliklə bitir.'} Həmin vaxtdan sonra video portaldan gizlədilir, yükləmək mümkün olmur və bir həftə sonra birdəfəlik silinir.
+${urgent ? 'Aşağıdakı videoların saxlanma müddəti bitmək üzrədir.' : 'Aşağıdakı videoların saxlanma müddəti tezliklə bitir.'} Həmin vaxtdan sonra video birdəfəlik silinir, yükləmək və geri qaytarmaq mümkün olmur.
 
 ${list}
 
-Videoları saxlamaq istəyirsinizsə, göstərilən vaxta qədər portaldan endirin. Silinmiş videoları geri qaytarmaq mümkün olmur.
+Videoları saxlamaq istəyirsinizsə, göstərilən vaxta qədər portaldan endirin.
 
 Portal: ${portalUrl}
 
