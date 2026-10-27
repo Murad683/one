@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { getSecureDownloadUrl, getSecureDownloadUrlForDownload } from '../services/upload.service';
+import { CLIENT_VISIBLE_WHERE, presentForClient } from '../utils/retention';
 
 // ─── GET /api/v1/share/:token ───────────────────
 // Public, unauthenticated — read-only view of a client's READY deliverables.
@@ -28,14 +29,14 @@ export const getSharedProfile = async (req: Request, res: Response): Promise<voi
 
     const [deliverables, total] = await Promise.all([
       prisma.deliverable.findMany({
-        where: { clientId: client.id, status: 'READY' },
+        where: { clientId: client.id, status: 'READY', ...CLIENT_VISIBLE_WHERE },
         include: { category: true },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
       prisma.deliverable.count({
-        where: { clientId: client.id, status: 'READY' },
+        where: { clientId: client.id, status: 'READY', ...CLIENT_VISIBLE_WHERE },
       }),
     ]);
 
@@ -78,12 +79,12 @@ export const getSharedProfile = async (req: Request, res: Response): Promise<voi
         // clientFeedback is intentionally omitted — never exposed on the public view.
         const { clientFeedback, ...rest } = d as typeof d & { clientFeedback?: unknown };
 
-        return {
+        return presentForClient({
           ...rest,
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
           originalUrl: signedOriginalUrl,
-        };
+        });
       })
     );
 

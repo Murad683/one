@@ -453,6 +453,23 @@ export const GuidePage = () => {
             mətn açılır.
           </p>
 
+          <h3 className="pt-2 text-base font-semibold text-heading">Videoların saxlanma müddəti (60 gün)</h3>
+          <p>
+            Video ilk dəfə <B>Hazırdır</B> olandan (müştəri portalında göründüyü andan) <B>60 gün</B> sonra müştəridən
+            gizlənir, daha <B>7 gün</B> sonra (67-ci gün) faylları (video, 720p önizləmə, kover) serverdən birdəfəlik
+            silinir. Faylı əvəz etmək müddəti uzatmır, saat ilk "Hazırdır" anından sayılır. Şəkil və dizayn faylları
+            silinmir. Statusun altında kiçik yazı vəziyyəti göstərir: "X gün sonra silinəcək", sonra "Müştəridən
+            gizlədilib · fayllar X gün sonra silinir", sonda sətir solğun olur və "Fayl silinib (tarix)" yazılır. Belə
+            sətirlər siyahının sonunda görünür. Qeydin özü (başlıq, müştəri, rəy) qalır.
+          </p>
+          <Callout tone="warn" title="Gizlədilmiş videoya yeni fayl yüklənmir">
+            <p>
+              Müştəridən gizlədilmiş və ya faylları silinmiş videoya yeni fayl yükləmək olmur. Lazımdırsa{' '}
+              <B>Yeni Fayl</B> ilə yeni qeyd yaradın. Gizlədilmiş video 7 gün ərzində admin paneldə hələ endirilə
+              bilər. Silinmiş fayllar geri qaytarılmır, ona görə müştəriyə vaxtında endirməyi xatırladın.
+            </p>
+          </Callout>
+
           <h3 className="pt-2 text-base font-semibold text-heading">"Yeni Fayl" / redaktə pəncərəsi</h3>
           <FieldTable
             rows={[

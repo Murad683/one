@@ -25,6 +25,11 @@ const FIND_FILES: FaqEntry = {
   a: 'Layihə Faylları cədvəlində:\n- **Axtarış** qutusu müştəri adı, e-poçt və fayl başlığı üzrə işləyir.\n- **Sıralamaq** üçün sütun başlığına basın (ikinci basış istiqaməti dəyişir).\n- **Süzmək** üçün başlıqdakı kiçik **huni ikonuna** basın: Müştəri, Növ, Status, Əlavə olunub. Status hunisində Gözləmədə qalıb və Müştəri rəyi var da var, Əlavə olunub hunisində Bu gün, Son 7 gün, Bu ay.\n- Aktiv filtrlər çip kimi görünür, **Hamısını təmizlə** ilə silinir.\n- Aşağıda **Səhifədə** (50, 100, 150, 200). Telefonda **Filtr / Sırala** düyməsi.',
 };
 
+const VIDEO_RETENTION: FaqEntry = {
+  q: 'Videolar nə vaxt silinir?',
+  a: 'Video ilk dəfə **Hazırdır** olandan **60 gün** sonra müştəridən gizlənir, daha **7 gün** sonra faylları (video, 720p, kover) serverdən birdəfəlik silinir.\n- Faylı əvəz etmək müddəti uzatmır. Şəkil və dizayn faylları silinmir.\n- Statusun altında qalan gün yazılır, silinəndən sonra sətir solğun olur: "Fayl silinib (tarix)".\n- Gizlədilmiş videoya yeni fayl yükləmək olmur, yeni qeyd yaradın.\n- Silinən fayl geri qayıtmır: müştəriyə vaxtında endirməyi xatırladın.',
+};
+
 export const STAFF_FAQ: FaqEntry[] = [
   {
     q: 'Müştəriyə paketi necə təyin edim?',
@@ -65,6 +70,7 @@ export const STAFF_FAQ: FaqEntry[] = [
   UPLOAD_PENDING,
   FIND_FILES,
   REPLACE_BLOCKED,
+  VIDEO_RETENTION,
 ];
 
 export const CREATOR_FAQ: FaqEntry[] = [
@@ -79,6 +85,7 @@ export const CREATOR_FAQ: FaqEntry[] = [
   UPLOAD_PENDING,
   FIND_FILES,
   REPLACE_BLOCKED,
+  VIDEO_RETENTION,
   {
     q: 'Yüklədiyim faylı necə dəyişim və ya silim?',
     a: 'Cədvəldə öz faylınızı redaktə edə (yeni fayl, başlıq, müştəri, növ, tarix) və silə bilərsiniz.\n- Silmə təsdiq pəncərəsi ilə olur və geri qaytarılmır.\n- Statusu əl ilə dəyişmək olmur, yükləmədən sonra avtomatik dəyişir.',

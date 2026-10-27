@@ -41,6 +41,7 @@ import {
   type DeliverableFilters,
   type SortKey,
 } from '../lib/deliverableList';
+import { retentionLockReason, retentionNote } from '../lib/retention';
 
 const isStalePending = (deliverable: Partial<Deliverable>) => {
   if (deliverable.status !== 'PENDING' || !deliverable.createdAt) return false;
@@ -91,6 +92,10 @@ interface Deliverable extends Record<string, unknown> {
   processingDuration?: number | null;
   createdAt?: string;
   updatedAt?: string;
+  // Video retention (null while the rule does not apply or is switched off).
+  expiresAt?: string | null;
+  hiddenAt?: string | null;
+  mediaDeletedAt?: string | null;
 }
 
 interface DeliverableFormValues {
@@ -450,7 +455,7 @@ export const DeliverablesPage = () => {
   }, [page, pageSize, sort, filters, debouncedSearch]);
 
   const openModal = (deliverable?: Deliverable) => {
-    if (deliverable && busyReason(deliverable)) return;
+    if (deliverable && (busyReason(deliverable) || deliverable.mediaDeletedAt)) return;
     setEditing(deliverable || null);
     setModalError('');
     setSelectedFiles([]);
@@ -667,6 +672,7 @@ export const DeliverablesPage = () => {
       hideOnMobile: true,
       render: (deliverable) => {
         const isStale = isStalePending(deliverable);
+        const retention = retentionNote(deliverable);
 
         return (
           <div className="flex flex-col gap-1 items-start">
@@ -710,6 +716,14 @@ export const DeliverablesPage = () => {
             {deliverable.status === 'PROCESSING' && (
               <span className="text-[10px] text-faint italic ml-1">Emal gedir, 1–5 dəqiqə çəkə bilər.</span>
             )}
+            {retention && (
+              <span
+                className={`text-[10px] ml-1 ${retention.tone === 'warning' ? 'text-amber-600' : 'text-faint'} ${retention.tone === 'deleted' ? 'font-medium' : 'italic'}`}
+                title={deliverable.expiresAt ? `Müştəri bu videonu ${formatAddedDay(deliverable.expiresAt)} tarixinə qədər görür` : undefined}
+              >
+                {retention.text}
+              </span>
+            )}
           </div>
         )
       },
@@ -735,15 +749,16 @@ export const DeliverablesPage = () => {
       header: 'Əməliyyatlar',
       render: (deliverable) => {
         const reason = busyReason(deliverable);
+        const editReason = reason ?? (deliverable.mediaDeletedAt ? retentionLockReason(deliverable) : null);
         return (
         <div className="flex gap-2">
           {/* title sits on the wrapper: disabled buttons don't show their own tooltip */}
-          <span className="inline-flex" title={reason ?? undefined}>
+          <span className="inline-flex" title={editReason ?? undefined}>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => openModal(deliverable)}
-              disabled={Boolean(reason)}
+              disabled={Boolean(editReason)}
               aria-label="Faylı redaktə et"
             >
               <Edit2 className="h-4 w-4" />
@@ -930,7 +945,7 @@ export const DeliverablesPage = () => {
             data={deliverables}
             isLoading={isLoading}
             emptyMessage={filtersActive ? 'Filtrə uyğun fayl tapılmadı.' : 'Fayl tapılmadı.'}
-            rowClassName={(row) => isStalePending(row) ? 'bg-red-50/50 hover:bg-red-50' : ''}
+            rowClassName={(row) => (isStalePending(row) ? 'bg-red-50/50 hover:bg-red-50' : row.mediaDeletedAt ? 'opacity-60' : '')}
           />
           <div className="flex flex-col gap-3 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
             <span>{filtersActive ? `Tapıldı: ${total} fayl` : `Cəmi: ${total} fayl`}</span>
@@ -1032,7 +1047,7 @@ export const DeliverablesPage = () => {
                 label={editing && editing.files?.length > 0 ? 'Faylı əvəz et' : 'Fayllar (Birdən çox seçə bilərsiniz)'}
                 type="file"
                 multiple
-                disabled={Boolean(busyReason(editing))}
+                disabled={Boolean(busyReason(editing) || retentionLockReason(editing))}
                 onChange={(event) => {
                   if (event.target.files) {
                     setSelectedFiles(Array.from(event.target.files));
@@ -1044,7 +1059,12 @@ export const DeliverablesPage = () => {
                   Bu fayl hazırda yüklənir və ya emal olunur. Bitəndən sonra faylı əvəz edə bilərsiniz.
                 </p>
               )}
-              {editing && editing.files?.length > 0 && (
+              {retentionLockReason(editing) && (
+                <p className="-mt-2 text-xs text-amber-500">
+                  {retentionLockReason(editing)} Lazımdırsa yeni fayl yaradın.
+                </p>
+              )}
+              {editing && editing.files?.length > 0 && !retentionLockReason(editing) && (
                 <p className="-mt-2 text-xs text-muted">
                   Yeni fayl seçsəniz, yuxarıdakı mövcud fayllar yeni fayl hazır olan kimi silinəcək (əlavə olunmur).
                 </p>
@@ -1092,7 +1112,7 @@ export const DeliverablesPage = () => {
                   <Input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
-                    disabled={Boolean(busyReason(editing))}
+                    disabled={Boolean(busyReason(editing) || retentionLockReason(editing))}
                     onChange={(event) => {
                       const file = event.target.files?.[0] || null;
                       setSelectedThumbnail(file);

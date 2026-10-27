@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cinematicEasing } from '../../utils/animations';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Download, ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react';
+import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Download, ChevronLeft, ChevronRight, Pencil, Trash2, Clock } from 'lucide-react';
+import { daysUntil, retentionLabel, RETENTION_WARNING_DAYS } from '../../utils/retention';
 
 interface Deliverable {
   id: string;
@@ -22,6 +23,8 @@ interface Deliverable {
   height?: number | null;
   originalUrl?: string | null;
   createdAt: string;
+  /** When the video leaves the portal (60-day retention); null when the rule does not apply. */
+  expiresAt?: string | null;
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
@@ -491,6 +494,14 @@ export const PreviewModal = ({
 
              <div className="px-4 text-[12px] mt-1" style={{ color: 'var(--ig-text-secondary)' }}>
                <span className="uppercase tracking-wide">{statusConfig[item.status]?.label} • {item.month}/{item.year}</span>
+               {!readOnly && item.expiresAt && (
+                 <span
+                   className="ml-1 font-medium"
+                   style={{ color: daysUntil(item.expiresAt) <= RETENTION_WARNING_DAYS ? '#ef4444' : undefined }}
+                 >
+                   • {retentionLabel(daysUntil(item.expiresAt))}, faylı vaxtında endirin
+                 </span>
+               )}
                <span className="ml-1 cursor-pointer font-normal"> • See translation</span>
              </div>
 
@@ -1028,6 +1039,20 @@ const DeliverablesPage = () => {
                       </svg>
                     ) : null}
                   </div>
+
+                  {/* ── Retention countdown (videos are removed 60 days after delivery) ── */}
+                  {d.expiresAt && (
+                    <div
+                      className={[
+                        'absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white pointer-events-none',
+                        daysUntil(d.expiresAt) <= RETENTION_WARNING_DAYS ? 'bg-red-600/90' : 'bg-black/55',
+                      ].join(' ')}
+                      title={`${retentionLabel(daysUntil(d.expiresAt))}. Faylı vaxtında endirin.`}
+                    >
+                      <Clock size={10} strokeWidth={2.5} />
+                      {daysUntil(d.expiresAt)} gün
+                    </div>
+                  )}
 
                   {/* ── Hover overlay with info ── */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-6 pointer-events-none">

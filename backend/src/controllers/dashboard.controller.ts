@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { getSecureDownloadUrl, getSecureDownloadUrlForDownload } from '../services/upload.service';
+import { CLIENT_VISIBLE_WHERE, presentForClient } from '../utils/retention';
 
 // ─── GET /api/v1/dashboard/overview ────────────
 export const getOverview = async (req: Request, res: Response): Promise<void> => {
@@ -62,14 +63,14 @@ export const getDeliverables = async (req: Request, res: Response): Promise<void
 
     const [deliverables, total] = await Promise.all([
       prisma.deliverable.findMany({
-        where: { clientId: userId, status: 'READY' },
+        where: { clientId: userId, status: 'READY', ...CLIENT_VISIBLE_WHERE },
         include: { category: true },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
       prisma.deliverable.count({
-        where: { clientId: userId, status: 'READY' },
+        where: { clientId: userId, status: 'READY', ...CLIENT_VISIBLE_WHERE },
       })
     ]);
 
@@ -112,12 +113,12 @@ export const getDeliverables = async (req: Request, res: Response): Promise<void
           }
         }
 
-        return {
+        return presentForClient({
           ...d,
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
           originalUrl: signedOriginalUrl,
-        };
+        });
       })
     );
 
@@ -202,9 +203,9 @@ export const submitFeedback = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Verify deliverable belongs to this user
+    // Verify deliverable belongs to this user (an expired video counts as gone)
     const deliverable = await prisma.deliverable.findFirst({
-      where: { id: deliverableId },
+      where: { id: deliverableId, ...CLIENT_VISIBLE_WHERE },
     });
 
     if (!deliverable) {
@@ -236,10 +237,10 @@ export const submitFeedback = async (req: Request, res: Response): Promise<void>
       })
     );
 
-    sendSuccess(res, {
+    sendSuccess(res, presentForClient({
       ...updated,
       files: filesWithSignedUrls,
-    });
+    }));
   } catch (err) {
     console.error('submitFeedback error:', err);
     sendError(res, 'Rəy göndərilə bilmədi', 500);
@@ -253,7 +254,7 @@ export const deleteFeedback = async (req: Request, res: Response): Promise<void>
     const deliverableId = req.params.id as string;
 
     const deliverable = await prisma.deliverable.findFirst({
-      where: { id: deliverableId },
+      where: { id: deliverableId, ...CLIENT_VISIBLE_WHERE },
     });
 
     if (!deliverable) {

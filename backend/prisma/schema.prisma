@@ -134,9 +134,16 @@ model Deliverable {
   categoryId     String?
   createdById    String?
   createdBy      User?                @relation("DeliverableCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  // Video retention (utils/retention.ts): null = the rule does not apply yet.
+  firstReadyAt   DateTime?
+  expiresAt      DateTime?
+  hiddenAt       DateTime?
+  mediaDeletedAt DateTime?
 
   @@index([clientId, year, month])
   @@index([createdById])
+  @@index([expiresAt])
+  @@index([hiddenAt])
 }
 
 model DeliverableCategory {
