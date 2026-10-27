@@ -55,23 +55,25 @@ ${bodyHtml}
 const button = (url: string, label: string): string =>
   `<p style="margin:20px 0 0;"><a href="${escapeHtml(url)}" style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-size:14px;">${escapeHtml(label)}</a></p>`;
 
-/** Sent once to a newly entered real address. */
+/** Sent once to a newly entered real address: a welcome and the 60-day rule. */
 export const infoMail = (clientName: string, portalUrl: string): MailContent => {
   const name = escapeHtml(clientName);
   return {
-    subject: `${BRAND}: bildirişlər bu ünvana gələcək`,
+    subject: `${BRAND} portalına xoş gəlmisiniz`,
     html: layout(
-      'Bildirişlər bu ünvana gələcək',
+      `${BRAND} portalına xoş gəlmisiniz`,
       `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Salam, ${name}.</p>
-<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Portalda yerləşdirilən videoların saxlanma müddəti <strong>60 gündür</strong>. Bu müddət bitəndə video portaldan birdəfəlik silinir.</p>
-<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Siz videoları vaxtında endirə bilməyiniz üçün silinməzdən əvvəl bu e-poçt ünvanına xəbərdarlıq göndərəcəyik (silinməsinə ${NOTICE_DAYS} gün qalmış).</p>
-<p style="margin:0;font-size:15px;line-height:1.6;">Portalın giriş ünvanı da bu e-poçtdur.</p>${button(portalUrl, 'Portala daxil ol')}`,
+<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Bu e-poçt ünvanı ${BRAND} müştəri portalındakı hesabınıza bağlıdır. Portalda sizin üçün hazırlanan işləri (video və şəkillər) <strong>Çatdırılmalar</strong> bölməsində görüb endirə, <strong>Ödənişlər</strong> bölməsində ödənişlərinizi izləyə, <strong>Dəstək</strong> bölməsindən komandamıza sorğu göndərə bilərsiniz.</p>
+<p style="margin:0 0 12px;font-size:15px;line-height:1.6;"><strong>Giriş:</strong> portala bu e-poçt ünvanı və şifrənizlə daxil olursunuz.</p>
+<p style="margin:0;font-size:15px;line-height:1.6;"><strong>Vacib:</strong> videoların saxlanma müddəti <strong>60 gündür</strong>. Bu müddət bitəndə video portaldan birdəfəlik silinir. Videoları vaxtında endirə bilməyiniz üçün silinməsinə ${NOTICE_DAYS} gün qalmış bu e-poçt ünvanına xəbərdarlıq göndərəcəyik.</p>${button(portalUrl, 'Portala daxil ol')}`,
     ),
     text: `Salam, ${clientName}.
 
-Portalda yerləşdirilən videoların saxlanma müddəti 60 gündür. Bu müddət bitəndə video portaldan birdəfəlik silinir.
+Bu e-poçt ünvanı ${BRAND} müştəri portalındakı hesabınıza bağlıdır. Portalda sizin üçün hazırlanan işləri (video və şəkillər) Çatdırılmalar bölməsində görüb endirə, Ödənişlər bölməsində ödənişlərinizi izləyə, Dəstək bölməsindən komandamıza sorğu göndərə bilərsiniz.
 
-Videoları vaxtında endirə bilməyiniz üçün silinməzdən əvvəl bu e-poçt ünvanına xəbərdarlıq göndərəcəyik (silinməsinə ${NOTICE_DAYS} gün qalmış). Portalın giriş ünvanı da bu e-poçtdur.
+Giriş: portala bu e-poçt ünvanı və şifrənizlə daxil olursunuz.
+
+Vacib: videoların saxlanma müddəti 60 gündür. Bu müddət bitəndə video portaldan birdəfəlik silinir. Videoları vaxtında endirə bilməyiniz üçün silinməsinə ${NOTICE_DAYS} gün qalmış bu e-poçt ünvanına xəbərdarlıq göndərəcəyik.
 
 Portal: ${portalUrl}
 
