@@ -5,7 +5,7 @@ import type { ComboboxOption } from '../ui/Combobox';
 import Input from '../ui/Input';
 import Popover from '../ui/Popover';
 import Select from '../ui/Select';
-import { SORT_OPTIONS, bakuDay, type DeliverableFilters } from '../../lib/deliverableList';
+import { RETENTION_FILTER_OPTIONS, SORT_OPTIONS, bakuDay, type DeliverableFilters, type RetentionFilter } from '../../lib/deliverableList';
 
 interface Props {
   filters: DeliverableFilters;
@@ -47,6 +47,7 @@ export const MobileFilterSheet = ({
     { value: 'none', label: 'Növ yoxdur' },
   ];
   const statusOptions = [{ value: '', label: 'Hamısı' }, ...Object.entries(statusLabels).map(([value, label]) => ({ value, label }))];
+  const retentionOptions = [{ value: '', label: 'Hamısı' }, ...RETENTION_FILTER_OPTIONS];
   const range = (from: string, to: string) => onFiltersChange({ from, to });
 
   return (
@@ -71,6 +72,7 @@ export const MobileFilterSheet = ({
           <Select label="Müştəri" value={filters.clientId} onChange={(event) => onFiltersChange({ clientId: event.target.value })} options={clientOptions} />
           <Select label="Növ" value={filters.categoryId} onChange={(event) => onFiltersChange({ categoryId: event.target.value })} options={categoryOptions} />
           <Select label="Status" value={filters.status} onChange={(event) => onFiltersChange({ status: event.target.value })} options={statusOptions} />
+          <Select label="Saxlama müddəti" value={filters.retention} onChange={(event) => onFiltersChange({ retention: event.target.value as RetentionFilter })} options={retentionOptions} />
           <div className="space-y-2">
             <p className="text-sm font-medium text-body">Əlavə olunub</p>
             <div className="flex flex-wrap gap-2">

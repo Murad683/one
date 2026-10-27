@@ -3,7 +3,7 @@ import { Check, Search } from 'lucide-react';
 import Button from '../ui/Button';
 import type { ComboboxOption } from '../ui/Combobox';
 import Input from '../ui/Input';
-import { bakuDay, type DeliverableFilters } from '../../lib/deliverableList';
+import { RETENTION_FILTER_OPTIONS, bakuDay, type DeliverableFilters } from '../../lib/deliverableList';
 
 type Patch = (patch: Partial<DeliverableFilters>) => void;
 
@@ -102,7 +102,7 @@ export const CategoryFilterPanel = ({
   );
 };
 
-/* ── Status (+ "Gözləmədə qalıb", "Müştəri rəyi var") ───────── */
+/* ── Status (+ "Gözləmədə qalıb", "Müştəri rəyi var", saxlama müddəti) ── */
 export const StatusFilterPanel = ({
   statusLabels,
   filters,
@@ -110,7 +110,7 @@ export const StatusFilterPanel = ({
   close,
 }: {
   statusLabels: Record<string, string>;
-  filters: Pick<DeliverableFilters, 'status' | 'stale' | 'hasFeedback'>;
+  filters: Pick<DeliverableFilters, 'status' | 'stale' | 'hasFeedback' | 'retention'>;
   onChange: Patch;
   close: () => void;
 }) => (
@@ -145,6 +145,18 @@ export const StatusFilterPanel = ({
         />
         Müştəri rəyi var
       </label>
+    </div>
+    <div className="border-t border-edge pt-2">
+      <p className="px-2.5 pb-1 text-xs font-medium text-muted">Saxlama müddəti</p>
+      {RETENTION_FILTER_OPTIONS.map((option) => (
+        <OptionRow
+          key={option.value}
+          label={option.label}
+          selected={filters.retention === option.value}
+          // Picking the selected stage again clears it.
+          onClick={() => { onChange({ retention: filters.retention === option.value ? '' : option.value }); close(); }}
+        />
+      ))}
     </div>
   </div>
 );
