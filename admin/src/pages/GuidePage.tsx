@@ -467,6 +467,11 @@ export const GuidePage = () => {
               gözləyin.
             </p>
             <p>
+              Fayl yüklənəndən sonra status <B>Hazırlanır</B> olur və emal 1–5 dəqiqə çəkə bilər. Bu müddətdə həmin
+              faylı <B>əvəz etmək olmur</B> (redaktədə fayl seçimi söndürülür): emal bitəndən sonra əvəz edin.
+              Yükləmə gedərkən "Çıxış" düyməsini basarsanız, panel əvvəlcə xəbərdarlıq edir.
+            </p>
+            <p>
               50 MB-dan böyük videolar birbaşa yaddaş sisteminə (S3) yüklənir; 20 MB-dan böyük olanlar isə
               hissə-hissə (multipart, paralel) yüklənir — bu, böyük fayllar üçün daha etibarlıdır və şəbəkə
               kəsilsə avtomatik təkrar cəhd edir.
@@ -647,6 +652,11 @@ export const GuidePage = () => {
             Portfolio, Paketlər və Layihə Faylları yükləmələri bütün panel boyunca davam edir — başqa
             səhifəyə keçə bilərsiniz. Yalnız brauzer tabını bağlamayın və yeniləməyin (F5), yoxsa yükləmə
             dayanır.
+          </FaqItem>
+          <FaqItem q='Faylı niyə əvəz edə bilmirəm, "Hazırlanır" yazılıb?'>
+            Fayl yüklənəndən sonra emal olunur (1–5 dəqiqə). Bu müddətdə eyni faylı yenidən yükləmək olmur,
+            fayl seçimi söndürülür. Emal bitib status "Hazırdır" olandan sonra faylı əvəz edin. Yükləmə
+            gedərkən hesabdan çıxmayın: "Çıxış" basanda panel xəbərdarlıq edir.
           </FaqItem>
           <FaqItem q='Paketi "Ən Populyar" etdim, köhnəsi niyə hələ də görünür?'>
             Sistem avtomatik söndürmür — əvvəlki "Ən Populyar" paketi əl ilə tapıb söndürməlisiniz, əks
