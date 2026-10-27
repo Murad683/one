@@ -363,7 +363,10 @@ export const GuidePage = () => {
           <h3 className="pt-2 text-base font-semibold text-heading">Yeni müştəri / redaktə</h3>
           <FieldTable
             rows={[
-              ['Ad Soyad, E-poçt', 'Məcburi, e-poçt formatı yoxlanılır.'],
+              [
+                'Ad Soyad, E-poçt',
+                'Məcburi, e-poçt formatı yoxlanılır. E-poçt kiçik hərflə saxlanır və müştəri girişdə hərf böyüklüyünə fikir verməli deyil. Eyni e-poçt başqa hesabda varsa saxlanmır və səbəb yazılır. Müştərinin e-poçtu həm giriş ünvanı, həm də silinmə xəbərdarlıqlarının getdiyi ünvandır, ona görə real ünvan yazın və səhvsiz yoxlayın. Müştərini silmək əvəzinə yalnız e-poçtu redaktə edin: silmək bütün fayllarını da silir.',
+              ],
               [
                 'Şifrə',
                 'Yeni müştəri yaradarkən məcburidir (min. 8 simvol). Mövcud müştərini redaktə edərkən bu sahəni boş buraxsanız, köhnə şifrə dəyişmir.',
@@ -463,6 +466,15 @@ export const GuidePage = () => {
             gizlədilib · fayllar X gün sonra silinir", sonda sətir solğun olur və "Fayl silinib (tarix)" yazılır. Belə
             sətirlər siyahının sonunda görünür, ayrıca tapmaq üçün Status hunisindəki "Saxlama müddəti" seçimindən
             istifadə edin. Qeydin özü (başlıq, müştəri, rəy) qalır.
+          </p>
+          <p>
+            Müştəriyə <B>mail xəbərdarlığı</B> gedir: videonun portaldan gizlənməsinə <B>7 gün</B> və <B>1 gün</B> qalmış
+            (bir neçə video olsa bir mailə yığılır, gündə ən çox bir mail, Bakı vaxtı ilə 10:00–20:00 arası). Müştərinin
+            e-poçtu <Code>@ourneweye.com</Code> olarsa və ya real deyilsə mail getmir: Müştərilər siyahısında e-poçtun
+            altında "Real e-poçt deyil, xəbərdarlıq getməyəcək", Layihə Faylları siyahısında isə gizlənməsinə 14 gün
+            qalan videoda "Müştərinin real e-poçtu yoxdur" yazılır. Real e-poçt yazılan kimi müştəriyə bir dəfə
+            "bildirişlər bu ünvana gələcək" maili gedir. Mail çatmayanda (ünvan səhvdir) e-poçtun altında qırmızı "Mail
+            çatmadı" yazılır, e-poçtu düzəldəndə yazı silinir.
           </p>
           <Callout tone="warn" title="Gizlədilmiş videoya yeni fayl yüklənmir">
             <p>

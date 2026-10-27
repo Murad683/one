@@ -31,6 +31,9 @@ interface ClientUser extends Record<string, unknown> {
   shareToken?: string | null;
   shareTokenExpiresAt?: string | null;
   shareUrl?: string | null;
+  /** Real, working mailbox of an active client: the retention warnings can reach it. */
+  canReceiveNotices?: boolean;
+  emailBouncedAt?: string | null;
 }
 
 interface Payment extends Record<string, unknown> {
@@ -234,7 +237,24 @@ export const UsersPage = () => {
 
   const columns: TableColumn<ClientUser>[] = [
     { key: 'name', header: 'Ad' },
-    { key: 'email', header: 'E-poçt' },
+    {
+      key: 'email',
+      header: 'E-poçt',
+      render: (user) => (
+        <div className="flex flex-col">
+          <span>{user.email}</span>
+          {user.emailBouncedAt ? (
+            <span className="text-[10px] font-medium text-red-600" title="Bu ünvana göndərilən mail çatmadı. E-poçtu düzəldin.">
+              Mail çatmadı
+            </span>
+          ) : user.canReceiveNotices === false ? (
+            <span className="text-[10px] italic text-faint" title="Silinmə xəbərdarlıqları yalnız real e-poçt ünvanına gedir.">
+              Real e-poçt deyil, xəbərdarlıq getməyəcək
+            </span>
+          ) : null}
+        </div>
+      ),
+    },
     {
       key: 'package',
       header: 'Paket',

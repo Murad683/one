@@ -31,6 +31,10 @@ model User {
   tickets      Ticket[]
   refreshTokens RefreshToken[]
   createdDeliverables Deliverable[] @relation("DeliverableCreatedBy")
+  // Retention notice mails (services/notice.service.ts)
+  emailBouncedAt    DateTime?   // the address bounced or complained: no more mail until it is changed
+  infoMailSentTo    String?     // address the "notices will come here" mail went to
+  lastNoticeMailAt  DateTime?   // at most one mail per client per Baku day
 }
 
 model Project {
@@ -139,6 +143,8 @@ model Deliverable {
   expiresAt      DateTime?
   hiddenAt       DateTime?
   mediaDeletedAt DateTime?
+  notice7SentAt  DateTime?
+  notice1SentAt  DateTime?
 
   @@index([clientId, year, month])
   @@index([createdById])

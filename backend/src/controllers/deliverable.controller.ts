@@ -21,6 +21,7 @@ import { isProcessingBusy, PROCESSING_BUSY_MESSAGE } from '../utils/deliverableS
 import { buildDeliverableListQuery } from '../utils/deliverableList';
 import { CLIENT_VISIBLE_WHERE, isRetentionLocked, presentForAdmin, presentForClient, RETENTION_LOCKED_MESSAGE } from '../utils/retention';
 import { stampFirstReady } from '../services/retention.service';
+import { canReceiveNotices } from '../utils/notices';
 
 // Video helpers (getVideoHeight / getVideoRotationDegrees / getMediaDimensions /
 // generateVideoThumbnail / generateWebPreview / applyVideoFaststart) moved to
@@ -186,7 +187,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
         orderBy: orderBy as any,
         include: {
           client: {
-            select: { id: true, name: true, email: true, shareToken: true, shareTokenExpiresAt: true },
+            select: { id: true, name: true, email: true, shareToken: true, shareTokenExpiresAt: true, role: true, isActive: true, emailBouncedAt: true },
           },
           category: true,
         },
@@ -240,6 +241,11 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
           originalUrl: signedOriginalUrl,
           client: d.client && {
             ...d.client,
+            // Can this client's address receive the retention warnings? (computed here so creators never need the e-mail)
+            canReceiveNotices: canReceiveNotices(d.client),
+            role: undefined,
+            isActive: undefined,
+            emailBouncedAt: undefined,
             ...(isCreator && { email: undefined }),
             shareUrl: d.client.shareToken ? `${process.env.FRONTEND_URL}/share/${d.client.shareToken}` : null,
           },

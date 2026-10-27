@@ -32,6 +32,7 @@ import { ensureUploadDirs } from './utils/ensureUploadDir';
 import { globalRateLimiter, contactRateLimiter, uploadRateLimiter } from './middleware/rateLimiter.middleware';
 import { xssSanitize } from './middleware/xss.middleware';
 import { startRetentionScheduler } from './jobs/retention';
+import { resendWebhook } from './controllers/webhook.controller';
 
 // Bootstrap
 ensureUploadDirs();
@@ -99,6 +100,10 @@ morgan.token('remote-addr', (req: Request) => {
 });
 // Custom format: real client IP + no ANSI colour codes (cleaner in journald).
 app.use(morgan(':remote-addr :method :url :status :response-time ms - :res[content-length]'));
+// Resend webhook: signed over the exact bytes, so it gets the raw body and is
+// registered before express.json() (and before the CSRF check, which Resend cannot satisfy;
+// the Svix signature authenticates the request instead).
+app.post('/api/v1/webhooks/resend', express.raw({ type: 'application/json', limit: '1mb' }), resendWebhook);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

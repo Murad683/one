@@ -1,11 +1,15 @@
 import { z } from 'zod';
 
+// Lower case, no surrounding spaces: "Jale@Gmail.com " is the same account as
+// "jale@gmail.com" (every stored address is already lower case).
 export const registerSchema = z.object({
   name: z
     .string({ error: 'Name is required' })
     .min(2, 'Name must be at least 2 characters'),
   email: z
     .string({ error: 'Email is required' })
+    .trim()
+    .toLowerCase()
     .email('Invalid email address'),
   password: z
     .string({ error: 'Password is required' })
@@ -17,6 +21,8 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
   email: z
     .string({ error: 'Email is required' })
+    .trim()
+    .toLowerCase()
     .email('Invalid email address'),
   password: z
     .string({ error: 'Password is required' })

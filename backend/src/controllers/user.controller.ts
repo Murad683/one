@@ -4,6 +4,8 @@ import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { hashPassword } from '../utils/password.util';
 import { collectDeliverableKeys, deleteUnreferencedDeliverableKeys } from '../services/upload.service';
+import { EMAIL_IN_USE_MESSAGE, isUniqueViolation, looksLikeEmail, normalizeEmail } from '../utils/email';
+import { canReceiveNotices } from '../utils/notices';
 
 const SHARE_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -36,13 +38,15 @@ export const getUsers = async (req: Request, res: Response) => {
           igHighlights: true,
           shareToken: true,
           shareTokenExpiresAt: true,
+          emailBouncedAt: true,
         },
       }),
       prisma.user.count({ where }),
     ]);
 
     return sendSuccess(res, {
-      items,
+      // canReceiveNotices: a real, working mailbox of an active client (utils/notices.ts)
+      items: items.map((u) => ({ ...u, canReceiveNotices: canReceiveNotices(u) })),
       total,
       page: pageNumber,
       limit: limitNumber,
@@ -79,10 +83,25 @@ export const updateUser = async (req: Request, res: Response) => {
       password?: string;
       isActive?: boolean;
       igHighlights?: any;
+      emailBouncedAt?: null;
     } = {};
 
     if (name !== undefined) data.name = name;
-    if (email !== undefined) data.email = email;
+    if (email !== undefined) {
+      const normalized = typeof email === 'string' ? normalizeEmail(email) : '';
+      if (!looksLikeEmail(normalized)) {
+        return sendError(res, 'Düzgün e-poçt ünvanı daxil edin', 400);
+      }
+      if (normalized !== existing.email) {
+        const taken = await prisma.user.findUnique({ where: { email: normalized }, select: { id: true } });
+        if (taken && taken.id !== id) {
+          return sendError(res, EMAIL_IN_USE_MESSAGE, 409);
+        }
+      }
+      data.email = normalized;
+      // A new address starts clean: the old one's bounce says nothing about it.
+      if (normalized !== existing.email) data.emailBouncedAt = null;
+    }
     if (isActive !== undefined) data.isActive = isActive;
     if (igHighlights !== undefined) data.igHighlights = igHighlights;
     if (password) data.password = await hashPassword(password);
@@ -99,11 +118,14 @@ export const updateUser = async (req: Request, res: Response) => {
         createdAt: true,
         updatedAt: true,
         igHighlights: true,
+        emailBouncedAt: true,
       },
     });
 
     return sendSuccess(res, user);
   } catch (error) {
+    // Two admins saving the same address at the same moment: the database wins.
+    if (isUniqueViolation(error)) return sendError(res, EMAIL_IN_USE_MESSAGE, 409);
     return sendError(res, 'Error updating user', 500, error);
   }
 };
