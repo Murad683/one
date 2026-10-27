@@ -31,7 +31,10 @@ export class MailError extends Error {
 
 export const isMailConfigured = (env: NodeJS.ProcessEnv = process.env): boolean => Boolean((env.RESEND_API_KEY || '').trim());
 
-export const getMailFrom = (env: NodeJS.ProcessEnv = process.env): string => (env.MAIL_FROM || '').trim() || DEFAULT_FROM;
+// Some env loaders (plain `docker run --env-file`) keep the quotes around a value; Resend rejects such a sender (422).
+const unquote = (value: string): string => value.replace(/^(["'])(.*)\1$/, '$2').trim();
+
+export const getMailFrom = (env: NodeJS.ProcessEnv = process.env): string => unquote((env.MAIL_FROM || '').trim()) || DEFAULT_FROM;
 
 /** Sends one mail and returns the provider's id. Throws MailError on any failure. */
 export async function sendMail(message: MailMessage, fetchImpl: typeof fetch = fetch): Promise<string> {
