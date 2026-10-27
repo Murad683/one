@@ -26,6 +26,10 @@ export function DeliverableUploadProvider({ children }: { children: ReactNode })
   const closeTimers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
 
   const activeCount = uploads.filter((u) => u.status === 'uploading').length;
+  const uploadFor = useCallback(
+    (deliverableId: string) => uploads.find((u) => u.status === 'uploading' && u.deliverableId === deliverableId),
+    [uploads],
+  );
   // The "don't close the tab" hint is shown once, on the first running card.
   const firstUploadingId = uploads.find((u) => u.status === 'uploading')?.id;
 
@@ -45,7 +49,7 @@ export function DeliverableUploadProvider({ children }: { children: ReactNode })
       const id = nextId.current++;
       const label =
         files.length === 1 ? files[0].name : files.length > 1 ? `${files.length} fayl` : (thumbnail?.name ?? 'Fayl');
-      setUploads((list) => [...list, { id, label, pct: 0, status: 'uploading', errorText: '' }]);
+      setUploads((list) => [...list, { id, deliverableId, label, pct: 0, status: 'uploading', errorText: '' }]);
 
       const isLargeVideo = files.some((f) => f.type.startsWith('video/') && f.size > DIRECT_UPLOAD_THRESHOLD_BYTES);
       const runUpload = isLargeVideo ? directUploadDeliverableFile : uploadDeliverableFile;
@@ -83,7 +87,9 @@ export function DeliverableUploadProvider({ children }: { children: ReactNode })
   }, []);
 
   return (
-    <DeliverableUploadCtx.Provider value={{ activeCount, canStart: activeCount < MAX_PARALLEL_UPLOADS, start }}>
+    <DeliverableUploadCtx.Provider
+      value={{ activeCount, canStart: activeCount < MAX_PARALLEL_UPLOADS, uploadFor, start }}
+    >
       {children}
       {uploads.length > 0 && (
         <div

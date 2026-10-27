@@ -299,6 +299,15 @@ export const DeliverablesPage = () => {
   const [modalError, setModalError] = useState('');
   // Uploads run in an app-level context so they survive leaving this page.
   const upload = useDeliverableUpload();
+  // Why a row cannot be edited or deleted right now: an upload from this tab is in
+  // flight, or the server is still processing it. Replacing/removing the file
+  // mid-way used to leave orphaned files in storage.
+  const busyReason = (d: Deliverable | null): string | null => {
+    if (!d) return null;
+    if (upload.uploadFor(d.id)) return 'Fayl yüklənir. Yükləmə bitəndən sonra redaktə edin və ya silin.';
+    if (isProcessingBusy(d)) return 'Fayl emal olunur (1–5 dəqiqə). Emal bitəndən sonra redaktə edin və ya silin.';
+    return null;
+  };
   const [feedbackView, setFeedbackView] = useState<string | null>(null);
   const [sharingClient, setSharingClient] = useState<ClientUser | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -382,6 +391,7 @@ export const DeliverablesPage = () => {
   }, [searchQuery]);
 
   const openModal = (deliverable?: Deliverable) => {
+    if (deliverable && busyReason(deliverable)) return;
     setEditing(deliverable || null);
     setModalError('');
     setSelectedFiles([]);
@@ -587,6 +597,11 @@ export const DeliverablesPage = () => {
                 Emal: {Math.floor(deliverable.processingDuration! / 60)}d {deliverable.processingDuration! % 60}s
               </span>
             )}
+            {upload.uploadFor(deliverable.id) && (
+              <span className="text-[10px] text-faint italic ml-1">
+                Fayl yüklənir… {upload.uploadFor(deliverable.id)!.pct}%
+              </span>
+            )}
             {deliverable.status === 'PROCESSING' && (
               <span className="text-[10px] text-faint italic ml-1">Emal gedir, 1–5 dəqiqə çəkə bilər.</span>
             )}
@@ -602,11 +617,22 @@ export const DeliverablesPage = () => {
     {
       key: 'actions',
       header: 'Əməliyyatlar',
-      render: (deliverable) => (
+      render: (deliverable) => {
+        const reason = busyReason(deliverable);
+        return (
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => openModal(deliverable)} aria-label="Faylı redaktə et">
-            <Edit2 className="h-4 w-4" />
-          </Button>
+          {/* title sits on the wrapper: disabled buttons don't show their own tooltip */}
+          <span className="inline-flex" title={reason ?? undefined}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => openModal(deliverable)}
+              disabled={Boolean(reason)}
+              aria-label="Faylı redaktə et"
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
+          </span>
           {deliverable.client && (
             <Button
               variant="ghost"
@@ -618,11 +644,20 @@ export const DeliverablesPage = () => {
               <Link2 className="h-4 w-4" />
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={() => setDeleting(deliverable)} aria-label="Faylı sil">
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <span className="inline-flex" title={reason ?? undefined}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDeleting(deliverable)}
+              disabled={Boolean(reason)}
+              aria-label="Faylı sil"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </span>
         </div>
-      ),
+        );
+      },
     },
   ];
 
@@ -811,16 +846,16 @@ export const DeliverablesPage = () => {
                 label={editing && editing.files?.length > 0 ? 'Faylı əvəz et' : 'Fayllar (Birdən çox seçə bilərsiniz)'}
                 type="file"
                 multiple
-                disabled={isProcessingBusy(editing)}
+                disabled={Boolean(busyReason(editing))}
                 onChange={(event) => {
                   if (event.target.files) {
                     setSelectedFiles(Array.from(event.target.files));
                   }
                 }}
               />
-              {isProcessingBusy(editing) && (
+              {busyReason(editing) && (
                 <p className="-mt-2 text-xs text-amber-500">
-                  Bu faylın emalı gedir. Emal bitəndən sonra faylı əvəz edə bilərsiniz.
+                  Bu fayl hazırda yüklənir və ya emal olunur. Bitəndən sonra faylı əvəz edə bilərsiniz.
                 </p>
               )}
               {editing && editing.files?.length > 0 && (
@@ -871,7 +906,7 @@ export const DeliverablesPage = () => {
                   <Input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
-                    disabled={isProcessingBusy(editing)}
+                    disabled={Boolean(busyReason(editing))}
                     onChange={(event) => {
                       const file = event.target.files?.[0] || null;
                       setSelectedThumbnail(file);
