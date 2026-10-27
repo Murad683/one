@@ -20,6 +20,11 @@ const REPLACE_BLOCKED: FaqEntry = {
   a: 'Fayl yüklənərkən və sonra emal olunarkən (1–5 dəqiqə, status **Hazırlanır**) həmin qeydin qələm və silmə düymələri söndürülür, üzərinə gətirəndə səbəb yazılır.\n- Cədvəldə statusun altında "Fayl yüklənir… 43%" və ya "Emal gedir" görünür.\n- Bitib status **Hazırdır** olandan sonra düymələr açılır.\n- Yükləmə gedərkən hesabdan çıxmayın, **Çıxış** basanda panel xəbərdarlıq edir.\n- 2 saatdan çox **Hazırlanır** qalarsa, düymələr yenidən açılır.',
 };
 
+const FIND_FILES: FaqEntry = {
+  q: 'Faylı necə tez tapım? (axtarış, filtr, sıralama)',
+  a: 'Layihə Faylları cədvəlinin üstündəki paneldən istifadə edin:\n- **Axtarış** müştəri adı, e-poçt və fayl başlığı üzrə işləyir.\n- **Filtrlər:** Müştəri, Növ, Status, Ay / İl; **Daha çox filtr**: əlavə olunma tarixi aralığı (Bu gün, Son 7 gün, Bu ay), Gözləmədə qalıb, Müştəri rəyi var.\n- **Sıralama** menyusu və **Sətir sayı** (50, 100, 150, 200).\n- **Təmizlə** düyməsi hamısını sıfırlayır.',
+};
+
 export const STAFF_FAQ: FaqEntry[] = [
   {
     q: 'Müştəriyə paketi necə təyin edim?',
@@ -58,6 +63,7 @@ export const STAFF_FAQ: FaqEntry[] = [
     a: 'Xeyr. Sorğular və Mesajlar bölmələri yalnız oxumaq və status dəyişmək üçündür, cavab yazmaq olmur.\nMüştəri ilə e-poçt və ya başqa kanaldan əlaqə saxlayın.',
   },
   UPLOAD_PENDING,
+  FIND_FILES,
   REPLACE_BLOCKED,
 ];
 
@@ -71,6 +77,7 @@ export const CREATOR_FAQ: FaqEntry[] = [
     a: 'Müştəri sizin yüklədiyiniz fayla rəy yazanda, faylın yanında mavi **Rəy** çipi görünür. Üzərinə klikləyəndə müştərinin yazdığı mətn açılır.',
   },
   UPLOAD_PENDING,
+  FIND_FILES,
   REPLACE_BLOCKED,
   {
     q: 'Yüklədiyim faylı necə dəyişim və ya silim?',
