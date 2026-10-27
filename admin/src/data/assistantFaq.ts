@@ -16,8 +16,8 @@ const UPLOAD_PENDING: FaqEntry = {
 };
 
 const REPLACE_BLOCKED: FaqEntry = {
-  q: 'Faylı niyə əvəz edə bilmirəm, "Hazırlanır" yazılıb?',
-  a: 'Yüklənən fayl emal olunur (1–5 dəqiqə), bu müddətdə eyni faylı yenidən yükləmək olmur və fayl seçimi söndürülür.\n- Status **Hazırdır** olandan sonra faylı əvəz edin.\n- Yükləmə gedərkən hesabdan çıxmayın, **Çıxış** basanda panel xəbərdarlıq edir.\n- 2 saatdan çox **Hazırlanır** qalarsa, yenidən yükləmək olar.',
+  q: 'Faylı niyə redaktə və ya silə bilmirəm, qələm söndürülüb?',
+  a: 'Fayl yüklənərkən və sonra emal olunarkən (1–5 dəqiqə, status **Hazırlanır**) həmin qeydin qələm və silmə düymələri söndürülür, üzərinə gətirəndə səbəb yazılır.\n- Cədvəldə statusun altında "Fayl yüklənir… 43%" və ya "Emal gedir" görünür.\n- Bitib status **Hazırdır** olandan sonra düymələr açılır.\n- Yükləmə gedərkən hesabdan çıxmayın, **Çıxış** basanda panel xəbərdarlıq edir.\n- 2 saatdan çox **Hazırlanır** qalarsa, düymələr yenidən açılır.',
 };
 
 export const STAFF_FAQ: FaqEntry[] = [

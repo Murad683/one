@@ -4,6 +4,8 @@ export type DeliverableUploadStatus = 'uploading' | 'done' | 'error';
 
 export interface DeliverableUploadItem {
   id: number;
+  /** The deliverable row this upload belongs to. */
+  deliverableId: string;
   label: string;
   pct: number;
   status: DeliverableUploadStatus;
@@ -18,6 +20,8 @@ export interface DeliverableUploadValue {
   activeCount: number;
   /** False once MAX_PARALLEL_UPLOADS are running; check before creating a record. */
   canStart: boolean;
+  /** The in-flight upload for this deliverable from this tab, if any. */
+  uploadFor: (deliverableId: string) => DeliverableUploadItem | undefined;
   /**
    * Starts a background upload. `onFinished` runs when it succeeds or fails
    * (e.g. to refetch the list); it may run after the caller's page unmounted.

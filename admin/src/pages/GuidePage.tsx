@@ -467,8 +467,9 @@ export const GuidePage = () => {
               gözləyin.
             </p>
             <p>
-              Fayl yüklənəndən sonra status <B>Hazırlanır</B> olur və emal 1–5 dəqiqə çəkə bilər. Bu müddətdə həmin
-              faylı <B>əvəz etmək olmur</B> (redaktədə fayl seçimi söndürülür): emal bitəndən sonra əvəz edin.
+              Fayl yüklənərkən və yüklənəndən sonra emal olunarkən (status <B>Hazırlanır</B>, 1–5 dəqiqə) həmin
+              qeydin <B>redaktə (qələm) və silmə düymələri söndürülür</B>: üzərinə gətirəndə səbəb yazılır, cədvəldə
+              statusun altında "Fayl yüklənir… 43%" və ya "Emal gedir" görünür. Bitəndən sonra düymələr açılır.
               Yükləmə gedərkən "Çıxış" düyməsini basarsanız, panel əvvəlcə xəbərdarlıq edir.
             </p>
             <p>
@@ -654,9 +655,9 @@ export const GuidePage = () => {
             dayanır.
           </FaqItem>
           <FaqItem q='Faylı niyə əvəz edə bilmirəm, "Hazırlanır" yazılıb?'>
-            Fayl yüklənəndən sonra emal olunur (1–5 dəqiqə). Bu müddətdə eyni faylı yenidən yükləmək olmur,
-            fayl seçimi söndürülür. Emal bitib status "Hazırdır" olandan sonra faylı əvəz edin. Yükləmə
-            gedərkən hesabdan çıxmayın: "Çıxış" basanda panel xəbərdarlıq edir.
+            Fayl yüklənərkən və sonra emal olunarkən (1–5 dəqiqə) həmin qeydin qələm (redaktə) və silmə
+            düymələri söndürülür, üzərinə gətirəndə səbəb yazılır. Emal bitib status "Hazırdır" olandan sonra
+            faylı əvəz edin və ya silin. Yükləmə gedərkən hesabdan çıxmayın: "Çıxış" basanda panel xəbərdarlıq edir.
           </FaqItem>
           <FaqItem q='Paketi "Ən Populyar" etdim, köhnəsi niyə hələ də görünür?'>
             Sistem avtomatik söndürmür — əvvəlki "Ən Populyar" paketi əl ilə tapıb söndürməlisiniz, əks
