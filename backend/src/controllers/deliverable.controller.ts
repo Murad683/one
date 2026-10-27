@@ -17,6 +17,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as crypto from 'crypto';
 import { SAS_UPLOAD_EXPIRY_SECONDS, FILE_SIZE_TOLERANCE_PERCENT, MAX_UPLOAD_SIZE_BYTES, MULTIPART_PART_SIZE_BYTES, MULTIPART_MAX_PARTS } from '../config/upload.constants';
+import { isProcessingBusy, PROCESSING_BUSY_MESSAGE } from '../utils/deliverableStatus';
 
 // Video helpers (getVideoHeight / getVideoRotationDegrees / getMediaDimensions /
 // generateVideoThumbnail / generateWebPreview / applyVideoFaststart) moved to
@@ -410,6 +411,13 @@ export const uploadDeliverableFile = async (req: Request, res: Response): Promis
       return;
     }
 
+    // The previous upload is still being processed: a second run would orphan its
+    // output. (The multipart body is only in memory here, nothing to clean up.)
+    if (isProcessingBusy(deliverable)) {
+      sendError(res, PROCESSING_BUSY_MESSAGE, 409);
+      return;
+    }
+
     const filesMap = req.files as Record<string, Express.Multer.File[]> | undefined;
     const uploadedFiles = filesMap?.['files'] || [];
     const customThumbnailFile = filesMap?.['thumbnail']?.[0] || null;
@@ -719,6 +727,7 @@ export const initiateDirectUpload = async (req: Request, res: Response): Promise
 
     if (!deliverable) { sendError(res, 'Deliverable not found', 404); return; }
     if (!canModifyDeliverable(req.user, deliverable)) { sendError(res, 'Forbidden', 403); return; }
+    if (isProcessingBusy(deliverable)) { sendError(res, PROCESSING_BUSY_MESSAGE, 409); return; }
 
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     const folder = isVideo ? 'videos' : 'designs';
@@ -758,6 +767,7 @@ export const initiateMultipartUpload = async (req: Request, res: Response): Prom
     });
     if (!deliverable) { sendError(res, 'Deliverable not found', 404); return; }
     if (!canModifyDeliverable(req.user, deliverable)) { sendError(res, 'Forbidden', 403); return; }
+    if (isProcessingBusy(deliverable)) { sendError(res, PROCESSING_BUSY_MESSAGE, 409); return; }
 
     const isVideo = deliverable.category?.isVideo || deliverable.type === 'VIDEO';
     const folder = isVideo ? 'videos' : 'designs';
@@ -867,6 +877,20 @@ export const finalizeDirectUpload = async (req: Request, res: Response): Promise
       if (!Array.isArray(files)) { sendError(res, 'files array is required', 400); return; }
       const keys = [...files.map((f: any) => f?.storageKey), ...(thumbnailStorageKey ? [thumbnailStorageKey] : [])];
       if (!(await creatorStorageKeysAllowed(keys, id))) { sendError(res, 'Forbidden storage key', 403); return; }
+    }
+
+    // Another upload for this row is still being processed. Refuse, and drop the
+    // raw objects this request just uploaded: nothing references them, and
+    // deleteUnreferencedDeliverableKeys keeps any key a row still points at.
+    if (isProcessingBusy(deliverable)) {
+      sendError(res, PROCESSING_BUSY_MESSAGE, 409);
+      if (Array.isArray(files)) {
+        await deleteUnreferencedDeliverableKeys([
+          ...files.map((f: any) => f?.storageKey).filter(Boolean),
+          ...(thumbnailStorageKey ? [thumbnailStorageKey] : []),
+        ]);
+      }
+      return;
     }
 
     // Paralel blob doğrulaması — bütün fayllar eyni anda yoxlanır
