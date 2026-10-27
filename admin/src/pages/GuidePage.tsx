@@ -426,8 +426,8 @@ export const GuidePage = () => {
           <p>
             Cədvəlin üstündəki axtarış qutusu <B>müştəri adı, e-poçt və fayl başlığı</B> üzrə axtarır (creator
             e-poçtla axtara bilmir). <B>Sıralamaq</B> üçün istənilən sütun başlığına basın (Müştəri, Başlıq, Növ,
-            Status, Ay/İl, Əlavə olunub): ikinci basış istiqaməti dəyişir, aktiv sütunda ox görünür. <B>Süzmək</B>{' '}
-            üçün Müştəri, Növ, Status, Ay/İl və Əlavə olunub başlıqlarındakı kiçik huni ikonuna basın (aktiv filtrdə ikon
+            Status, Əlavə olunub): ikinci basış istiqaməti dəyişir, aktiv sütunda ox görünür. <B>Süzmək</B>{' '}
+            üçün Müştəri, Növ, Status və Əlavə olunub başlıqlarındakı kiçik huni ikonuna basın (aktiv filtrdə ikon
             mavi olur). Status hunisində "Gözləmədə qalıb" və "Müştəri rəyi var" da var, Əlavə olunub hunisində tarix
             aralığı və Bu gün, Son 7 gün, Bu ay düymələri. Aktiv filtrlər cədvəlin üstündə çip kimi görünür, ✕ ilə
             tək-tək, "Hamısını təmizlə" ilə hamısı silinir. Cədvəlin altında "Səhifədə" ilə sətir sayını (50, 100, 150,

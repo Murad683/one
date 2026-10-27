@@ -149,19 +149,6 @@ export const StatusFilterPanel = ({
   </div>
 );
 
-/* ── Ay / İl (iş ayı) ────────────────────────────────────── */
-export const MonthFilterPanel = ({ value, onChange, close }: { value: string; onChange: Patch; close: () => void }) => (
-  <div className="space-y-3">
-    <Input label="Ay / İl (iş ayı)" type="month" value={value} onChange={(event) => onChange({ month: event.target.value })} />
-    <div className="flex justify-between gap-2">
-      <Button variant="ghost" size="sm" onClick={() => { onChange({ month: '' }); close(); }} disabled={!value}>
-        Təmizlə
-      </Button>
-      <Button size="sm" onClick={close}>Hazırdır</Button>
-    </div>
-  </div>
-);
-
 /* ── Əlavə olunub (tarix aralığı) ────────────────────────── */
 export const AddedFilterPanel = ({
   from,

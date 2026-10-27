@@ -43,8 +43,6 @@ export const SORT_OPTIONS = [
   { value: 'category:desc', label: 'Növ Z → A' },
   { value: 'status:asc', label: 'Status: gözləyənlər əvvəl' },
   { value: 'status:desc', label: 'Status: hazır olanlar əvvəl' },
-  { value: 'month:desc', label: 'Ay/İl: yeni əvvəl' },
-  { value: 'month:asc', label: 'Ay/İl: köhnə əvvəl' },
 ];
 
 export const DEFAULT_SORT = SORT_OPTIONS[0].value;

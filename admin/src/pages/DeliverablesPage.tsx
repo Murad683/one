@@ -21,7 +21,6 @@ import {
   AddedFilterPanel,
   CategoryFilterPanel,
   ClientFilterPanel,
-  MonthFilterPanel,
   StatusFilterPanel,
 } from '../components/deliverables/DeliverableColumnFilters';
 import ActiveFilterChips from '../components/deliverables/ActiveFilterChips';
@@ -716,28 +715,6 @@ export const DeliverablesPage = () => {
       },
     },
     {
-      key: 'month',
-      header: headerFor(
-        'month',
-        'Ay/İl',
-        <ColumnFilter label="Ay/İl" active={Boolean(filters.month)}>
-          {(close) => <MonthFilterPanel value={filters.month} onChange={updateFilters} close={close} />}
-        </ColumnFilter>,
-      ),
-      ariaSort: ariaSortFor('month'),
-      render: (deliverable) => (
-        <div className="flex flex-col">
-          <span>{`${deliverable.month}/${deliverable.year}`}</span>
-          {/* The "Əlavə olunub" column is hidden on phones: show the day here instead. */}
-          {formatAddedDay(deliverable.createdAt) && (
-            <span className="whitespace-nowrap text-[10px] italic text-faint sm:hidden">
-              Əlavə olunub: {formatAddedDay(deliverable.createdAt)}
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
       key: 'createdAt',
       header: headerFor(
         'createdAt',
@@ -747,7 +724,6 @@ export const DeliverablesPage = () => {
         </ColumnFilter>,
       ),
       ariaSort: ariaSortFor('createdAt'),
-      hideOnMobile: true,
       render: (deliverable) => (
         <span className="whitespace-nowrap text-muted" title={formatAddedDateTime(deliverable.createdAt) || undefined}>
           {formatAddedDay(deliverable.createdAt) || '—'}
