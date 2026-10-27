@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { MAX_PARALLEL_UPLOADS, useDeliverableUpload } from '../context/deliverableUpload';
-import { Download, Edit2, FileX, Image, Link2, MessageCircle, Play, Plus, Trash2, Video, X, Copy } from 'lucide-react';
+import { Download, Edit2, FileX, Image, Link2, MessageCircle, Play, Plus, Search, Trash2, Video, X, Copy } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuthStore } from '../store/authStore';
 import Badge from '../components/ui/Badge';
@@ -16,16 +16,31 @@ import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
 import { HighlightsManager } from '../components/deliverables/HighlightsManager';
-import DeliverableFilterBar from '../components/deliverables/DeliverableFilterBar';
+import { ColumnFilter, SortHeader } from '../components/deliverables/ColumnHeader';
+import {
+  AddedFilterPanel,
+  CategoryFilterPanel,
+  ClientFilterPanel,
+  MonthFilterPanel,
+  StatusFilterPanel,
+} from '../components/deliverables/DeliverableColumnFilters';
+import ActiveFilterChips from '../components/deliverables/ActiveFilterChips';
+import MobileFilterSheet from '../components/deliverables/MobileFilterSheet';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import {
   DEFAULT_PAGE_SIZE,
   DEFAULT_SORT,
+  PAGE_SIZES,
   buildListParams,
   countActiveFilters,
+  describeFilters,
   emptyFilters,
   formatAddedDay,
+  formatAddedDateTime,
+  nextSort,
+  parseSort,
   type DeliverableFilters,
+  type SortKey,
 } from '../lib/deliverableList';
 
 const isStalePending = (deliverable: Partial<Deliverable>) => {
@@ -558,15 +573,45 @@ export const DeliverablesPage = () => {
     setShareExpiresAt(null);
   };
 
+  // Column headers sort on click; the funnel next to a title filters that column.
+  const sortState = parseSort(sort);
+  const sortBy = (key: SortKey) => {
+    setSort(nextSort(sort, key));
+    setPage(1);
+  };
+  const ariaSortFor = (key: SortKey): 'ascending' | 'descending' | 'none' =>
+    sortState.key === key ? (sortState.order === 'asc' ? 'ascending' : 'descending') : 'none';
+  const headerFor = (key: SortKey, label: string, filter?: ReactNode) => (
+    <span className="inline-flex items-center gap-1.5">
+      <SortHeader label={label} active={sortState.key === key} order={sortState.order} onClick={() => sortBy(key)} />
+      {filter}
+    </span>
+  );
+  const filterChips = describeFilters(filters, { clients: clientOptions, categories, statusLabels });
+
   const columns: TableColumn<Deliverable>[] = [
     {
       key: 'client',
-      header: 'Müştəri',
-      render: (deliverable) => deliverable.client?.name || 'Naməlum müştəri',
+      header: headerFor(
+        'client',
+        'Müştəri',
+        <ColumnFilter label="Müştəri" active={Boolean(filters.clientId)} width={300}>
+          {(close) => <ClientFilterPanel clients={clientOptions} value={filters.clientId} onChange={updateFilters} close={close} />}
+        </ColumnFilter>,
+      ),
+      ariaSort: ariaSortFor('client'),
+      render: (deliverable) => (
+        <div className="flex flex-col">
+          <span>{deliverable.client?.name || 'Naməlum müştəri'}</span>
+          {/* Phones hide the title column: keep the file name visible under the client. */}
+          <span className="max-w-[180px] truncate text-xs text-muted sm:hidden">{deliverable.title || 'Başlıqsız'}</span>
+        </div>
+      ),
     },
     {
       key: 'title',
-      header: 'Başlıq / Fayl',
+      header: headerFor('title', 'Başlıq / Fayl'),
+      ariaSort: ariaSortFor('title'),
       hideOnMobile: true,
       render: (deliverable) => {
         const hasFiles = deliverable.files && deliverable.files.length > 0;
@@ -596,7 +641,14 @@ export const DeliverablesPage = () => {
     },
     {
       key: 'categoryId',
-      header: 'Növ',
+      header: headerFor(
+        'category',
+        'Növ',
+        <ColumnFilter label="Növ" active={Boolean(filters.categoryId)}>
+          {(close) => <CategoryFilterPanel categories={categories} value={filters.categoryId} onChange={updateFilters} close={close} />}
+        </ColumnFilter>,
+      ),
+      ariaSort: ariaSortFor('category'),
       render: (deliverable) => (
         <Badge variant="info">
           {deliverable.category?.name || deliverable.type || 'Növ yoxdur'}
@@ -605,7 +657,14 @@ export const DeliverablesPage = () => {
     },
     {
       key: 'status',
-      header: 'Status',
+      header: headerFor(
+        'status',
+        'Status',
+        <ColumnFilter label="Status" active={Boolean(filters.status || filters.stale || filters.hasFeedback)} width={300}>
+          {(close) => <StatusFilterPanel statusLabels={statusLabels} filters={filters} onChange={updateFilters} close={close} />}
+        </ColumnFilter>,
+      ),
+      ariaSort: ariaSortFor('status'),
       hideOnMobile: true,
       render: (deliverable) => {
         const isStale = isStalePending(deliverable);
@@ -613,9 +672,17 @@ export const DeliverablesPage = () => {
         return (
           <div className="flex flex-col gap-1 items-start">
             <div className="flex items-center gap-1.5">
-              <Badge variant={statusVariant(deliverable.status)}>
-                {statusLabels[deliverable.status] || deliverable.status}
-              </Badge>
+              <span
+                title={
+                  (deliverable.processingDuration ?? 0) > 0 && deliverable.status === 'READY'
+                    ? `Emal müddəti: ${Math.floor(deliverable.processingDuration! / 60)} dəq ${deliverable.processingDuration! % 60} san`
+                    : undefined
+                }
+              >
+                <Badge variant={statusVariant(deliverable.status)}>
+                  {statusLabels[deliverable.status] || deliverable.status}
+                </Badge>
+              </span>
               {isStale && (
                 <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-sm" title="2 saatdan çoxdur gözləmədədir">
                   Gözləmədə qalıb
@@ -636,12 +703,6 @@ export const DeliverablesPage = () => {
                 </button>
               )}
             </div>
-            {/* `> 0`, not truthiness: a 0 s duration (photos) would render a stray "0". */}
-            {(deliverable.processingDuration ?? 0) > 0 && deliverable.status === 'READY' && (
-              <span className="text-[10px] text-faint italic ml-1">
-                Emal: {Math.floor(deliverable.processingDuration! / 60)}d {deliverable.processingDuration! % 60}s
-              </span>
-            )}
             {upload.uploadFor(deliverable.id) && (
               <span className="text-[10px] text-faint italic ml-1">
                 Fayl yüklənir… {upload.uploadFor(deliverable.id)!.pct}%
@@ -656,16 +717,41 @@ export const DeliverablesPage = () => {
     },
     {
       key: 'month',
-      header: 'Ay/İl',
+      header: headerFor(
+        'month',
+        'Ay/İl',
+        <ColumnFilter label="Ay/İl" active={Boolean(filters.month)}>
+          {(close) => <MonthFilterPanel value={filters.month} onChange={updateFilters} close={close} />}
+        </ColumnFilter>,
+      ),
+      ariaSort: ariaSortFor('month'),
       render: (deliverable) => (
         <div className="flex flex-col">
           <span>{`${deliverable.month}/${deliverable.year}`}</span>
+          {/* The "Əlavə olunub" column is hidden on phones: show the day here instead. */}
           {formatAddedDay(deliverable.createdAt) && (
-            <span className="text-[10px] text-faint italic whitespace-nowrap">
+            <span className="whitespace-nowrap text-[10px] italic text-faint sm:hidden">
               Əlavə olunub: {formatAddedDay(deliverable.createdAt)}
             </span>
           )}
         </div>
+      ),
+    },
+    {
+      key: 'createdAt',
+      header: headerFor(
+        'createdAt',
+        'Əlavə olunub',
+        <ColumnFilter label="Əlavə olunub" active={Boolean(filters.from || filters.to)} width={300}>
+          {(close) => <AddedFilterPanel from={filters.from} to={filters.to} onChange={updateFilters} close={close} />}
+        </ColumnFilter>,
+      ),
+      ariaSort: ariaSortFor('createdAt'),
+      hideOnMobile: true,
+      render: (deliverable) => (
+        <span className="whitespace-nowrap text-muted" title={formatAddedDateTime(deliverable.createdAt) || undefined}>
+          {formatAddedDay(deliverable.createdAt) || '—'}
+        </span>
       ),
     },
     {
@@ -814,51 +900,92 @@ export const DeliverablesPage = () => {
               Fayl Əlavə Et
             </Button>
           </div>
-          <DeliverableFilterBar
-            search={searchQuery}
-            onSearchChange={(value) => {
-              setSearchQuery(value);
-              setPage(1);
-            }}
-            filters={filters}
-            onFiltersChange={updateFilters}
-            onClear={clearAllFilters}
-            sort={sort}
-            onSortChange={(value) => {
-              setSort(value);
-              setPage(1);
-            }}
-            pageSize={pageSize}
-            onPageSizeChange={(value) => {
-              setPageSize(value);
-              setPage(1);
-            }}
-            clients={clientOptions}
-            categories={categories}
-            statusLabels={statusLabels}
-            isCreator={isCreator}
-          />
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <Search className="h-4 w-4 text-faint" />
+                </div>
+                <Input
+                  placeholder={isCreator ? 'Müştəri adı və ya başlıq ilə axtarın...' : 'Müştəri, e-poçt və ya başlıq ilə axtarın...'}
+                  className="pl-10 pr-9"
+                  value={searchQuery}
+                  onChange={(event) => {
+                    setSearchQuery(event.target.value);
+                    setPage(1);
+                  }}
+                  aria-label="Axtarış"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setPage(1);
+                    }}
+                    aria-label="Axtarışı sil"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-faint hover:text-heading"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <MobileFilterSheet
+                filters={filters}
+                onFiltersChange={updateFilters}
+                onClearFilters={() => updateFilters(emptyFilters)}
+                sort={sort}
+                onSortChange={(value) => {
+                  setSort(value);
+                  setPage(1);
+                }}
+                clients={clientOptions}
+                categories={categories}
+                statusLabels={statusLabels}
+                activeCount={countActiveFilters(filters)}
+              />
+            </div>
+            <ActiveFilterChips chips={filterChips} onClearOne={updateFilters} onClearAll={clearAllFilters} />
+          </div>
           {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
           <Table
+            minimal
             columns={columns}
             data={deliverables}
             isLoading={isLoading}
             emptyMessage={filtersActive ? 'Filtrə uyğun fayl tapılmadı.' : 'Fayl tapılmadı.'}
             rowClassName={(row) => isStalePending(row) ? 'bg-red-50/50 hover:bg-red-50' : ''}
           />
-          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-            <span className="text-xs text-muted">
-              {filtersActive ? `Tapıldı: ${total} fayl` : `Cəmi: ${total} fayl`}
-            </span>
-            {totalPages > 1 && (
-              <div className="flex items-center gap-4">
-                <Button variant="secondary" size="sm" disabled={page <= 1 || isLoading} onClick={() => setPage((p) => p - 1)}>
-                  Əvvəlki
-                </Button>
-                <span className="text-xs font-medium text-body">{page} / {totalPages} Səhifə</span>
-                <Button variant="secondary" size="sm" disabled={page >= totalPages || isLoading} onClick={() => setPage((p) => p + 1)}>
-                  Növbəti
-                </Button>
+          <div className="flex flex-col gap-3 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+            <span>{filtersActive ? `Tapıldı: ${total} fayl` : `Cəmi: ${total} fayl`}</span>
+            {total > 0 && (
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                <label className="flex items-center gap-2">
+                  Səhifədə
+                  <select
+                    value={pageSize}
+                    onChange={(event) => {
+                      setPageSize(parseInt(event.target.value, 10));
+                      setPage(1);
+                    }}
+                    className="rounded-md border border-field-border bg-field px-2 py-1 text-xs text-heading outline-none focus:ring-2 focus:ring-blue-100"
+                  >
+                    {PAGE_SIZES.map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </label>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" disabled={page <= 1 || isLoading} onClick={() => setPage((p) => p - 1)}>
+                      ‹ Əvvəlki
+                    </Button>
+                    <span className="font-medium text-body">{page} / {totalPages}</span>
+                    <Button variant="ghost" size="sm" disabled={page >= totalPages || isLoading} onClick={() => setPage((p) => p + 1)}>
+                      Növbəti ›
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
