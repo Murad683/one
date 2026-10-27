@@ -424,7 +424,13 @@ export const GuidePage = () => {
 
           <h3 className="pt-2 text-base font-semibold text-heading">Fayllar cədvəli</h3>
           <p>
-            Yuxarıdakı axtarış qutusu ad/e-poçt üzrə axtarır. Status sütununda 5 mümkün vəziyyət var:
+            Cədvəlin üstündəki panel faylı tez tapmaq üçündür: axtarış qutusu <B>müştəri adı, e-poçt və fayl
+            başlığı</B> üzrə axtarır (creator e-poçtla axtara bilmir). Altında <B>Müştəri, Növ, Status və Ay / İl</B>{' '}
+            filtrləri var; <B>"Daha çox filtr"</B> bölməsində faylın əlavə olunduğu günə görə tarix aralığı (Bu gün,
+            Son 7 gün, Bu ay düymələri), "Gözləmədə qalıb" və "Müştəri rəyi var" seçimləri yerləşir. <B>"Təmizlə"</B>{' '}
+            düyməsi hamısını sıfırlayır. <B>Sıralama</B> menyusundan yeni/köhnə, müştəri, başlıq və ya status üzrə
+            seçə bilərsiniz. Cədvəl səhifələnir: defolt 50 sətir, <B>Sətir sayı</B> ilə 50, 100, 150 və ya 200 seçilir;
+            "Ay/İl"in altında faylın əlavə olunma günü yazılır. Status sütununda 5 mümkün vəziyyət var:
           </p>
           <div className="my-3 flex flex-wrap gap-2">
             <Badge variant="warning">Gözləmədə</Badge>

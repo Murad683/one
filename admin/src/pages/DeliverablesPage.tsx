@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { MAX_PARALLEL_UPLOADS, useDeliverableUpload } from '../context/deliverableUpload';
-import { Download, Edit2, FileX, Image, Link2, MessageCircle, Play, Plus, Search, Trash2, Video, X, Copy } from 'lucide-react';
+import { Download, Edit2, FileX, Image, Link2, MessageCircle, Play, Plus, Trash2, Video, X, Copy } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuthStore } from '../store/authStore';
 import Badge from '../components/ui/Badge';
@@ -16,6 +16,17 @@ import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
 import { HighlightsManager } from '../components/deliverables/HighlightsManager';
+import DeliverableFilterBar from '../components/deliverables/DeliverableFilterBar';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import {
+  DEFAULT_PAGE_SIZE,
+  DEFAULT_SORT,
+  buildListParams,
+  countActiveFilters,
+  emptyFilters,
+  formatAddedDay,
+  type DeliverableFilters,
+} from '../lib/deliverableList';
 
 const isStalePending = (deliverable: Partial<Deliverable>) => {
   if (deliverable.status !== 'PENDING' || !deliverable.createdAt) return false;
@@ -281,6 +292,15 @@ export const DeliverablesPage = () => {
   const [categories, setCategories] = useState<DeliverableCategory[]>([]);
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebouncedValue(searchQuery.trim(), 400);
+  const [filters, setFilters] = useState<DeliverableFilters>(emptyFilters);
+  const [sort, setSort] = useState(DEFAULT_SORT);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  // Only the newest request may update the table (filters change faster than the API answers).
+  const requestId = useRef(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [newCategory, setNewCategory] = useState('');
@@ -367,19 +387,44 @@ export const DeliverablesPage = () => {
   };
 
   const fetchDeliverables = async () => {
+    const currentRequest = ++requestId.current;
     setIsLoading(true);
     setError('');
     try {
-      const params = new URLSearchParams({ limit: '100' });
-      if (searchQuery) params.set('search', searchQuery);
+      const params = buildListParams({ page, pageSize, sort, search: debouncedSearch, filters });
       const response = await api.get<ApiEnvelope<Paginated<Deliverable>>>(`/deliverables?${params.toString()}`);
-      setDeliverables(response.data.data.items || []);
+      if (currentRequest !== requestId.current) return;
+      const data = response.data.data;
+      setDeliverables(data.items || []);
+      setTotal(data.total ?? 0);
+      setTotalPages(Math.max(1, data.totalPages ?? 1));
+      // The last row of the last page was removed: step back one page.
+      if ((data.items || []).length === 0 && page > 1 && (data.total ?? 0) > 0) setPage(page - 1);
     } catch (err) {
+      if (currentRequest !== requestId.current) return;
       setError(requestErrorMessage(err, 'Fayllar yüklənə bilmədi.'));
     } finally {
-      setIsLoading(false);
+      if (currentRequest === requestId.current) setIsLoading(false);
     }
   };
+  // Callbacks that outlive this render (an upload finishing later) must refetch with
+  // the filters of the moment, not those captured when the upload started.
+  const fetchRef = useRef(fetchDeliverables);
+  useEffect(() => {
+    fetchRef.current = fetchDeliverables;
+  });
+
+  // Any filter/search/sort/page-size change goes back to page 1.
+  const updateFilters = (patch: Partial<DeliverableFilters>) => {
+    setFilters((current) => ({ ...current, ...patch }));
+    setPage(1);
+  };
+  const clearAllFilters = () => {
+    setFilters(emptyFilters);
+    setSearchQuery('');
+    setPage(1);
+  };
+  const filtersActive = countActiveFilters(filters) > 0 || Boolean(debouncedSearch);
 
   useEffect(() => {
     fetchClients().catch((err) => setError(requestErrorMessage(err, 'Müştərilər yüklənə bilmədi.')));
@@ -388,7 +433,7 @@ export const DeliverablesPage = () => {
 
   useEffect(() => {
     fetchDeliverables();
-  }, [searchQuery]);
+  }, [page, pageSize, sort, filters, debouncedSearch]);
 
   const openModal = (deliverable?: Deliverable) => {
     if (deliverable && busyReason(deliverable)) return;
@@ -453,7 +498,7 @@ export const DeliverablesPage = () => {
       // Refetch when it finishes or fails (a no-op if the admin left the page;
       // the list is fetched again on return).
       upload.start(deliverableId, filesToUpload, thumbToUpload, () => {
-        fetchDeliverables();
+        fetchRef.current();
       });
       setIsModalOpen(false);
       setIsSaving(false);
@@ -612,7 +657,16 @@ export const DeliverablesPage = () => {
     {
       key: 'month',
       header: 'Ay/İl',
-      render: (deliverable) => `${deliverable.month}/${deliverable.year}`,
+      render: (deliverable) => (
+        <div className="flex flex-col">
+          <span>{`${deliverable.month}/${deliverable.year}`}</span>
+          {formatAddedDay(deliverable.createdAt) && (
+            <span className="text-[10px] text-faint italic whitespace-nowrap">
+              Əlavə olunub: {formatAddedDay(deliverable.createdAt)}
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'actions',
@@ -760,25 +814,54 @@ export const DeliverablesPage = () => {
               Fayl Əlavə Et
             </Button>
           </div>
-          <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <Search className="h-4 w-4 text-faint" />
-            </div>
-            <Input
-              placeholder={isCreator ? 'Müştəri adı ilə axtarın...' : 'Müştəri adı və ya e-poçt ilə axtarın...'}
-              className="pl-10"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-            />
-          </div>
+          <DeliverableFilterBar
+            search={searchQuery}
+            onSearchChange={(value) => {
+              setSearchQuery(value);
+              setPage(1);
+            }}
+            filters={filters}
+            onFiltersChange={updateFilters}
+            onClear={clearAllFilters}
+            sort={sort}
+            onSortChange={(value) => {
+              setSort(value);
+              setPage(1);
+            }}
+            pageSize={pageSize}
+            onPageSizeChange={(value) => {
+              setPageSize(value);
+              setPage(1);
+            }}
+            clients={clientOptions}
+            categories={categories}
+            statusLabels={statusLabels}
+            isCreator={isCreator}
+          />
           {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
           <Table
             columns={columns}
             data={deliverables}
             isLoading={isLoading}
-            emptyMessage="Fayl tapılmadı."
+            emptyMessage={filtersActive ? 'Filtrə uyğun fayl tapılmadı.' : 'Fayl tapılmadı.'}
             rowClassName={(row) => isStalePending(row) ? 'bg-red-50/50 hover:bg-red-50' : ''}
           />
+          <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+            <span className="text-xs text-muted">
+              {filtersActive ? `Tapıldı: ${total} fayl` : `Cəmi: ${total} fayl`}
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-4">
+                <Button variant="secondary" size="sm" disabled={page <= 1 || isLoading} onClick={() => setPage((p) => p - 1)}>
+                  Əvvəlki
+                </Button>
+                <span className="text-xs font-medium text-body">{page} / {totalPages} Səhifə</span>
+                <Button variant="secondary" size="sm" disabled={page >= totalPages || isLoading} onClick={() => setPage((p) => p + 1)}>
+                  Növbəti
+                </Button>
+              </div>
+            )}
+          </div>
 
           {/* ── Create / Edit Modal ── */}
           <Modal
