@@ -4,6 +4,7 @@ import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { hashPassword } from '../utils/password.util';
 import { collectDeliverableKeys, deleteUnreferencedDeliverableKeys } from '../services/upload.service';
+import { EMAIL_IN_USE_MESSAGE, isUniqueViolation, looksLikeEmail, normalizeEmail } from '../utils/email';
 
 const SHARE_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -82,7 +83,19 @@ export const updateUser = async (req: Request, res: Response) => {
     } = {};
 
     if (name !== undefined) data.name = name;
-    if (email !== undefined) data.email = email;
+    if (email !== undefined) {
+      const normalized = typeof email === 'string' ? normalizeEmail(email) : '';
+      if (!looksLikeEmail(normalized)) {
+        return sendError(res, 'Düzgün e-poçt ünvanı daxil edin', 400);
+      }
+      if (normalized !== existing.email) {
+        const taken = await prisma.user.findUnique({ where: { email: normalized }, select: { id: true } });
+        if (taken && taken.id !== id) {
+          return sendError(res, EMAIL_IN_USE_MESSAGE, 409);
+        }
+      }
+      data.email = normalized;
+    }
     if (isActive !== undefined) data.isActive = isActive;
     if (igHighlights !== undefined) data.igHighlights = igHighlights;
     if (password) data.password = await hashPassword(password);
@@ -104,6 +117,8 @@ export const updateUser = async (req: Request, res: Response) => {
 
     return sendSuccess(res, user);
   } catch (error) {
+    // Two admins saving the same address at the same moment: the database wins.
+    if (isUniqueViolation(error)) return sendError(res, EMAIL_IN_USE_MESSAGE, 409);
     return sendError(res, 'Error updating user', 500, error);
   }
 };

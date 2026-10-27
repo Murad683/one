@@ -6,6 +6,7 @@ import { signToken } from '../utils/jwt.util';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { RegisterBody, LoginBody } from '../types/auth.types';
 import { UpdateProfileBody } from '../utils/validators/profile.validators';
+import { EMAIL_IN_USE_MESSAGE, isUniqueViolation } from '../utils/email';
 
 // ─── Register ──────────────────────────────────
 export const register = async (req: Request, res: Response): Promise<void> => {
@@ -15,7 +16,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Check for existing user
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      sendError(res, 'Email already in use', 409);
+      sendError(res, EMAIL_IN_USE_MESSAGE, 409);
       return;
     }
 
@@ -66,6 +67,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     }
     sendSuccess(res, { user: safeUser, token, refreshToken }, 201);
   } catch (err) {
+    if (isUniqueViolation(err)) {
+      sendError(res, EMAIL_IN_USE_MESSAGE, 409);
+      return;
+    }
     console.error('Register error:', err);
     sendError(res, 'Internal Server Error', 500);
   }

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { hashPassword } from '../utils/password.util';
+import { EMAIL_IN_USE_MESSAGE, isUniqueViolation, looksLikeEmail, normalizeEmail } from '../utils/email';
 import { processAndStoreFile, getSecureDownloadUrl, extractStorageKey } from '../services/upload.service';
 
 const signPaymentUrls = async (payment: any) => {
@@ -326,10 +327,15 @@ export const getAdmins = async (_req: Request, res: Response): Promise<void> => 
 // ─── POST /api/v1/admin/team ───────────────────
 export const createAdminUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, password, role } = req.body;
+    const email = typeof req.body.email === 'string' ? normalizeEmail(req.body.email) : '';
 
     if (!name || !email || !password) {
       sendError(res, 'Ad, e-poçt və şifrə mütləqdir', 400);
+      return;
+    }
+    if (!looksLikeEmail(email)) {
+      sendError(res, 'Düzgün e-poçt ünvanı daxil edin', 400);
       return;
     }
 
@@ -341,7 +347,7 @@ export const createAdminUser = async (req: Request, res: Response): Promise<void
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
-      sendError(res, 'Bu e-poçt artıq istifadə olunur', 409);
+      sendError(res, EMAIL_IN_USE_MESSAGE, 409);
       return;
     }
 
@@ -363,6 +369,10 @@ export const createAdminUser = async (req: Request, res: Response): Promise<void
 
     sendSuccess(res, newAdmin, 201);
   } catch (err) {
+    if (isUniqueViolation(err)) {
+      sendError(res, EMAIL_IN_USE_MESSAGE, 409);
+      return;
+    }
     console.error('createAdminUser error:', err);
     sendError(res, 'Admin yaratmaq mümkün olmadı', 500);
   }
