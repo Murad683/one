@@ -3,7 +3,7 @@
  * Pure: every function returns { subject, html, text }. Video titles come from
  * admins and are HTML-escaped. Dates are Baku calendar days (DD.MM.YYYY).
  */
-import { bakuDay } from './notices';
+import { bakuDay, bakuHour } from './notices';
 
 export interface MailContent {
   subject: string;
@@ -28,6 +28,12 @@ export const escapeHtml = (value: string): string =>
 export const formatDay = (date: Date): string => {
   const [y, m, d] = bakuDay(date).split('-');
   return `${d}.${m}.${y}`;
+};
+
+/** "26.12.2026, saat 17:59-dək": the video is hidden at that minute, not at the end of the day. */
+export const formatDeadline = (date: Date): string => {
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0'); // Baku is a whole number of hours from UTC
+  return `${formatDay(date)}, saat ${String(bakuHour(date)).padStart(2, '0')}:${minutes}-dək`;
 };
 
 const daysWord = (days: number): string => (days <= 0 ? 'bu gün' : days === 1 ? 'sabah' : `${days} gün sonra`);
@@ -88,30 +94,30 @@ export const noticeMail = (clientName: string, items: NoticeItem[], portalUrl: s
   const rows = sorted
     .map(
       (i) =>
-        `<tr><td style="padding:8px 0;border-top:1px solid #e4e4e7;font-size:15px;">${escapeHtml(i.title)}</td><td style="padding:8px 0 8px 12px;border-top:1px solid #e4e4e7;font-size:14px;color:#52525b;white-space:nowrap;text-align:right;">${formatDay(i.expiresAt)} (${daysWord(i.daysLeft)})</td></tr>`,
+        `<tr><td style="padding:8px 0;border-top:1px solid #e4e4e7;font-size:15px;">${escapeHtml(i.title)}</td><td style="padding:8px 0 8px 12px;border-top:1px solid #e4e4e7;font-size:14px;color:#52525b;text-align:right;"><span style="white-space:nowrap;">${formatDeadline(i.expiresAt)}</span><br><span style="font-size:12px;color:#71717a;">${daysWord(i.daysLeft)}</span></td></tr>`,
     )
     .join('');
 
   const lead = urgent
     ? 'Aşağıdakı videoların portalda görünmə müddəti bitmək üzrədir. Bundan sonra video <strong>portaldan gizlədilir, yükləmək mümkün olmur</strong> və bir həftə sonra birdəfəlik silinir.'
-    : 'Aşağıdakı videoların portalda görünmə müddəti tezliklə bitir. Həmin tarixdən sonra video <strong>portaldan gizlədilir, yükləmək mümkün olmur</strong> və bir həftə sonra birdəfəlik silinir.';
+    : 'Aşağıdakı videoların portalda görünmə müddəti tezliklə bitir. Həmin vaxtdan sonra video <strong>portaldan gizlədilir, yükləmək mümkün olmur</strong> və bir həftə sonra birdəfəlik silinir.';
 
   const html = layout(
     heading,
     `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Salam, ${name}.</p>
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">${lead}</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;">${rows}</table>
-<p style="margin:12px 0 0;font-size:15px;line-height:1.6;">Videoları saxlamaq istəyirsinizsə, <strong>göstərilən tarixə qədər</strong> portaldan endirin. Silinmiş videoları geri qaytarmaq mümkün olmur.</p>${button(portalUrl, 'Portala daxil ol')}`,
+<p style="margin:12px 0 0;font-size:15px;line-height:1.6;">Videoları saxlamaq istəyirsinizsə, <strong>göstərilən vaxta qədər</strong> portaldan endirin. Silinmiş videoları geri qaytarmaq mümkün olmur.</p>${button(portalUrl, 'Portala daxil ol')}`,
   );
 
-  const list = sorted.map((i) => `- ${i.title}: ${formatDay(i.expiresAt)} (${daysWord(i.daysLeft)})`).join('\n');
+  const list = sorted.map((i) => `- ${i.title}: ${formatDeadline(i.expiresAt)} (${daysWord(i.daysLeft)})`).join('\n');
   const text = `Salam, ${clientName}.
 
-${urgent ? 'Aşağıdakı videoların portalda görünmə müddəti bitmək üzrədir.' : 'Aşağıdakı videoların portalda görünmə müddəti tezliklə bitir.'} Həmin tarixdən sonra video portaldan gizlədilir, yükləmək mümkün olmur və bir həftə sonra birdəfəlik silinir.
+${urgent ? 'Aşağıdakı videoların portalda görünmə müddəti bitmək üzrədir.' : 'Aşağıdakı videoların portalda görünmə müddəti tezliklə bitir.'} Həmin vaxtdan sonra video portaldan gizlədilir, yükləmək mümkün olmur və bir həftə sonra birdəfəlik silinir.
 
 ${list}
 
-Videoları saxlamaq istəyirsinizsə, göstərilən tarixə qədər portaldan endirin. Silinmiş videoları geri qaytarmaq mümkün olmur.
+Videoları saxlamaq istəyirsinizsə, göstərilən vaxta qədər portaldan endirin. Silinmiş videoları geri qaytarmaq mümkün olmur.
 
 Portal: ${portalUrl}
 
