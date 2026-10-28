@@ -18,6 +18,8 @@ export const MAX_PARALLEL_UPLOADS = 3;
 export interface DeliverableUploadValue {
   /** Uploads currently in flight (finished/failed cards don't count). */
   activeCount: number;
+  /** True while any progress card (running, done or failed) is on screen. */
+  hasCards: boolean;
   /** False once MAX_PARALLEL_UPLOADS are running; check before creating a record. */
   canStart: boolean;
   /** The in-flight upload for this deliverable from this tab, if any. */

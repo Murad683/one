@@ -88,7 +88,7 @@ export function DeliverableUploadProvider({ children }: { children: ReactNode })
 
   return (
     <DeliverableUploadCtx.Provider
-      value={{ activeCount, canStart: activeCount < MAX_PARALLEL_UPLOADS, uploadFor, start }}
+      value={{ activeCount, hasCards: uploads.length > 0, canStart: activeCount < MAX_PARALLEL_UPLOADS, uploadFor, start }}
     >
       {children}
       {uploads.length > 0 && (

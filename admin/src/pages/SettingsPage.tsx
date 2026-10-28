@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Home, Info, Globe, X, Upload, CheckCircle2, Hash, Quote, PhoneCall, Share2, ImageIcon } from 'lucide-react';
+import { Home, Info, Globe, X, CheckCircle2, Hash, Quote, PhoneCall, Share2, ImageIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
+import MediaUploadBox from '../components/ui/MediaUploadBox';
 import { useSiteSettings } from '../hooks/useSiteSettings';
 import { assetUrl } from '../lib/apiHelpers';
 
@@ -132,7 +133,6 @@ export const SettingsPage = () => {
 
 const HeroCard = ({ settings, onSave, onUpload, setSuccess }: any) => {
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const { register, handleSubmit, reset } = useForm({
     defaultValues: {
       heroBadge: settings?.heroBadge || '',
@@ -154,18 +154,6 @@ const HeroCard = ({ settings, onSave, onUpload, setSuccess }: any) => {
       heroCtaUrl: settings.heroCtaUrl || '',
     });
   }, [settings]);
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploading(true);
-    try {
-      await onUpload(file, 'heroVideoUrl');
-      setSuccess('Media uğurla yükləndi.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const onSubmit = async (values: any) => {
     setIsSaving(true);
@@ -191,14 +179,8 @@ const HeroCard = ({ settings, onSave, onUpload, setSuccess }: any) => {
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium text-body">Hero Media (Video/Şəkil)</label>
-        <div className="flex items-center gap-4">
-          <div className="relative flex h-24 w-full items-center justify-center rounded-xl border-2 border-dashed border-edge bg-surface-alt transition hover:bg-surface-hover">
-            <input type="file" accept="video/*,image/*" onChange={handleUpload} className="absolute inset-0 cursor-pointer opacity-0" disabled={isUploading} />
-            <div className="flex flex-col items-center gap-1 text-faint">
-              <Upload className={`h-5 w-5 ${isUploading ? 'animate-bounce' : ''}`} />
-              <span className="text-[10px] font-medium uppercase tracking-wider">Yüklə</span>
-            </div>
-          </div>
+        <div className="flex items-start gap-4">
+          <MediaUploadBox accept="video/*,image/*" field="heroVideoUrl" onUpload={onUpload} onSuccess={setSuccess} successText="Media yükləndi." />
           {settings?.heroVideoUrl && (
             <div className="h-24 w-40 overflow-hidden rounded-xl border border-edge shadow-inner bg-surface-hover flex items-center justify-center">
                {settings.heroVideoUrl.match(/\.(mp4|webm|ogg)([?#]|$)|video/i) ? (
@@ -428,22 +410,6 @@ const ContactCard = ({ settings, onSave, setSuccess }: any) => {
 };
 
 const LogosCard = ({ settings, onUpload, setSuccess }: any) => {
-  const [isUploadingNavbar, setIsUploadingNavbar] = useState(false);
-
-  const handleNavbarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingNavbar(true);
-    try {
-      await onUpload(file, 'navbarLogoUrl');
-      setSuccess('Navbar logosu uğurla yükləndi.');
-    } finally {
-      setIsUploadingNavbar(false);
-    }
-  };
-
-
-
   return (
     <div className="rounded-2xl border border-edge bg-surface shadow-sm overflow-hidden flex flex-col">
       <div className="border-b border-edge-light bg-surface-alt/50 px-4 md:px-6 py-4 flex items-center gap-3">
@@ -457,14 +423,8 @@ const LogosCard = ({ settings, onUpload, setSuccess }: any) => {
           {/* Site Logo */}
           <div className="space-y-2 col-span-2 md:col-span-1">
             <label className="text-sm font-medium text-body">Sayt Logosu</label>
-            <div className="flex items-center gap-4">
-              <div className="relative flex h-24 w-full items-center justify-center rounded-xl border-2 border-dashed border-edge bg-surface-alt transition hover:bg-surface-hover">
-                <input type="file" accept="image/*" onChange={handleNavbarUpload} className="absolute inset-0 cursor-pointer opacity-0" disabled={isUploadingNavbar} />
-                <div className="flex flex-col items-center gap-1 text-faint">
-                  <Upload className={`h-5 w-5 ${isUploadingNavbar ? 'animate-bounce' : ''}`} />
-                  <span className="text-[10px] font-medium uppercase tracking-wider">Yüklə</span>
-                </div>
-              </div>
+            <div className="flex items-start gap-4">
+              <MediaUploadBox accept="image/*" field="navbarLogoUrl" onUpload={onUpload} onSuccess={setSuccess} successText="Logo yükləndi." />
               {settings?.navbarLogoUrl && (
                 <div className="h-24 w-28 shrink-0 overflow-hidden rounded-xl border border-edge shadow-inner bg-surface-hover flex items-center justify-center p-2">
                   <img src={assetUrl(settings.navbarLogoUrl)} alt="Navbar Logo" className="max-h-full max-w-full object-contain" />
