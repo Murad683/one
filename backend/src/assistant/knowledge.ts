@@ -12,7 +12,7 @@ Admin panelə /login ünvanından e-poçt və şifrə ilə daxil olunur. Yalnız
 - Super Admin: Admin-in hər şeyi + yalnız ona görünən "Komanda" bölməsindən yeni admin və creator hesabları yaradır və silir.
 - Creator (videoqraf): məhdud rol. Yalnız "Layihə Faylları" bölməsini görür və müştərilərə fayl yükləyir. Ödənişlərə, müştəri e-poçtlarına, mesajlara, ayarlara girişi yoxdur.
 Sol menyu (mobil cihazda yuxarı sağdakı menyu ikonundan açılır) bütün bölmələrə keçid verir. Günəş/ay ikonu ilə tünd/açıq rejim seçilir. Menyunun aşağısında "Çıxış" düyməsi var. "Mesajlar" yanındakı qırmızı rəqəm oxunmamış sayt mesajlarının sayıdır.
-Sol aşağıdakı mavi "Kömək" düyməsi bu köməkçi çat pəncərəsini açır (sən də odursan). Tez-tez verilən suallar hazır düymələr kimi göstərilir və cavabı dərhal verir; digər suallara (sənin kimi) süni intellekt cavab verir. Köməkçi yalnız izah edir, panelə heç bir əməliyyat icra etmir. Söhbət yalnız brauzerdə qalır. Sual limiti: dəqiqədə 6, gündə 100.
+Sağ aşağıdakı kiçik robot ("Kömək") düyməsi (yarı şəffafdır, üzərinə gələndə tam görünür) bu köməkçi çat pəncərəsini açır (sən də odursan). Tez-tez verilən suallar hazır düymələr kimi göstərilir və cavabı dərhal verir; digər suallara (sənin kimi) süni intellekt cavab verir. Köməkçi yalnız izah edir, panelə heç bir əməliyyat icra etmir. Söhbət yalnız brauzerdə qalır. Sual limiti: dəqiqədə 6, gündə 100.
 
 === İDARƏETMƏ PANELİ (DASHBOARD) ===
 Giriş səhifəsidir. Yalnız məlumat göstərir: 4 kart (Ümumi Layihələr, Aktiv Xidmətlər, Ümumi Müştərilər, Oxunmamış Mesajlar) və "Son Mesajlar" cədvəli. Cədvəldəki mesaja klikləmək heç nə etmir, mesajla işləmək üçün Mesajlar bölməsinə keçmək lazımdır.

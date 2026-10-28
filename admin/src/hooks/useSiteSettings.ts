@@ -23,11 +23,15 @@ export const useSiteSettings = () => {
     return data.data;
   };
 
-  const uploadMedia = async (file: File, field: string = 'heroVideoUrl') => {
+  const uploadMedia = async (file: File, field: string = 'heroVideoUrl', onProgress?: (pct: number) => void) => {
     const formData = new FormData();
     formData.append('file', file);
     const { data } = await api.patch<ApiEnvelope<SiteSettings>>(`/site-settings/upload?field=${field}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 600000, // 10 minutes, same as the other video uploads
+      onUploadProgress: (event) => {
+        if (event.total) onProgress?.(Math.round((event.loaded * 100) / event.total));
+      },
     });
     setSettings(data.data);
     return data.data;

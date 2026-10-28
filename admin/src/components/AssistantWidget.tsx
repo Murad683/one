@@ -6,6 +6,8 @@ import { askAssistant } from '../api/assistant.api';
 import type { AssistantMessage } from '../api/assistant.api';
 import { useAuthStore } from '../store/authStore';
 import { CREATOR_FAQ, STAFF_FAQ, findFaqAnswer } from '../data/assistantFaq';
+import { useDeliverableUpload } from '../context/deliverableUpload';
+import { useShowcaseUpload } from '../context/ShowcaseUploadContext';
 
 const MAX_INPUT = 1000;
 const MAX_HISTORY = 12; // must match the backend limit
@@ -59,6 +61,10 @@ const errorText = (err: unknown): string => {
 
 export const AssistantWidget = () => {
   const role = useAuthStore((state) => state.user?.role);
+  // Upload progress cards live bottom-right; the button steps aside while they are on screen.
+  const deliverableCards = useDeliverableUpload().hasCards;
+  const showcaseCard = useShowcaseUpload().phase !== 'idle';
+  const cardsShown = deliverableCards || showcaseCard;
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<ChatItem[]>([]);
   const [input, setInput] = useState('');
@@ -173,7 +179,10 @@ export const AssistantWidget = () => {
           ref={dialogRef}
           role="dialog"
           aria-label="Admin köməkçisi"
-          className="fixed bottom-20 left-4 z-40 flex h-[32rem] max-h-[calc(100vh-7rem)] w-[24rem] max-w-[calc(100vw-2rem)] flex-col overflow-hidden overscroll-contain rounded-2xl border border-edge bg-surface shadow-2xl md:left-64"
+          className={[
+            'fixed bottom-16 right-4 z-[60] flex h-[32rem] max-h-[calc(100vh-7rem)] w-[24rem] max-w-[calc(100vw-2rem)] flex-col overflow-hidden overscroll-contain rounded-2xl border border-edge bg-surface shadow-2xl',
+            cardsShown ? 'sm:right-[calc(320px+2rem)]' : '',
+          ].join(' ')}
         >
           <div className="flex items-center gap-3 border-b border-edge px-4 py-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 ring-1 ring-inset ring-blue-500/20">
@@ -307,12 +316,17 @@ export const AssistantWidget = () => {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-4 left-4 z-40 flex h-12 items-center gap-2 rounded-full bg-blue-600 px-4 text-sm font-medium text-white shadow-lg transition hover:bg-blue-700 md:left-64"
+        className={[
+          'fixed z-40 flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-md transition-all duration-150 hover:bg-blue-700 hover:opacity-100 focus-visible:opacity-100',
+          // Half see-through so it never hides the content behind it; fully visible on hover, focus and while open.
+          open ? 'opacity-100' : 'opacity-60 sm:opacity-40',
+          cardsShown ? 'bottom-4 right-4 max-sm:bottom-72 sm:right-[calc(320px+2rem)]' : 'bottom-4 right-4',
+        ].join(' ')}
         aria-label={open ? 'Köməkçini bağla' : 'Köməkçini aç'}
         aria-expanded={open}
+        title="Kömək"
       >
         <Bot className="h-5 w-5" />
-        <span className="hidden sm:inline">Kömək</span>
       </button>
     </>
   );

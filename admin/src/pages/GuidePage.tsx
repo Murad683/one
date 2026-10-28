@@ -191,7 +191,7 @@ export const GuidePage = () => {
           </p>
           <Callout tone="info" title="Köməkçi (Kömək düyməsi)">
             <p>
-              Sol aşağıdakı mavi <B>"Kömək"</B> düyməsi çat pəncərəsini açır. Orada panelin necə işlədiyi barədə
+              Sağ aşağıdakı kiçik robot (<B>"Kömək"</B>) düyməsi çat pəncərəsini açır. Kontenti örtməsin deyə yarı şəffafdır, üzərinə gələndə tam görünür. Orada panelin necə işlədiyi barədə
               Azərbaycan dilində sual yaza bilərsiniz (məsələn "Müştəriyə paketi necə təyin edim?"). Tez-tez
               verilən suallar <B>hazır düymələr</B> kimi göstərilir və cavabı dərhal verir; digər suallara
               süni intellekt (AI) cavab verir və cavabın altında <B>"AI cavabı"</B> yazılır. Köməkçi
