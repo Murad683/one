@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
-import { getSecureDownloadUrl } from '../services/upload.service';
+import { getSecureDownloadUrl, processAndStoreFile } from '../services/upload.service';
 import { optimizeAndStore } from '../services/image.service';
+import { processHeroVideo } from '../services/heroMedia.service';
 import { sendSuccess, sendError } from '../utils/response.util';
 
 const signSettingsUrls = async (settings: any) => {
@@ -107,13 +108,26 @@ export const uploadSettingsMedia = async (req: Request, res: Response): Promise<
     const imageOpts = field === 'heroVideoUrl'
       ? { maxEdge: 2400, quality: 85 }
       : { maxEdge: 800, quality: 90 };
-    const result = await optimizeAndStore(req.file, folder, imageOpts);
+
+    // A hero video gets faststart + a poster frame so it starts quickly; a hero
+    // image (or a logo) just goes through the usual optimization. heroPoster
+    // always follows heroVideoUrl: a new image must not keep the old poster.
+    let result;
+    const extra: { heroPoster?: string | null } = {};
+    if (field === 'heroVideoUrl' && req.file.mimetype.startsWith('video/')) {
+      const hero = await processHeroVideo(req.file);
+      result = await processAndStoreFile(hero.file, folder);
+      extra.heroPoster = hero.poster;
+    } else {
+      result = await optimizeAndStore(req.file, folder, imageOpts);
+      if (field === 'heroVideoUrl') extra.heroPoster = null;
+    }
 
     // Store the RELATIVE path (url) in the database, not the absolute storageKey
     const updated = await prisma.siteSettings.upsert({
       where: { id: 'global' },
-      update: { [field]: result.url },
-      create: { id: 'global', [field]: result.url },
+      update: { [field]: result.url, ...extra },
+      create: { id: 'global', [field]: result.url, ...extra },
     });
 
     const signedSettings = await signSettingsUrls(updated);

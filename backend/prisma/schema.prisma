@@ -166,6 +166,8 @@ model SiteSettings {
   heroCtaText          String   @default("Bizimlə Əlaqə")
   heroCtaUrl           String   @default("/contact")
   heroVideoUrl         String?
+  // Tiny data-URI first frame of heroVideoUrl, written by the server on upload (never by PATCH /site-settings).
+  heroPoster           String?
   marqueeWords         String   @default("[]")
   companyAddress       String   @default("")
   companyPhone         String   @default("")

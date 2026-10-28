@@ -54,6 +54,8 @@ const HeroSection = () => {
             loop
             playsInline
             key={settings.heroVideoUrl}
+            poster={settings.heroPoster || undefined}
+            preload="auto"
             onError={() => setHeroMediaFailed(true)}
             className="w-full h-full object-cover brightness-90 contrast-[1.1]"
             style={{ backgroundColor: 'var(--bg-primary)' }}
