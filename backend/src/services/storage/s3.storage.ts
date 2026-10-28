@@ -10,7 +10,9 @@ import {
   AbortMultipartUploadCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl as presignS3Url } from '@aws-sdk/s3-request-presigner';
-import { IStorageProvider, UploadResult, MultipartPartUrl, CompletedPart } from './storage.interface';
+import type { Readable } from 'stream';
+import { IStorageProvider, UploadResult, MultipartPartUrl, CompletedPart, ObjectStream } from './storage.interface';
+import { extractStorageKey } from '../../utils/storageKey';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
@@ -20,23 +22,6 @@ import fs from 'fs';
 // the right host. A single bucket is used; "folder" (thumbnails/, avatars/,
 // videos/, etc.) is stored as a key prefix, matching the "container/blob"
 // shaped storageKey the rest of the app already expects (see azure.storage.ts).
-function extractStorageKey(keyOrUrl: string | null | undefined): string {
-  if (!keyOrUrl) return '';
-  const keyStr = String(keyOrUrl);
-  if (keyStr.includes('uploads/') || keyStr.includes('undefined') || keyStr.includes('null')) {
-    return keyStr;
-  }
-  if (keyStr.startsWith('http')) {
-    try {
-      const url = new URL(keyStr);
-      return url.pathname.substring(1);
-    } catch {
-      return keyStr;
-    }
-  }
-  return keyStr;
-}
-
 export class S3StorageProvider implements IStorageProvider {
   private client: S3Client;
   private bucket: string;
@@ -108,6 +93,21 @@ export class S3StorageProvider implements IStorageProvider {
       fileSize: file.size,
       mimeType: file.mimetype,
       storageKey,
+    };
+  }
+
+  async getObjectStream(rawKey: string, range?: string): Promise<ObjectStream> {
+    const storageKey = extractStorageKey(rawKey);
+    const out = await this.client.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: storageKey, ...(range ? { Range: range } : {}) })
+    );
+    return {
+      body: out.Body as Readable,
+      contentType: out.ContentType,
+      contentLength: out.ContentLength,
+      contentRange: out.ContentRange,
+      etag: out.ETag,
+      lastModified: out.LastModified,
     };
   }
 
