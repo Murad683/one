@@ -7,10 +7,9 @@ import {
   bakuDay,
   bakuDaysLeft,
   canReceiveNotices,
-  dueNotice,
   isSendingHour,
   needsInfoMail,
-  type NoticeLevel,
+  selectNoticeBatch,
 } from '../utils/notices';
 import { infoMail, noticeMail, type MailContent, type NoticeItem } from '../utils/mailTemplates';
 import { normalizeEmail } from '../utils/email';
@@ -56,7 +55,8 @@ const shortHash = (parts: string[]): string => crypto.createHash('sha1').update(
 
 /**
  * One pass of the notice rule: a mail to each client whose videos are about to
- * leave the portal (7 days / 1 day before), and once to a newly entered address.
+ * leave the portal (NOTICE_DAYS before, covering the videos that follow within
+ * NOTICE_GROUP_DAYS), and once to a newly entered address.
  * Every mail is sent first and recorded second; the idempotency key (client, day
  * and exact content) makes a retry after a failed save harmless.
  */
@@ -91,7 +91,6 @@ export async function runNotices(options: NoticeRunOptions): Promise<NoticeRunRe
           hiddenAt: true,
           mediaDeletedAt: true,
           notice7SentAt: true,
-          notice1SentAt: true,
         },
       },
     },
@@ -105,23 +104,20 @@ export async function runNotices(options: NoticeRunOptions): Promise<NoticeRunRe
     if (!canReceiveNotices(client) || alreadyMailedToday(client.lastNoticeMailAt, now)) continue;
 
     const email = normalizeEmail(client.email);
-    const due = client.deliverables
-      .filter((d) => hasRetainedMedia(d.files))
-      .map((d) => ({ video: d, level: dueNotice(d, now) }))
-      .filter((d): d is { video: (typeof client.deliverables)[number]; level: NoticeLevel } => d.level !== null);
+    const due = selectNoticeBatch(client.deliverables.filter((d) => hasRetainedMedia(d.files)), now);
 
     let kind: 'notice' | 'info';
     let content: MailContent;
     let key: string;
     if (due.length > 0) {
       kind = 'notice';
-      const items: NoticeItem[] = due.map(({ video }) => ({
+      const items: NoticeItem[] = due.map((video) => ({
         title: video.title,
         expiresAt: video.expiresAt as Date,
         daysLeft: bakuDaysLeft(video.expiresAt as Date, now),
       }));
       content = noticeMail(client.name, items, url);
-      key = `notice-${client.id}-${bakuDay(now)}-${shortHash([email, ...due.map((d) => `${d.video.id}:${d.level}`).sort()])}`;
+      key = `notice-${client.id}-${bakuDay(now)}-${shortHash([email, ...due.map((d) => d.id).sort()])}`;
     } else if (needsInfoMail(client)) {
       kind = 'info';
       content = infoMail(client.name, url);
@@ -134,7 +130,7 @@ export async function runNotices(options: NoticeRunOptions): Promise<NoticeRunRe
       userId: client.id,
       to: email,
       kind,
-      videoIds: due.map((d) => d.video.id),
+      videoIds: due.map((d) => d.id),
       subject: content.subject,
     };
     result.planned.push(planned);
@@ -163,11 +159,8 @@ export async function runNotices(options: NoticeRunOptions): Promise<NoticeRunRe
     try {
       await prisma.$transaction([
         prisma.user.update({ where: { id: client.id }, data: { lastNoticeMailAt: now, infoMailSentTo: email } }),
-        ...due.map(({ video, level }) =>
-          prisma.deliverable.update({
-            where: { id: video.id },
-            data: level === 1 ? { notice7SentAt: now, notice1SentAt: now } : { notice7SentAt: now },
-          }),
+        ...due.map((video) =>
+          prisma.deliverable.update({ where: { id: video.id }, data: { notice7SentAt: now } }),
         ),
       ]);
     } catch (err) {
@@ -188,23 +181,25 @@ export async function runNotices(options: NoticeRunOptions): Promise<NoticeRunRe
 export async function sendSamples(to: string, mailer: Mailer = sendMail, now: Date = new Date()): Promise<string[]> {
   const url = portalUrl();
   const day = 24 * 60 * 60 * 1000;
-  const items = (days: number): NoticeItem[] => [
-    { title: 'Nümunə video 1', expiresAt: new Date(now.getTime() + days * day), daysLeft: days },
-    { title: 'Nümunə video 2', expiresAt: new Date(now.getTime() + days * day), daysLeft: days },
-  ];
+  const item = (n: number, days: number): NoticeItem => ({
+    title: `Nümunə video ${n}`,
+    expiresAt: new Date(now.getTime() + days * day),
+    daysLeft: days,
+  });
   const samples: Array<[string, MailContent]> = [
     ['info', infoMail('Nümunə Müştəri', url)],
-    ['7 gün', noticeMail('Nümunə Müştəri', items(7), url)],
-    ['1 gün', noticeMail('Nümunə Müştəri', items(1), url)],
+    ['tək video', noticeMail('Nümunə Müştəri', [item(1, 3)], url)],
+    ['bir neçə video', noticeMail('Nümunə Müştəri', [item(1, 3), item(2, 5), item(3, 8)], url)],
   ];
   const sent: string[] = [];
-  for (const [label, content] of samples) {
+  for (const [index, [label, content]] of samples.entries()) {
     await mailer({
       to: normalizeEmail(to),
       subject: `[NÜMUNƏ] ${content.subject}`,
       html: content.html,
       text: content.text,
-      idempotencyKey: `sample-${label}-${Date.now()}`,
+      // The key is an HTTP header value: plain ASCII only (the label has Azerbaijani letters and spaces).
+      idempotencyKey: `sample-${index + 1}-${Date.now()}`,
     });
     sent.push(label);
   }

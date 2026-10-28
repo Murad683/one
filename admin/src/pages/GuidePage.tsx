@@ -468,12 +468,13 @@ export const GuidePage = () => {
             istifadə edin. Qeydin özü (başlıq, müştəri, rəy) qalır.
           </p>
           <p>
-            Müştəriyə <B>mail xəbərdarlığı</B> gedir: videonun portaldan gizlənməsinə <B>7 gün</B> və <B>1 gün</B> qalmış
-            (bir neçə video olsa bir mailə yığılır, gündə ən çox bir mail, Bakı vaxtı ilə 10:00–20:00 arası). Müştərinin
+            Müştəriyə <B>mail xəbərdarlığı</B> gedir: video silinməzdən (müştəri üçün əlçatmaz olmazdan) <B>3 gün</B> əvvəl,
+            hər video üçün bir mail. Silinmə vaxtları bir-birinə 5 gün yaxın olan videolar mail sayını azaltmaq üçün bir
+            mailə yığılır (maildə hər videonun öz tarixi və saatı yazılır), gündə ən çox bir mail, Bakı vaxtı ilə 10:00–20:00 arası. Müştərinin
             e-poçtu <Code>@ourneweye.com</Code> olarsa və ya real deyilsə mail getmir: Müştərilər siyahısında e-poçtun
             altında "Real e-poçt deyil, xəbərdarlıq getməyəcək", Layihə Faylları siyahısında isə gizlənməsinə 14 gün
             qalan videoda "Müştərinin real e-poçtu yoxdur" yazılır. Real e-poçt yazılan kimi müştəriyə bir dəfə
-            "bildirişlər bu ünvana gələcək" maili gedir. Mail çatmayanda (ünvan səhvdir) e-poçtun altında qırmızı "Mail
+            "ONE Agency ailəsinə xoş gəlmisiniz" maili gedir (portalın bölmələri, giriş və 60 günlük qayda barədə). Mail çatmayanda (ünvan səhvdir) e-poçtun altında qırmızı "Mail
             çatmadı" yazılır, e-poçtu düzəldəndə yazı silinir.
           </p>
           <Callout tone="warn" title="Gizlədilmiş videoya yeni fayl yüklənmir">

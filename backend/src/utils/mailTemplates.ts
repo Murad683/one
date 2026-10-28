@@ -3,7 +3,8 @@
  * Pure: every function returns { subject, html, text }. Video titles come from
  * admins and are HTML-escaped. Dates are Baku calendar days (DD.MM.YYYY).
  */
-import { bakuDay, bakuHour } from './notices';
+import { NOTICE_DAYS, bakuDay, bakuHour } from './notices';
+import { RETENTION_DAYS } from './retention';
 
 export interface MailContent {
   subject: string;
@@ -38,7 +39,9 @@ export const formatDeadline = (date: Date): string => {
 
 const daysWord = (days: number): string => (days <= 0 ? 'bu gün' : days === 1 ? 'sabah' : `${days} gün sonra`);
 
-const layout = (heading: string, bodyHtml: string): string => `<!doctype html>
+const DEFAULT_FOOTER = 'Bu mail avtomatik göndərilib, ona cavab verməyin. Sualınız varsa agentliklə əlaqə saxlayın.';
+
+const layout = (heading: string, bodyHtml: string, footer: string = DEFAULT_FOOTER): string => `<!doctype html>
 <html lang="az"><body style="margin:0;padding:0;background:#f4f4f5;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:24px 12px;">
 <tr><td align="center">
@@ -47,7 +50,7 @@ const layout = (heading: string, bodyHtml: string): string => `<!doctype html>
 <p style="margin:0 0 4px;font-size:13px;color:#71717a;">${BRAND}</p>
 <h1 style="margin:0 0 16px;font-size:20px;line-height:1.3;">${heading}</h1>
 ${bodyHtml}
-<p style="margin:24px 0 0;font-size:12px;color:#71717a;">Bu mail avtomatik göndərilib, ona cavab verməyin. Sualınız varsa agentliklə əlaqə saxlayın.</p>
+<p style="margin:24px 0 0;font-size:12px;color:#71717a;">${footer}</p>
 </td></tr></table>
 </td></tr></table>
 </body></html>`;
@@ -55,39 +58,67 @@ ${bodyHtml}
 const button = (url: string, label: string): string =>
   `<p style="margin:20px 0 0;"><a href="${escapeHtml(url)}" style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-size:14px;">${escapeHtml(label)}</a></p>`;
 
-/** Sent once to a newly entered real address. */
+/** Sent once to a newly entered real address: a welcome, the portal, and the 60-day rule (the part that matters, boxed). */
 export const infoMail = (clientName: string, portalUrl: string): MailContent => {
   const name = escapeHtml(clientName);
+  const p = 'margin:0 0 12px;font-size:15px;line-height:1.6;';
   return {
-    subject: `${BRAND}: bildirişlər bu ünvana gələcək`,
+    subject: `${BRAND} ailəsinə xoş gəlmisiniz`,
     html: layout(
-      'Bildirişlər bu ünvana gələcək',
-      `<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Salam, ${name}.</p>
-<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Portalda yerləşdirilən videoların saxlanma müddəti <strong>60 gündür</strong>. Bu müddət bitəndə video portaldan birdəfəlik silinir.</p>
-<p style="margin:0 0 12px;font-size:15px;line-height:1.6;">Siz videoları vaxtında endirə bilməyiniz üçün silinməzdən əvvəl bu e-poçt ünvanına xəbərdarlıq göndərəcəyik (7 gün və 1 gün əvvəl).</p>
-<p style="margin:0;font-size:15px;line-height:1.6;">Portalın giriş ünvanı da bu e-poçtdur.</p>${button(portalUrl, 'Portala daxil ol')}`,
+      `${BRAND} ailəsinə xoş gəlmisiniz!`,
+      `<p style="${p}">Salam, ${name}! 👋</p>
+<p style="${p}">Bizimlə olduğunuz üçün çox şadıq. Sizin üçün müştəri portalını hazırlamışıq. Buradan bütün vacib məlumatlara rahatlıqla baxa bilərsiniz:</p>
+<ul style="margin:0 0 12px;padding-left:20px;font-size:15px;line-height:1.7;">
+<li><strong>Çatdırılmalar</strong> — işlərinizi izləyin.</li>
+<li><strong>Ödənişlər</strong> — ödəniş məlumatlarınızı yoxlayın.</li>
+<li><strong>Dəstək</strong> — sualınız yaranarsa, bizə yazın.</li>
+</ul>
+<p style="${p}">Portala bu e-poçt ünvanınız və şifrənizlə daxil ola bilərsiniz.</p>
+<div style="margin:16px 0;padding:14px 16px;background:#fff7e0;border:1px solid #f5c542;border-radius:10px;">
+<p style="margin:0 0 8px;font-size:15px;line-height:1.5;"><strong>Vacib xatırlatma: videolarınız ${RETENTION_DAYS} gün saxlanılır</strong> ⚠️</p>
+<p style="margin:0 0 8px;font-size:15px;line-height:1.6;">Portalda yerləşdirilən videolar ${RETENTION_DAYS} gün ərzində saxlanılır, sonra isə <strong>birdəfəlik silinir</strong> və onları bərpa etmək mümkün olmur. Narahat olmayın, silinməyə ${NOTICE_DAYS} gün qalmış bu e-poçt ünvanına sizə xatırlatma göndərəcəyik.</p>
+<p style="margin:0;font-size:15px;line-height:1.6;"><strong>Videolarınızı itirməmək üçün vaxtında endirməyi unutmayın!</strong></p>
+</div>
+<p style="${p}">Hər hansı sualınız olsa, agentliyinizlə əlaqə saxlaya bilərsiniz. Sizə kömək etməkdən məmnun olarıq. 😊</p>
+<p style="margin:0;font-size:15px;line-height:1.6;">Uğurlar arzulayırıq!<br><strong>${BRAND} komandası</strong></p>${button(portalUrl, 'Portala daxil ol')}`,
+      'Bu mail avtomatik göndərilir, ona cavab yazmayın.',
     ),
-    text: `Salam, ${clientName}.
+    // The plain-text version has no emoji.
+    text: `Salam, ${clientName}!
 
-Portalda yerləşdirilən videoların saxlanma müddəti 60 gündür. Bu müddət bitəndə video portaldan birdəfəlik silinir.
+${BRAND} ailəsinə xoş gəlmisiniz!
 
-Videoları vaxtında endirə bilməyiniz üçün silinməzdən əvvəl bu e-poçt ünvanına xəbərdarlıq göndərəcəyik (7 gün və 1 gün əvvəl). Portalın giriş ünvanı da bu e-poçtdur.
+Bizimlə olduğunuz üçün çox şadıq. Sizin üçün müştəri portalını hazırlamışıq. Buradan bütün vacib məlumatlara rahatlıqla baxa bilərsiniz:
+
+- Çatdırılmalar — işlərinizi izləyin.
+- Ödənişlər — ödəniş məlumatlarınızı yoxlayın.
+- Dəstək — sualınız yaranarsa, bizə yazın.
+
+Portala bu e-poçt ünvanınız və şifrənizlə daxil ola bilərsiniz.
+
+VACİB XATIRLATMA: videolarınız ${RETENTION_DAYS} gün saxlanılır
+Portalda yerləşdirilən videolar ${RETENTION_DAYS} gün ərzində saxlanılır, sonra isə birdəfəlik silinir və onları bərpa etmək mümkün olmur. Narahat olmayın, silinməyə ${NOTICE_DAYS} gün qalmış bu e-poçt ünvanına sizə xatırlatma göndərəcəyik.
+Videolarınızı itirməmək üçün vaxtında endirməyi unutmayın!
+
+Hər hansı sualınız olsa, agentliyinizlə əlaqə saxlaya bilərsiniz. Sizə kömək etməkdən məmnun olarıq.
+
+Uğurlar arzulayırıq!
+${BRAND} komandası
 
 Portal: ${portalUrl}
 
-Bu mail avtomatik göndərilib, ona cavab verməyin.`,
+Bu mail avtomatik göndərilir, ona cavab yazmayın.`,
   };
 };
 
-/** The 7-day / 1-day warning. `items` is sorted by the date they leave the portal. */
+/** The warning mail (one per group of videos). `items` are listed by the date they leave the portal. */
 export const noticeMail = (clientName: string, items: NoticeItem[], portalUrl: string): MailContent => {
   const sorted = [...items].sort((a, b) => a.expiresAt.getTime() - b.expiresAt.getTime());
   const soonest = Math.min(...sorted.map((i) => i.daysLeft));
   const urgent = soonest <= 1;
   const many = sorted.length > 1;
-  const subject = urgent
-    ? `${BRAND}: ${many ? 'videolarınız' : 'videonuz'} ${soonest <= 0 ? 'bu gün' : 'sabah'} silinəcək`
-    : `${BRAND}: ${many ? 'videolarınız' : 'videonuz'} ${soonest} gün sonra silinəcək`;
+  // With several videos only the first one is that close, so the subject says "one of your videos".
+  const subject = `${BRAND}: ${many ? 'videolarınızdan biri' : 'videonuz'} ${daysWord(soonest)} silinəcək`;
   const heading = urgent ? 'Videoları bu gün endirin' : 'Videoların saxlanma müddəti bitir';
   const name = escapeHtml(clientName);
 
