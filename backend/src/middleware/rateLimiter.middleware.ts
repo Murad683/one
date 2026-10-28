@@ -42,6 +42,16 @@ export const globalRateLimiter = rateLimit({
   skip: (req) => req.method === 'OPTIONS',
 });
 
+// Public site media: cached by Cloudflare, so the origin only sees misses. Generous per-visitor cap that only stops abuse.
+export const mediaRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 300,
+  keyGenerator: clientKey,
+  message: 'Too many requests',
+  standardHeaders: false,
+  legacyHeaders: false,
+});
+
 export const uploadRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 10, // 10 upload requests per IP per minute

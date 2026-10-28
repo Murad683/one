@@ -33,6 +33,7 @@ import { globalRateLimiter, contactRateLimiter, uploadRateLimiter } from './midd
 import { xssSanitize } from './middleware/xss.middleware';
 import { startRetentionScheduler } from './jobs/retention';
 import { resendWebhook } from './controllers/webhook.controller';
+import { mediaRouter } from './routes/media.routes';
 
 // Bootstrap
 ensureUploadDirs();
@@ -59,6 +60,8 @@ const allowedOrigins = Array.from(
       .filter(Boolean)
   )
 );
+// Public site media for the CDN: before cors/helmet/cookies/rate limiter so the answer stays cacheable (no Set-Cookie or Vary).
+app.use('/media', mediaRouter);
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin.replace(/\/+$/, ''))) {

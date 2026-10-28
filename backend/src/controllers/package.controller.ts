@@ -1,21 +1,21 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { getSecureDownloadUrl, cleanupOrphanFiles } from '../services/upload.service';
+import { getPublicMediaUrl, cleanupOrphanFiles } from '../services/upload.service';
 
 // Signs the showcase-video keys on a package on the way out (same pattern as
 // project.signProjectUrls). youtubeUrl stays a raw external URL.
 const signPackageUrls = async (pkg: any) => {
   if (pkg?.videoUrl) {
     try {
-      pkg.videoUrl = await getSecureDownloadUrl(pkg.videoUrl);
+      pkg.videoUrl = await getPublicMediaUrl(pkg.videoUrl);
     } catch (e) {
       console.warn('Failed to sign package videoUrl', e);
     }
   }
   if (pkg?.videoThumbnailUrl) {
     try {
-      pkg.videoThumbnailUrl = await getSecureDownloadUrl(pkg.videoThumbnailUrl);
+      pkg.videoThumbnailUrl = await getPublicMediaUrl(pkg.videoThumbnailUrl);
     } catch (e) {
       console.warn('Failed to sign package videoThumbnailUrl', e);
     }

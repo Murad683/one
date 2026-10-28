@@ -1,25 +1,9 @@
 import { BlobServiceClient, generateBlobSASQueryParameters, BlobSASPermissions } from '@azure/storage-blob';
 import { IStorageProvider, UploadResult } from './storage.interface';
+import { extractStorageKey } from '../../utils/storageKey';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
-
-function extractStorageKey(keyOrUrl: string | null | undefined): string {
-  if (!keyOrUrl) return '';
-  const keyStr = String(keyOrUrl);
-  if (keyStr.includes('uploads/') || keyStr.includes('undefined') || keyStr.includes('null')) {
-    return keyStr;
-  }
-  if (keyStr.startsWith('http')) {
-    try {
-      const url = new URL(keyStr);
-      return url.pathname.substring(1); // removes leading slash, e.g., 'container/blob'
-    } catch {
-      return keyStr;
-    }
-  }
-  return keyStr;
-}
 
 export class AzureStorageProvider implements IStorageProvider {
   private blobServiceClient: BlobServiceClient;

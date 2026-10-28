@@ -2,25 +2,9 @@ import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { getSecureDownloadUrl, cleanupOrphanFiles } from '../services/upload.service';
+import { getPublicMediaUrl, cleanupOrphanFiles } from '../services/upload.service';
 import { optimizeAndStore } from '../services/image.service';
-
-function extractStorageKey(keyOrUrl: string | null | undefined): string {
-  if (!keyOrUrl) return '';
-  const keyStr = String(keyOrUrl);
-  if (keyStr.includes('uploads/') || keyStr.includes('undefined') || keyStr.includes('null')) {
-    return keyStr;
-  }
-  if (keyStr.startsWith('http')) {
-    try {
-      const url = new URL(keyStr);
-      return url.pathname.substring(1);
-    } catch {
-      return keyStr;
-    }
-  }
-  return keyStr;
-}
+import { extractStorageKey } from '../utils/storageKey';
 
 const normalizeProjectData = (body: Record<string, unknown>): Record<string, unknown> => {
   const { category, ...data } = body;
@@ -40,21 +24,21 @@ const normalizeProjectData = (body: Record<string, unknown>): Record<string, unk
 const signProjectUrls = async (project: any) => {
   if (project.thumbnailUrl) {
     try {
-      project.thumbnailUrl = await getSecureDownloadUrl(project.thumbnailUrl);
+      project.thumbnailUrl = await getPublicMediaUrl(project.thumbnailUrl);
     } catch (e) {
       console.warn('Failed to sign thumbnailUrl', e);
     }
   }
   if (project.videoUrl) {
     try {
-      project.videoUrl = await getSecureDownloadUrl(project.videoUrl);
+      project.videoUrl = await getPublicMediaUrl(project.videoUrl);
     } catch (e) {
       console.warn('Failed to sign videoUrl', e);
     }
   }
   if (project.videoThumbnailUrl) {
     try {
-      project.videoThumbnailUrl = await getSecureDownloadUrl(project.videoThumbnailUrl);
+      project.videoThumbnailUrl = await getPublicMediaUrl(project.videoThumbnailUrl);
     } catch (e) {
       console.warn('Failed to sign videoThumbnailUrl', e);
     }

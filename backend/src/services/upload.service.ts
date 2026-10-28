@@ -1,6 +1,8 @@
 import { storageProvider } from './storage/storage.factory';
 import { UploadResult } from './storage/storage.interface';
 import prisma from '../utils/prisma';
+import { buildPublicMediaUrl, isSafeMediaKey } from '../utils/mediaUrl';
+import { extractStorageKey as extractKey } from '../utils/storageKey';
 
 // How long a signed read/display URL stays valid. Default 1 day so a portal
 // tab left open for hours (or overnight) doesn't start returning 403s on its
@@ -31,21 +33,26 @@ export async function getSecureDownloadUrlForDownload(storageKey: string): Promi
   return storageProvider.getSignedUrl(storageKey, PRESIGNED_URL_TTL_SECONDS, 'attachment');
 }
 
-export function extractStorageKey(keyOrUrl: string | null | undefined): string {
-  if (!keyOrUrl) return '';
-  const keyStr = String(keyOrUrl);
-  if (keyStr.includes('uploads/') || keyStr.includes('undefined') || keyStr.includes('null')) {
-    return keyStr;
-  }
-  if (keyStr.startsWith('http')) {
+export const extractStorageKey = extractKey;
+
+/**
+ * Link for PUBLIC site media (portfolio, packages, team, site settings).
+ * With PUBLIC_MEDIA_PROXY=on (and an S3 provider) it is the stable, cacheable
+ * /media link; in every other case, and for any key that does not look like one
+ * of ours, it is exactly the signed storage link as before.
+ * Never use it for clients' private files.
+ */
+export async function getPublicMediaUrl(storageKey: string): Promise<string> {
+  const proxyOn = (process.env.PUBLIC_MEDIA_PROXY || '').trim().toLowerCase() === 'on';
+  if (proxyOn && storageProvider.getObjectStream && !/uploads\/|undefined|null/.test(String(storageKey))) {
     try {
-      const url = new URL(keyStr);
-      return url.pathname.substring(1); // removes leading slash
-    } catch {
-      return keyStr;
+      const key = extractKey(storageKey);
+      if (isSafeMediaKey(key)) return buildPublicMediaUrl(key);
+    } catch (err) {
+      console.warn('[Media] could not build a public link, using a signed storage link:', err);
     }
   }
-  return keyStr;
+  return getSecureDownloadUrl(storageKey);
 }
 
 // Deletes every key in oldUrls that is not also in newUrls. Keys are compared

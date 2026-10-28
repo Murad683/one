@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { getSecureDownloadUrl, extractStorageKey } from '../services/upload.service';
+import { getPublicMediaUrl, extractStorageKey } from '../services/upload.service';
 
 const signTeamMemberUrls = async (member: any) => {
   if (member.avatarUrl) {
     try {
-      member.avatarUrl = await getSecureDownloadUrl(member.avatarUrl);
+      member.avatarUrl = await getPublicMediaUrl(member.avatarUrl);
     } catch (e) {
       console.warn('Failed to sign avatarUrl', e);
     }

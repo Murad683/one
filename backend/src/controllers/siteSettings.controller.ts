@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
-import { getSecureDownloadUrl, processAndStoreFile } from '../services/upload.service';
+import { getPublicMediaUrl, processAndStoreFile } from '../services/upload.service';
 import { optimizeAndStore } from '../services/image.service';
 import { processHeroVideo } from '../services/heroMedia.service';
 import { sendSuccess, sendError } from '../utils/response.util';
@@ -8,21 +8,21 @@ import { sendSuccess, sendError } from '../utils/response.util';
 const signSettingsUrls = async (settings: any) => {
   if (settings.heroVideoUrl) {
     try {
-      settings.heroVideoUrl = await getSecureDownloadUrl(settings.heroVideoUrl);
+      settings.heroVideoUrl = await getPublicMediaUrl(settings.heroVideoUrl);
     } catch (e) {
       console.warn('Failed to sign heroVideoUrl', e);
     }
   }
   if (settings.navbarLogoUrl) {
     try {
-      settings.navbarLogoUrl = await getSecureDownloadUrl(settings.navbarLogoUrl);
+      settings.navbarLogoUrl = await getPublicMediaUrl(settings.navbarLogoUrl);
     } catch (e) {
       console.warn('Failed to sign navbarLogoUrl', e);
     }
   }
   if (settings.footerLogoUrl) {
     try {
-      settings.footerLogoUrl = await getSecureDownloadUrl(settings.footerLogoUrl);
+      settings.footerLogoUrl = await getPublicMediaUrl(settings.footerLogoUrl);
     } catch (e) {
       console.warn('Failed to sign footerLogoUrl', e);
     }
