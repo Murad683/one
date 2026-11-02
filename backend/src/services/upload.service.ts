@@ -33,6 +33,21 @@ export async function getSecureDownloadUrlForDownload(storageKey: string): Promi
   return storageProvider.getSignedUrl(storageKey, PRESIGNED_URL_TTL_SECONDS, 'attachment');
 }
 
+/**
+ * Attachment-signed link for a deliverable's cover image, so the portal's
+ * "download cover" button saves the file instead of opening it in a tab.
+ * Null when there is no cover or it cannot be signed (the button then stays hidden).
+ */
+export async function getCoverDownloadUrl(storageKey: string | null | undefined): Promise<string | null> {
+  if (!storageKey || typeof storageKey !== 'string') return null;
+  try {
+    return (await getSecureDownloadUrlForDownload(storageKey)) || null;
+  } catch (e) {
+    console.warn('Failed to sign cover download url', e);
+    return null;
+  }
+}
+
 export const extractStorageKey = extractKey;
 
 /**
