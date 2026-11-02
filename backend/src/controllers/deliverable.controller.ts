@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloadUrlForDownload, collectDeliverableKeys, deleteUnreferencedDeliverableKeys, getPresignedUploadUrl, getBlobProperties, downloadBlobToFile, createMultipartUpload, getMultipartUploadUrls, completeMultipartUpload as completeMultipartUploadStorage, abortMultipartUpload as abortMultipartUploadStorage } from '../services/upload.service';
+import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloadUrlForDownload, getCoverDownloadUrl, collectDeliverableKeys, deleteUnreferencedDeliverableKeys, getPresignedUploadUrl, getBlobProperties, downloadBlobToFile, createMultipartUpload, getMultipartUploadUrls, completeMultipartUpload as completeMultipartUploadStorage, abortMultipartUpload as abortMultipartUploadStorage } from '../services/upload.service';
 import { uploadSiteMediaWithThumbnail } from '../middleware/upload.middleware';
 import { optimizeImage } from '../services/image.service';
 import {
@@ -160,7 +160,7 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
           }
         }
 
-        return presentForClient({ ...d, files: filesWithSignedUrls, thumbnailUrl: signedThumbnailUrl, originalUrl: signedOriginalUrl });
+        return presentForClient({ ...d, files: filesWithSignedUrls, thumbnailUrl: signedThumbnailUrl, thumbnailDownloadUrl: await getCoverDownloadUrl(d.thumbnailUrl), originalUrl: signedOriginalUrl });
       })
     );
 
@@ -238,6 +238,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
           ...d,
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
+          thumbnailDownloadUrl: await getCoverDownloadUrl(d.thumbnailUrl),
           originalUrl: signedOriginalUrl,
           client: d.client && {
             ...d.client,

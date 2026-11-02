@@ -19,6 +19,8 @@ interface Deliverable {
   notes: string | null;
   clientFeedback: string | null;
   thumbnailUrl?: string | null;
+  /** Attachment-signed link to the cover (absent when there is no cover). */
+  thumbnailDownloadUrl?: string | null;
   width?: number | null;
   height?: number | null;
   originalUrl?: string | null;
@@ -268,6 +270,18 @@ export const PreviewModal = ({
     document.body.removeChild(link);
   };
 
+  const coverDownloadUrl = sanitizeUrl(item.thumbnailDownloadUrl);
+
+  const handleDownloadCover = () => {
+    if (!coverDownloadUrl) return;
+    const link = document.createElement('a');
+    link.href = coverDownloadUrl;
+    link.download = 'kover';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -471,11 +485,44 @@ export const PreviewModal = ({
                  onClick={handleDownload}
                  disabled={!item.originalUrl && !activeFile?.downloadUrl && !url}
                  className="hover:opacity-60 disabled:opacity-40 transition-opacity"
-                 title="Yüklə"
+                 title={coverDownloadUrl ? 'Videonu yüklə' : 'Yüklə'}
+                 aria-label={coverDownloadUrl ? 'Videonu yüklə' : 'Yüklə'}
                >
                  <Download size={24} strokeWidth={1.5} />
                </button>
              </div>
+
+             {/* Cover download: shows the cover itself so it is clear what gets saved */}
+             {coverDownloadUrl && (
+               <div
+                 className="mx-4 mb-2 flex items-center gap-3 rounded-lg border p-2"
+                 style={{ borderColor: 'var(--ig-border)' }}
+               >
+                 {item.thumbnailUrl && (
+                   <img
+                     src={sanitizeUrl(item.thumbnailUrl)}
+                     alt=""
+                     className="h-[52px] w-10 shrink-0 rounded object-cover"
+                     loading="lazy"
+                     decoding="async"
+                   />
+                 )}
+                 <div className="min-w-0 flex-1 leading-tight">
+                   <p className="text-[13px] font-semibold">Kover şəkli</p>
+                   <p className="text-[12px]" style={{ color: 'var(--ig-text-secondary)' }}>Videonun üz qabığı</p>
+                 </div>
+                 <button
+                   onClick={handleDownloadCover}
+                   className="flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 text-[13px] font-medium transition-opacity hover:opacity-60"
+                   style={{ borderColor: 'var(--ig-border)' }}
+                   title="Koveri yüklə"
+                   aria-label="Koveri yüklə"
+                 >
+                   <Download size={15} strokeWidth={1.75} />
+                   Yüklə
+                 </button>
+               </div>
+             )}
 
              {/* Caption Preview */}
              <div className="px-4 text-sm flex flex-col gap-1 mt-1">

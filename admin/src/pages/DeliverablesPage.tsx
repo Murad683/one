@@ -89,6 +89,7 @@ interface Deliverable extends Record<string, unknown> {
   title: string;
   files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null }[];
   thumbnailUrl?: string | null;
+  thumbnailDownloadUrl?: string | null;
   originalUrl?: string | null;
   clientFeedback?: string | null;
   processingDuration?: number | null;
@@ -264,6 +265,18 @@ const PreviewOverlay = ({
             >
               <Download className="h-4 w-4" />
               Yüklə
+            </a>
+          )}
+          {item.thumbnailDownloadUrl && (
+            <a
+              href={sanitizeUrl(item.thumbnailDownloadUrl)}
+              download="kover"
+              title="Koveri yüklə"
+              aria-label="Koveri yüklə"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-surface/10 hover:bg-surface/20 rounded-lg transition-colors backdrop-blur-md"
+            >
+              <Image className="h-4 w-4" />
+              Kover
             </a>
           )}
           <button

@@ -17,6 +17,7 @@ interface SharedDeliverable {
   notes: string | null;
   clientFeedback: string | null;
   thumbnailUrl?: string | null;
+  thumbnailDownloadUrl?: string | null;
   originalUrl?: string | null;
   createdAt: string;
 }
