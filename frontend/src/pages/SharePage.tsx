@@ -13,7 +13,7 @@ interface SharedDeliverable {
   status: string;
   month: number;
   year: number;
-  files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null }[];
+  files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null; originalDownloadUrl?: string | null }[];
   notes: string | null;
   clientFeedback: string | null;
   thumbnailUrl?: string | null;

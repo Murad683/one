@@ -26,6 +26,7 @@ import adminRoutes from './routes/admin.routes';
 import creatorRoutes from './routes/creator.routes';
 import assistantRoutes from './routes/assistant.routes';
 import shareRoutes from './routes/share.routes';
+import downloadRoutes from './routes/download.routes';
 
 import { sendError } from './utils/response.util';
 import { ensureUploadDirs } from './utils/ensureUploadDir';
@@ -145,6 +146,7 @@ apiRouter.use('/uploads', uploadRateLimiter, uploadRoutes);
 apiRouter.use('/dashboard', dashboardRoutes);
 apiRouter.use('/admin', adminRoutes);
 apiRouter.use('/share', shareRoutes);
+apiRouter.use('/downloads', downloadRoutes);
 apiRouter.use('/creator', creatorRoutes);
 apiRouter.use('/assistant', assistantRoutes);
 

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cinematicEasing } from '../../utils/animations';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Download, ChevronLeft, ChevronRight, Pencil, Trash2, Clock } from 'lucide-react';
+import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Download, Archive, Loader2, ChevronLeft, ChevronRight, Pencil, Trash2, Clock } from 'lucide-react';
 import { daysUntil, retentionLabel, RETENTION_WARNING_DAYS } from '../../utils/retention';
 
 interface Deliverable {
@@ -15,7 +15,7 @@ interface Deliverable {
   status: string;
   month: number;
   year: number;
-  files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null }[];
+  files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null; originalDownloadUrl?: string | null }[];
   notes: string | null;
   clientFeedback: string | null;
   thumbnailUrl?: string | null;
@@ -259,16 +259,76 @@ export const PreviewModal = ({
     }
   };
 
-  const handleDownload = () => {
-    const downloadUrl = item.originalUrl || activeFile?.downloadUrl || url;
-    if (!downloadUrl) return;
+  // The file being viewed in its best form: its own original, else (first file only) the post's
+  // original, else the file as shown. Posts uploaded before per-file originals keep their old
+  // behaviour: only the first image has an original, the others download as shown.
+  const activeDownloadUrl =
+    activeFile?.originalDownloadUrl || (activeIndex === 0 ? item.originalUrl : null) || activeFile?.downloadUrl || url;
+  const hasMultipleFiles = (item.files?.length ?? 0) > 1;
+  // One download icon; on a post with several files it opens a small menu (this file / all as ZIP).
+  // The ZIP needs the signed-in portal, so the shared link keeps the plain per-file download.
+  const showDownloadMenu = hasMultipleFiles && !readOnly;
+  const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
+  const [zipBusy, setZipBusy] = useState(false);
+  const [zipError, setZipError] = useState('');
+  const downloadMenuRef = useRef<HTMLDivElement>(null);
+
+  const saveUrl = (href: string, fileName?: string) => {
     const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = activeFile?.name || 'media';
+    link.href = href;
+    if (fileName) link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
+
+  const handleDownload = () => {
+    if (!activeDownloadUrl) return;
+    saveUrl(activeDownloadUrl, activeFile?.name || 'media');
+    setDownloadMenuOpen(false);
+  };
+
+  const handleDownloadAll = async () => {
+    if (zipBusy) return;
+    setZipBusy(true);
+    setZipError('');
+    try {
+      const res = (await apiClient.post(`/dashboard/deliverables/${item.id}/zip-ticket`)) as unknown as {
+        data: { ticket: string };
+      };
+      saveUrl(`${BACKEND}/api/v1/downloads/${res.data.ticket}`);
+      setDownloadMenuOpen(false);
+    } catch (err) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setZipError(message || 'ZIP hazırlana bilmədi. Yenidən cəhd edin.');
+    } finally {
+      setZipBusy(false);
+    }
+  };
+
+  // Close the download menu on an outside click or Esc (Esc closes only the menu, not the whole modal).
+  useEffect(() => {
+    if (!downloadMenuOpen) return;
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      if (downloadMenuRef.current && !downloadMenuRef.current.contains(e.target as Node)) {
+        setDownloadMenuOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        setDownloadMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('touchstart', onPointerDown);
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('touchstart', onPointerDown);
+      window.removeEventListener('keydown', onKeyDown, true);
+    };
+  }, [downloadMenuOpen]);
 
   const coverDownloadUrl = sanitizeUrl(item.thumbnailDownloadUrl);
 
@@ -481,15 +541,49 @@ export const PreviewModal = ({
                  <button className="hover:opacity-60 transition-opacity"><Send size={24} strokeWidth={1.5} /></button>
                </div>
 
-               <button
-                 onClick={handleDownload}
-                 disabled={!item.originalUrl && !activeFile?.downloadUrl && !url}
-                 className="hover:opacity-60 disabled:opacity-40 transition-opacity"
-                 title={coverDownloadUrl ? 'Videonu yüklə' : 'Yüklə'}
-                 aria-label={coverDownloadUrl ? 'Videonu yüklə' : 'Yüklə'}
-               >
-                 <Download size={24} strokeWidth={1.5} />
-               </button>
+               <div ref={downloadMenuRef} className="relative">
+                 <button
+                   onClick={showDownloadMenu ? () => { setZipError(''); setDownloadMenuOpen((open) => !open); } : handleDownload}
+                   disabled={!activeDownloadUrl}
+                   className="hover:opacity-60 disabled:opacity-40 transition-opacity"
+                   title={coverDownloadUrl ? 'Videonu yüklə' : 'Yüklə'}
+                   aria-label={coverDownloadUrl ? 'Videonu yüklə' : 'Yüklə'}
+                   aria-haspopup={showDownloadMenu ? 'menu' : undefined}
+                   aria-expanded={showDownloadMenu ? downloadMenuOpen : undefined}
+                 >
+                   <Download size={24} strokeWidth={1.5} />
+                 </button>
+
+                 {showDownloadMenu && downloadMenuOpen && (
+                   <div
+                     role="menu"
+                     className="absolute right-0 bottom-full mb-2 z-30 w-56 overflow-hidden rounded-lg border py-1 shadow-xl"
+                     style={{ backgroundColor: 'var(--ig-bg)', borderColor: 'var(--ig-border)', color: 'var(--ig-text)' }}
+                   >
+                     <button
+                       role="menuitem"
+                       onClick={handleDownload}
+                       disabled={!activeDownloadUrl}
+                       className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] hover:opacity-60 disabled:opacity-40 transition-opacity"
+                     >
+                       <Download size={16} strokeWidth={1.75} />
+                       Bu şəkli yüklə
+                     </button>
+                     <button
+                       role="menuitem"
+                       onClick={handleDownloadAll}
+                       disabled={zipBusy}
+                       className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] hover:opacity-60 disabled:opacity-60 transition-opacity"
+                     >
+                       {zipBusy ? <Loader2 size={16} className="animate-spin" /> : <Archive size={16} strokeWidth={1.75} />}
+                       {zipBusy ? 'Hazırlanır…' : `Hamısını yüklə (${item.files.length}, ZIP)`}
+                     </button>
+                     {zipError && (
+                       <p className="px-3 pb-2 pt-1 text-[12px] leading-snug text-red-500" role="alert">{zipError}</p>
+                     )}
+                   </div>
+                 )}
+               </div>
              </div>
 
              {/* Cover download: shows the cover itself so it is clear what gets saved */}

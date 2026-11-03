@@ -34,21 +34,29 @@ export async function getSecureDownloadUrlForDownload(storageKey: string): Promi
 }
 
 /**
- * Attachment-signed link for a deliverable's cover image, so the portal's
- * "download cover" button saves the file instead of opening it in a tab.
- * Null when there is no cover or it cannot be signed (the button then stays hidden).
+ * Attachment-signed link (the browser saves the file instead of opening it) for
+ * a deliverable's cover or a file's untouched original.
+ * Null when there is no key or it cannot be signed (the matching button then stays hidden).
  */
-export async function getCoverDownloadUrl(storageKey: string | null | undefined): Promise<string | null> {
+export async function getAttachmentUrl(storageKey: string | null | undefined): Promise<string | null> {
   if (!storageKey || typeof storageKey !== 'string') return null;
   try {
     return (await getSecureDownloadUrlForDownload(storageKey)) || null;
   } catch (e) {
-    console.warn('Failed to sign cover download url', e);
+    console.warn('Failed to sign download url', e);
     return null;
   }
 }
 
 export const extractStorageKey = extractKey;
+
+/** True when the active storage provider can stream objects (S3 only), which the ZIP download needs. */
+export const canStreamObjects = (): boolean => typeof storageProvider.getObjectStream === 'function';
+
+export async function getObjectStreamForKey(storageKey: string) {
+  if (!storageProvider.getObjectStream) throw new Error('This storage provider cannot stream objects');
+  return storageProvider.getObjectStream(storageKey);
+}
 
 /**
  * Link for PUBLIC site media (portfolio, packages, team, site settings).
@@ -91,15 +99,18 @@ export async function cleanupOrphanFiles(oldUrls: string[], newUrls: string[]): 
 }
 
 // Every storage key a deliverable row points at: each file plus its 720p
-// preview, the cover image and (for images) the untouched original.
+// preview and its own untouched original (images), the cover image and the
+// row-level original of the first image.
 export function collectDeliverableKeys(row: {
   files?: unknown;
   thumbnailUrl?: string | null;
   originalUrl?: string | null;
 }): string[] {
-  const files = Array.isArray(row.files) ? (row.files as Array<{ url?: unknown; previewUrl?: unknown }>) : [];
+  const files = Array.isArray(row.files)
+    ? (row.files as Array<{ url?: unknown; previewUrl?: unknown; originalUrl?: unknown }>)
+    : [];
   const keys = [
-    ...files.flatMap((f) => [f?.url, f?.previewUrl]),
+    ...files.flatMap((f) => [f?.url, f?.previewUrl, f?.originalUrl]),
     row.thumbnailUrl,
     row.originalUrl,
   ].filter((k): k is string => typeof k === 'string' && k.length > 0);

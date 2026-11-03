@@ -35,6 +35,11 @@ const NOTICE_MAIL: FaqEntry = {
   a: 'Video silinməzdən **3 gün** əvvəl müştərinin e-poçtuna bir mail gedir (silinmə vaxtları 5 gün yaxın olan videolar bir mailə yığılır, gündə ən çox bir mail).\n- E-poçt **@ourneweye.com** və ya real deyilsə mail getmir. Müştərilər siyahısında e-poçtun altında "Real e-poçt deyil" yazılır.\n- Real e-poçtu **Müştərilər** bölməsində qələm ikonu ilə yazın. Şifrə xanasını boş buraxın. Müştərini **silməyin**, bütün faylları silinər.\n- Mail çatmasa e-poçtun altında qırmızı "Mail çatmadı" çıxır, e-poçtu düzəldin.\n- E-poçt kiçik hərflə saxlanır, girişdə hərf fərq etmir.',
 };
 
+const DOWNLOAD_ALL: FaqEntry = {
+  q: 'Çox şəkilli postu necə endirim?',
+  a: 'Layihə Faylları səhifəsində başlığa klikləyin, tam ekran önizləmə açılır. **Yüklə** düyməsinə basın:\n- Bir fayl varsa, birbaşa endirilir.\n- Birdən çox fayl varsa menyu açılır: **Bu faylı yüklə** (baxdığınız fayl) və **Hamısını yüklə (ZIP)** (hamısı bir arxivdə).\nZIP limiti: ən çox 30 fayl və 200 MB; aşarsa faylları ayrı-ayrılıqda yükləyin.\nHər şəkil öz orijinalında endirilir. Qeyd: köhnə çox şəkilli postlarda yalnız ilk şəklin orijinalı var, qalanları kiçildilmiş nüsxə kimi endirilir.\nMüştəri də eyni menyunu öz portalında görür.',
+};
+
 export const STAFF_FAQ: FaqEntry[] = [
   {
     q: 'Müştəriyə paketi necə təyin edim?',
@@ -77,6 +82,7 @@ export const STAFF_FAQ: FaqEntry[] = [
   REPLACE_BLOCKED,
   VIDEO_RETENTION,
   NOTICE_MAIL,
+  DOWNLOAD_ALL,
 ];
 
 export const CREATOR_FAQ: FaqEntry[] = [
@@ -104,6 +110,7 @@ export const CREATOR_FAQ: FaqEntry[] = [
     q: 'Müştərinin paylaşım linkini necə yeniləyim?',
     a: 'Müştərini seçdikdən sonra paylaşım linkini yarada, yeniləyə və ləğv edə bilərsiniz.\nLinki yeniləmək və ya ləğv etmək köhnə linki dərhal işləməz edir, ona görə sistem əvvəl təsdiq soruşur.',
   },
+  DOWNLOAD_ALL,
 ];
 
 const normalize = (s: string): string =>

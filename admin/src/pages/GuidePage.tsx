@@ -531,7 +531,11 @@ export const GuidePage = () => {
           <p>
             Cədvəldə başlığa klikləyin — tam ekran önizləmə açılır (video/şəkil), birdən çox fayl varsa
             aşağıda kiçik önizləmə zolağından fayllar arasında keçid edə bilərsiniz. <B>"Yüklə"</B> düyməsi
-            faylın orijinal versiyasını endirir. Bağlamaq üçün × və ya Esc.
+            baxdığınız faylın orijinal versiyasını endirir. Birdən çox fayl varsa düymə menyu açır:
+            <B>"Bu faylı yüklə"</B> və <B>"Hamısını yüklə (ZIP)"</B> (ən çox 30 fayl və 200 MB, aşarsa
+            faylları ayrı-ayrılıqda yükləyin). Köhnə, çox şəkilli postlarda yalnız ilk şəklin orijinalı
+            saxlanıb, qalanları kiçildilmiş nüsxə kimi endirilir. Müştəri də eyni menyunu öz portalında görür.
+            Bağlamaq üçün × və ya Esc.
           </p>
 
           <h3 className="pt-2 text-base font-semibold text-heading">Önə Çıxanlar (Instagram Highlights)</h3>
