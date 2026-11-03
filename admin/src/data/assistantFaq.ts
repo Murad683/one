@@ -47,7 +47,7 @@ const HIGHLIGHT_ADD: FaqEntry = {
 
 const HIGHLIGHT_ARRANGE: FaqEntry = {
   q: 'Highlight-ın kovərini və şəkil sırasını necə dəyişim?',
-  a: 'Müştərinin highlight-ına basın, redaktə pəncərəsi açılır:\n- **Kover:** dairənin üzündəki şəkildir (defolt birinci). Başqasını seçmək üçün şəklin **⋯** menyusundan **Kover et**.\n- **Sıra:** şəkli sürüşdürün (telefonda uzun basıb). Highlight dairələrinin sırasını da sürüşdürürsünüz, aşağıdakı zolaqda **Yadda saxla**.\n- **Silmək:** ⋯ menyusundan **Sil** şəkli qaralamadan çıxarır, **Yadda saxla**dan sonra həqiqətən silinir. Bütün highlight-ı pəncərənin sol altındakı **Highlight-ı sil** silir, geri qaytarılmır.\nDəyişikliklər **Yadda saxla**ya qədər müştəriyə görünmür.',
+  a: 'Müştərinin highlight-ına basın, redaktə pəncərəsi açılır:\n- **Kover:** dairənin üzündəki şəkildir (defolt birinci). Başqasını seçmək üçün şəklin **⋯** menyusundan **Kover et**.\n- **Sıra:** şəkli sürüşdürün (telefonda uzun basıb). Highlight dairələrinin sırasını da sürüşdürürsünüz, aşağıdakı zolaqda **Yadda saxla**.\n- **Silmək:** ⋯ menyusundan **Sil** şəkli qaralamadan çıxarır, **Yadda saxla**dan sonra həqiqətən silinir. Bütün highlight-ı dairənin sağ-yuxarı küncündəki **×** (sürətli) və ya pəncərənin sol altındakı **Highlight-ı sil** silir, hər ikisi təsdiq soruşur, geri qaytarılmır.\nDəyişikliklər **Yadda saxla**ya qədər müştəriyə görünmür.',
 };
 
 export const STAFF_FAQ: FaqEntry[] = [

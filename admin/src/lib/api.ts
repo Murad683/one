@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ensureFreshAdminToken, isAuthCall } from './tokenRefresh';
 
 const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -9,7 +10,8 @@ export const api = axios.create({
 });
 
 // Request interceptor to attach CSRF token and Bearer token
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
+  if (!isAuthCall(config.url)) await ensureFreshAdminToken(`${BACKEND}/api/v1/auth/refresh`);
   if (config.headers) {
     config.headers['X-Portal'] = 'admin';
     

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Image as ImageIcon, Plus } from 'lucide-react';
+import { Image as ImageIcon, Pencil, Plus, X } from 'lucide-react';
 import {
   MAX_HIGHLIGHTS,
+  deleteHighlight,
   listHighlights,
   reorderHighlights,
   type HighlightSummary,
@@ -48,6 +49,7 @@ export const HighlightsManager = ({ clients, onRefreshClients }: HighlightsManag
   const [order, setOrder] = useState<string[] | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
   const [switchTo, setSwitchTo] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<HighlightSummary | null>(null);
   const addToast = useToastStore((state) => state.addToast);
 
   const client = clients.find((entry) => entry.id === clientId);
@@ -126,6 +128,26 @@ export const HighlightsManager = ({ clients, onRefreshClients }: HighlightsManag
     }
   };
 
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    const target = deleting;
+    try {
+      await deleteHighlight(target.id);
+    } catch (err) {
+      setDeleting(null);
+      addToast(requestErrorMessage(err, 'Highlight silinmədi. Yenidən cəhd edin.'), 'error');
+      return;
+    }
+    setDeleting(null);
+    setOrder((prev) => {
+      const next = prev ? prev.filter((id) => id !== target.id) : null;
+      return next && next.length > 0 ? next : null;
+    });
+    addToast('Highlight silindi', 'success');
+    reload();
+    onRefreshClients();
+  };
+
   const closeEditor = () => setEditor(null);
   const handleChanged = () => {
     reload();
@@ -187,24 +209,44 @@ export const HighlightsManager = ({ clients, onRefreshClients }: HighlightsManag
                   disabled={savingOrder}
                   className="flex flex-wrap items-start gap-x-1 sm:gap-x-3 gap-y-5 rounded-xl border border-edge bg-surface-alt p-3 sm:p-4"
                   renderItem={(entry) => (
-                    <button
-                      type="button"
-                      onClick={() => setEditor({ highlightId: entry.id })}
-                      aria-label={`${entry.title} highlight-ını redaktə et`}
-                      className="group flex w-[4.75rem] sm:w-24 flex-col items-center gap-1.5 rounded-lg p-1 focus:outline-none"
-                    >
-                      <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-edge bg-surface shadow-sm transition group-hover:border-accent">
-                        {entry.coverUrl ? (
-                          <img src={entry.coverUrl} alt="" className="h-full w-full object-cover" draggable={false} />
-                        ) : (
-                          <ImageIcon size={20} className="text-faint" aria-hidden="true" />
-                        )}
+                    <div className="relative w-[4.75rem] sm:w-24">
+                      <button
+                        type="button"
+                        onClick={() => setEditor({ highlightId: entry.id })}
+                        aria-label={`${entry.title} highlight-ını redaktə et`}
+                        className="group flex w-full cursor-pointer flex-col items-center gap-1.5 rounded-lg p-1 focus:outline-none"
+                      >
+                        <span className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-edge bg-surface shadow-sm transition group-hover:border-accent">
+                          {entry.coverUrl ? (
+                            <img src={entry.coverUrl} alt="" className="h-full w-full object-cover" draggable={false} />
+                          ) : (
+                            <ImageIcon size={20} className="text-faint" aria-hidden="true" />
+                          )}
+                          <span className="absolute inset-0 hidden items-center justify-center bg-black/45 text-white group-hover:flex">
+                            <Pencil size={18} aria-hidden="true" />
+                          </span>
+                        </span>
+                        <span className="w-full truncate text-center text-xs font-medium text-body" title={entry.title}>
+                          {entry.title}
+                        </span>
+                        <span className="text-xs text-muted">{entry.itemCount} şəkil</span>
+                      </button>
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute right-1.5 top-[2.9rem] flex h-5 w-5 items-center justify-center rounded-full border border-edge bg-surface text-muted shadow-sm sm:right-3.5"
+                      >
+                        <Pencil size={10} />
                       </span>
-                      <span className="w-full truncate text-center text-xs font-medium text-body" title={entry.title}>
-                        {entry.title}
-                      </span>
-                      <span className="text-xs text-muted">{entry.itemCount} şəkil</span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleting(entry)}
+                        aria-label={`${entry.title} highlight-ını sil`}
+                        title="Sil"
+                        className="absolute right-0.5 top-0 flex h-6 w-6 items-center justify-center rounded-full border border-edge bg-surface text-muted shadow-sm transition hover:border-red-500 hover:bg-red-500 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 sm:right-3"
+                      >
+                        <X size={13} aria-hidden="true" />
+                      </button>
+                    </div>
                   )}
                   trailing={
                     full ? null : (
@@ -227,7 +269,7 @@ export const HighlightsManager = ({ clients, onRefreshClients }: HighlightsManag
                 )}
                 {full && <p className="text-sm text-muted">Bir müştəridə ən çox {MAX_HIGHLIGHTS} highlight ola bilər.</p>}
                 <p className="text-sm text-muted">
-                  Redaktə etmək üçün highlight-a basın. Sıranı dəyişmək üçün dairəni sürüşdürün (telefonda uzun basıb).
+                  Redaktə üçün dairəyə basın (✎). Silmək üçün küncdəki × düyməsi. Sıranı dəyişmək üçün dairəni sürüşdürün (telefonda uzun basıb).
                 </p>
               </div>
             )}
@@ -258,6 +300,16 @@ export const HighlightsManager = ({ clients, onRefreshClients }: HighlightsManag
           onChanged={handleChanged}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={deleting !== null}
+        onClose={() => setDeleting(null)}
+        onConfirm={confirmDelete}
+        title="Highlight silinsin?"
+        message={`"${deleting?.title ?? ''}" highlight-ı və içindəki ${deleting?.itemCount ?? 0} şəkil silinəcək. Bu əməliyyat geri qaytarılmır.`}
+        confirmText="Sil"
+        cancelText="Ləğv et"
+      />
 
       <ConfirmDialog
         isOpen={switchTo !== null}
