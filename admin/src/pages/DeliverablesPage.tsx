@@ -63,7 +63,8 @@ interface ClientUser extends Record<string, unknown> {
   id: string;
   name: string;
   email?: string;
-  igHighlights?: { title: string; imageUrl: string }[];
+  /** Highlights on the client's profile (rows, or the older one-image form until first edited). */
+  highlightCount?: number;
   shareUrl?: string | null;
   shareTokenExpiresAt?: string | null;
   /** The client has a real mailbox, so the retention warnings reach them. */

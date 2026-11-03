@@ -291,7 +291,6 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
     if (body.igFollowing !== undefined) updateData.igFollowing = body.igFollowing;
     if (body.igPostsCount !== undefined) updateData.igPostsCount = body.igPostsCount;
     if (body.igProfilePic !== undefined) updateData.igProfilePic = body.igProfilePic;
-    if (body.igHighlights !== undefined) updateData.igHighlights = body.igHighlights;
 
     const updated = await prisma.user.update({
       where: { id: userId },

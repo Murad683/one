@@ -540,17 +540,39 @@ export const GuidePage = () => {
 
           <h3 className="pt-2 text-base font-semibold text-heading">Önə Çıxanlar (Instagram Highlights)</h3>
           <p>
-            Müştəri seçdikdən sonra onun portalında görünəcək dairəvi "highlight" ikonlarını idarə edirsiniz.
+            Müştərinin profilində görünən dairələrdir. Müştəri dairəyə basanda içindəki şəkillər
+            story kimi tam ekranda açılır. Müştərini seçirsiniz, onun highlight-ları dairələr kimi görünür
+            (kover, başlıq, şəkil sayı). Müştəri seçimində hər adın yanında neçə highlight olduğu yazılıb.
           </p>
           <ul className="list-disc space-y-1 pl-5">
-            <li>Hər müştəri üçün <B>maksimum 20</B> highlight (sərt limit).</li>
-            <li>Yeni highlight: şəkil seçin + başlıq yazın (maks. 30 simvol) → "Siyahıya Əlavə Et".</li>
             <li>
-              <Callout tone="warn" title="Diqqət">
+              <B>Yeni highlight:</B> "Yeni highlight" dairəsinə basın, başlıq yazın (maks. 30 simvol), "Yarat".
+              Açılan səhifədə şəkilləri əlavə edin.
+            </li>
+            <li>
+              <B>Şəkil əlavə etmək:</B> "Şəkil əlavə et"ə basıb bir neçə şəkli birdən seçin və ya şəkilləri
+              səhifəyə sürüşdürüb atın. Yalnız şəkil (JPG, PNG, WEBP, HEIC), hər biri ən çox 10 MB.
+              Bir highlight-da <B>ən çox 30</B> şəkil, bir müştəridə <B>ən çox 20</B> highlight ola bilər.
+              Video hələ dəstəklənmir.
+            </li>
+            <li>
+              <B>Sıra:</B> şəkilləri (və ya highlight dairələrini) sürüşdürərək və ya altındakı ox düymələri ilə
+              yerini dəyişin. Telefonda ox düymələrindən istifadə edin.
+            </li>
+            <li>
+              <B>Kover:</B> dairənin üzündə görünən şəkildir. Defolt birinci şəkildir. Başqa şəkli seçmək üçün
+              altındakı "Kover et"ə basın.
+            </li>
+            <li>
+              <B>Silmək:</B> şəklin üzərindəki × ilə silinir (əvvəl "Silinsin?" soruşulur). Bütün highlight-ı silmək
+              üçün səhifənin altındakı "Highlight-ı sil" düyməsi, təsdiqdən sonra şəkillərlə birlikdə silinir.
+              Silinənlər geri qaytarılmır.
+            </li>
+            <li>
+              <Callout tone="info" title="Yadda saxla düyməsi yoxdur">
                 <p>
-                  Bu "Siyahıya Əlavə Et" düyməsi faylı hələ <B>yükləmir</B> — yalnız lokal olaraq siyahıya
-                  əlavə edir. Faktiki yükləmə və saxlama yalnız səhifənin <B>"Yadda Saxla"</B> düyməsinə
-                  basdıqda baş verir. Bu addımı unutsanız, dəyişiklikləriniz itir.
+                  Hər dəyişiklik dərhal özü yadda qalır. Yuxarıda "Yadda saxlanır…" və "Yadda saxlandı" yazısı görünür.
+                  Xəta olsa qırmızı mesaj çıxır və nə etmək lazım olduğu yazılır.
                 </p>
               </Callout>
             </li>
