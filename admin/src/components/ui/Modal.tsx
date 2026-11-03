@@ -11,6 +11,10 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   size?: ModalSize;
+  /** Sticky bar under the content (e.g. Cancel / Save). */
+  footer?: ReactNode;
+  /** On phones fill the whole screen instead of a bottom sheet. */
+  fullScreenOnMobile?: boolean;
 }
 
 const sizes: Record<ModalSize, string> = {
@@ -20,7 +24,7 @@ const sizes: Record<ModalSize, string> = {
   xl: 'sm:max-w-4xl',
 };
 
-export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalProps) => {
+export const Modal = ({ isOpen, onClose, title, children, size = 'md', footer, fullScreenOnMobile = false }: ModalProps) => {
   useEffect(() => {
     if (!isOpen) return undefined;
 
@@ -43,7 +47,11 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center overflow-hidden bg-black/50 sm:p-4" onMouseDown={onClose}>
       <div
-        className={`flex w-full ${sizes[size]} max-h-[90vh] sm:max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-t-2xl sm:rounded-xl bg-surface shadow-xl sm:m-auto border border-edge`}
+        className={`flex w-full ${sizes[size]} ${
+          fullScreenOnMobile
+            ? 'h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[calc(100vh-2rem)] rounded-none'
+            : 'max-h-[90vh] sm:max-h-[calc(100vh-2rem)] rounded-t-2xl'
+        } flex-col overflow-hidden sm:rounded-xl bg-surface shadow-xl sm:m-auto border border-edge`}
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-edge px-4 md:px-5 py-3 md:py-4">
@@ -58,6 +66,11 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 md:px-5 py-3 md:py-4">{children}</div>
+        {footer && (
+          <div className="shrink-0 border-t border-edge bg-surface px-4 md:px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            {footer}
+          </div>
+        )}
       </div>
     </div>,
     document.body,

@@ -315,3 +315,15 @@ model HighlightItem {
 
   @@index([highlightId, sortOrder])
 }
+
+// Images staged by the highlight editor before "Yadda saxla". Not linked to any highlight, so
+// no client sees them; saving moves them into HighlightItem, cancelling or the hourly job deletes them.
+model HighlightUpload {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  @@index([uploadedById])
+  @@index([createdAt])
+}

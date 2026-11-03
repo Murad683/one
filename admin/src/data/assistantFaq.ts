@@ -42,12 +42,12 @@ const DOWNLOAD_ALL: FaqEntry = {
 
 const HIGHLIGHT_ADD: FaqEntry = {
   q: 'Müştəri üçün highlight necə əlavə edirəm?',
-  a: 'Layihə Faylları səhifəsində **Önə Çıxanlar (Highlights)** tabı:\n1. Müştərini seçin.\n2. **Yeni highlight** dairəsinə basın, başlıq yazın (maks. 30 simvol), **Yarat**.\n3. **Şəkil əlavə et** ilə bir neçə şəkli birdən seçin və ya sürüşdürüb atın (JPG, PNG, WEBP, HEIC, hər biri ən çox 10 MB).\nHər dəyişiklik özü yadda qalır, **Yadda saxla** düyməsi yoxdur. Limit: müştəridə 20 highlight, hər birində 30 şəkil. Video hələ dəstəklənmir.\nMüştəri dairəyə basanda şəkillər story kimi açılır.',
+  a: 'Layihə Faylları səhifəsində **Önə Çıxanlar (Highlights)** tabı:\n1. Müştərini seçin.\n2. **Yeni highlight** dairəsinə basın.\n3. Pəncərədə başlıq yazın (maks. 30 simvol), **Şəkil əlavə et** ilə bir neçə şəkli seçin və ya sürüşdürüb atın (JPG, PNG, WEBP, HEIC, hər biri ən çox 10 MB).\n4. **Yadda saxla**.\nYadda saxlamayana qədər müştəri heç nə görmür. **Ləğv et** hər şeyi atır. Limit: müştəridə 20 highlight, hər birində 30 şəkil. Video hələ dəstəklənmir.',
 };
 
 const HIGHLIGHT_ARRANGE: FaqEntry = {
   q: 'Highlight-ın kovərini və şəkil sırasını necə dəyişim?',
-  a: 'Müştərinin highlight-ına basın:\n- **Kover:** dairənin üzündəki şəkildir (defolt birinci). Başqasını seçmək üçün şəklin altındakı **Kover et**.\n- **Sıra:** şəkilləri sürüşdürün və ya altındakı ◀ ▶ düymələrindən istifadə edin (telefonda yalnız düymələr). Highlight dairələrinin sırası da eyni qaydada dəyişir.\n- **Silmək:** şəklin üzərindəki × (əvvəl "Silinsin?" soruşulur) və ya səhifənin altındakı **Highlight-ı sil**. Silinənlər geri qaytarılmır.',
+  a: 'Müştərinin highlight-ına basın, redaktə pəncərəsi açılır:\n- **Kover:** dairənin üzündəki şəkildir (defolt birinci). Başqasını seçmək üçün şəklin **⋯** menyusundan **Kover et**.\n- **Sıra:** şəkli sürüşdürün (telefonda uzun basıb). Highlight dairələrinin sırasını da sürüşdürürsünüz, aşağıdakı zolaqda **Yadda saxla**.\n- **Silmək:** ⋯ menyusundan **Sil** şəkli qaralamadan çıxarır, **Yadda saxla**dan sonra həqiqətən silinir. Bütün highlight-ı pəncərənin sol altındakı **Highlight-ı sil** silir, geri qaytarılmır.\nDəyişikliklər **Yadda saxla**ya qədər müştəriyə görünmür.',
 };
 
 export const STAFF_FAQ: FaqEntry[] = [

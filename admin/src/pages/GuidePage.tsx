@@ -546,33 +546,44 @@ export const GuidePage = () => {
           </p>
           <ul className="list-disc space-y-1 pl-5">
             <li>
-              <B>Yeni highlight:</B> "Yeni highlight" dairəsinə basın, başlıq yazın (maks. 30 simvol), "Yarat".
-              Açılan səhifədə şəkilləri əlavə edin.
+              <B>Yeni highlight:</B> "Yeni highlight" dairəsinə basın. Açılan pəncərədə başlıq yazın (maks. 30 simvol),
+              şəkilləri əlavə edin və <B>"Yadda saxla"</B>ya basın.
+            </li>
+            <li>
+              <B>Redaktə:</B> dairəyə basın, eyni pəncərə açılır. Başlığı, şəkilləri, sırasını və koveri dəyişib
+              "Yadda saxla"ya basın. Telefonda pəncərə tam ekran açılır.
             </li>
             <li>
               <B>Şəkil əlavə etmək:</B> "Şəkil əlavə et"ə basıb bir neçə şəkli birdən seçin və ya şəkilləri
-              səhifəyə sürüşdürüb atın. Yalnız şəkil (JPG, PNG, WEBP, HEIC), hər biri ən çox 10 MB.
+              pəncərəyə sürüşdürüb atın. Yalnız şəkil (JPG, PNG, WEBP, HEIC), hər biri ən çox 10 MB.
+              Şəkillər arxa fonda yüklənir, yükləmə gedərkən "Yadda saxla" gözləyir.
               Bir highlight-da <B>ən çox 30</B> şəkil, bir müştəridə <B>ən çox 20</B> highlight ola bilər.
               Video hələ dəstəklənmir.
             </li>
             <li>
-              <B>Sıra:</B> şəkilləri (və ya highlight dairələrini) sürüşdürərək və ya altındakı ox düymələri ilə
-              yerini dəyişin. Telefonda ox düymələrindən istifadə edin.
+              <B>Sıra:</B> şəkli sürüşdürüb yerini dəyişin (telefonda şəkli uzun basıb sürüşdürün; klaviatura ilə
+              şəkli fokuslayıb Boşluq və ox düymələri). Highlight dairələrinin sırasını da sürüşdürərək dəyişirsiniz,
+              bu halda aşağıda çıxan zolaqda "Yadda saxla"ya basın.
             </li>
             <li>
               <B>Kover:</B> dairənin üzündə görünən şəkildir. Defolt birinci şəkildir. Başqa şəkli seçmək üçün
-              altındakı "Kover et"ə basın.
+              şəklin üzərindəki <B>⋯</B> menyusundan "Kover et"i seçin.
             </li>
             <li>
-              <B>Silmək:</B> şəklin üzərindəki × ilə silinir (əvvəl "Silinsin?" soruşulur). Bütün highlight-ı silmək
-              üçün səhifənin altındakı "Highlight-ı sil" düyməsi, təsdiqdən sonra şəkillərlə birlikdə silinir.
-              Silinənlər geri qaytarılmır.
+              <B>Şəkli silmək:</B> ⋯ menyusundan "Sil". Şəkil yalnız qaralamadan çıxır, "Yadda saxla"dan sonra
+              həqiqətən silinir. "Ləğv et" onu geri qaytarır.
             </li>
             <li>
-              <Callout tone="info" title="Yadda saxla düyməsi yoxdur">
+              <B>Highlight-ı silmək:</B> pəncərənin sol altındakı "Highlight-ı sil", təsdiqdən sonra dərhal və
+              şəkillərlə birlikdə silinir. Geri qaytarılmır.
+            </li>
+            <li>
+              <Callout tone="info" title="Yadda saxlamayana qədər müştəri heç nə görmür">
                 <p>
-                  Hər dəyişiklik dərhal özü yadda qalır. Yuxarıda "Yadda saxlanır…" və "Yadda saxlandı" yazısı görünür.
-                  Xəta olsa qırmızı mesaj çıxır və nə etmək lazım olduğu yazılır.
+                  Pəncərədəki hər şey qaralamadır. "Yadda saxla"ya basanda hamısı birdən yazılır (ya hamısı, ya heç nə).
+                  "Ləğv et", ×, Esc və ya kənara klik dəyişiklik varsa soruşur: "Redaktəyə qayıt" və ya "Çıx, dəyişiklikləri at".
+                  Eyni highlight-ı başqası dəyişibsə "Bu highlight başqa yerdə dəyişdirilib. Səhifəni yeniləyin." çıxır,
+                  heç nə üstünə yazılmır. Yadda saxlanmamış yüklənmiş şəkillər 24 saatdan sonra özü silinir.
                 </p>
               </Callout>
             </li>

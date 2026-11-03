@@ -1,10 +1,13 @@
+import type { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
 import { cleanupOrphanFiles, extractStorageKey, getSecureDownloadUrl } from './upload.service';
 
 // Limits of the story-style highlights (see prisma Highlight / HighlightItem).
 export const MAX_HIGHLIGHTS = 20;
 export const MAX_ITEMS = 30;
-export const MAX_FILES_PER_REQUEST = 10;
+/** Staged (not yet saved) editor uploads one staff member may hold at a time. */
+export const MAX_STAGED_UPLOADS = 60;
+export const STAGED_UPLOAD_TTL_MS = 24 * 60 * 60 * 1000;
 export const TITLE_MAX = 30;
 
 export const LEGACY_PREFIX = 'legacy-';
@@ -33,6 +36,8 @@ export interface HighlightDetail {
   id: string;
   title: string;
   coverItemId: string | null;
+  /** Version for the editor's conflict check (staff only; absent for the legacy copy). */
+  updatedAt?: string;
   items: HighlightItemView[];
 }
 
@@ -88,6 +93,7 @@ interface RowWithItems {
   id: string;
   title: string;
   coverItemId: string | null;
+  updatedAt?: Date;
   items: { id: string; imageUrl: string }[];
 }
 
@@ -174,6 +180,7 @@ export const detailOf = async (row: RowWithItems): Promise<HighlightDetail> => (
   id: row.id,
   title: row.title,
   coverItemId: row.coverItemId,
+  ...(row.updatedAt && { updatedAt: row.updatedAt.toISOString() }),
   items: await Promise.all(row.items.map(async (item) => ({ id: item.id, url: await signKey(item.imageUrl) }))),
 });
 
@@ -228,5 +235,173 @@ export const deleteHighlightFiles = async (keys: string[]): Promise<void> => {
     );
   } catch (err) {
     console.warn('[Highlights] file cleanup failed:', err instanceof Error ? err.message : err);
+  }
+};
+
+// ---------------------------------------------------------------------------
+// One-step save (the editor's "Yadda saxla") and the staging area behind it.
+// ---------------------------------------------------------------------------
+
+const TX_OPTIONS = { timeout: 20_000 };
+
+export type ItemRef = { id: string } | { uploadKey: string };
+
+export interface SaveInput {
+  title: string;
+  items: ItemRef[];
+  /** Position in `items` of the circle image; null/undefined = the first one. */
+  coverIndex?: number | null;
+}
+
+/** A save that is refused for a reason the editor can show (status is the HTTP code). */
+export class SaveError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+/** The staged uploads this staff member may use; throws when a key is unknown, someone else's, or listed twice. */
+const claimStaged = async (tx: Prisma.TransactionClient, staffId: string, keys: string[]): Promise<string[]> => {
+  if (keys.length === 0) return [];
+  if (new Set(keys).size !== keys.length) throw new SaveError(400, 'Eyni şəkil iki dəfə göndərilib.');
+  const rows = await tx.highlightUpload.findMany({
+    where: { key: { in: keys }, uploadedById: staffId },
+    select: { key: true },
+  });
+  if (rows.length !== keys.length) {
+    throw new SaveError(400, 'Yüklənmiş şəkillərdən biri tapılmadı. Şəkli yenidən əlavə edin.');
+  }
+  return keys;
+};
+
+const checkCover = (input: SaveInput): void => {
+  if (input.coverIndex != null && input.coverIndex >= input.items.length) {
+    throw new SaveError(400, 'Kover üçün highlight-ın şəkli seçilməlidir.');
+  }
+};
+
+/**
+ * Creates a highlight with its images in one transaction. Every item must be a staged
+ * upload of `staffId`; staging rows are consumed. Returns the new highlight.
+ */
+export const createHighlightWithItems = async (clientId: string, staffId: string, input: SaveInput) => {
+  checkCover(input);
+  const keys: string[] = [];
+  for (const item of input.items) {
+    if (!('uploadKey' in item)) throw new SaveError(400, 'Yeni highlight-a yalnız yeni şəkillər əlavə olunur.');
+    keys.push(item.uploadKey);
+  }
+  await materializeLegacy(clientId);
+
+  return prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${clientId} FOR UPDATE`;
+    if ((await tx.highlight.count({ where: { userId: clientId } })) >= MAX_HIGHLIGHTS) {
+      throw new SaveError(400, `Bir müştəridə ən çox ${MAX_HIGHLIGHTS} highlight ola bilər.`);
+    }
+    await claimStaged(tx, staffId, keys);
+    const last = await tx.highlight.aggregate({ where: { userId: clientId }, _max: { sortOrder: true } });
+    const row = await tx.highlight.create({
+      data: { userId: clientId, title: input.title, sortOrder: (last._max.sortOrder ?? -1) + 1 },
+    });
+    const ids: string[] = [];
+    for (const [index, key] of keys.entries()) {
+      const item = await tx.highlightItem.create({
+        data: { highlightId: row.id, imageUrl: key, sortOrder: index },
+        select: { id: true },
+      });
+      ids.push(item.id);
+    }
+    const coverItemId = input.coverIndex != null ? ids[input.coverIndex] : null;
+    await tx.highlight.update({ where: { id: row.id }, data: { coverItemId } });
+    await tx.highlightUpload.deleteMany({ where: { key: { in: keys } } });
+    return tx.highlight.findUniqueOrThrow({ where: { id: row.id }, include: { items: itemsInOrder } });
+  }, TX_OPTIONS);
+};
+
+/**
+ * Replaces a highlight's title, images, order and cover in one transaction. `expectedUpdatedAt`
+ * must still be the stored version, otherwise someone else saved first (409). Images that are no
+ * longer listed are deleted from the database here and from storage by the caller afterwards.
+ */
+export const saveHighlightWithItems = async (
+  id: string,
+  staffId: string,
+  input: SaveInput,
+  expectedUpdatedAt: string,
+): Promise<{ row: Awaited<ReturnType<typeof createHighlightWithItems>>; removedKeys: string[] } | null> => {
+  checkCover(input);
+  const expected = new Date(expectedUpdatedAt).getTime();
+
+  return prisma.$transaction(async (tx) => {
+    const locked = await tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "Highlight" WHERE "id" = ${id} FOR UPDATE`;
+    if (locked.length === 0) return null;
+    const current = await tx.highlight.findUniqueOrThrow({ where: { id }, include: { items: itemsInOrder } });
+    if (!Number.isFinite(expected) || current.updatedAt.getTime() !== expected) {
+      throw new SaveError(409, 'Bu highlight başqa yerdə dəyişdirilib. Səhifəni yeniləyin.');
+    }
+
+    const existing = new Map(current.items.map((item) => [item.id, item]));
+    const keptIds = new Set<string>();
+    const newKeys: string[] = [];
+    for (const item of input.items) {
+      if ('id' in item) {
+        if (!existing.has(item.id) || keptIds.has(item.id)) {
+          throw new SaveError(400, 'Şəkillər düzgün göndərilməyib. Səhifəni yeniləyin.');
+        }
+        keptIds.add(item.id);
+      } else {
+        newKeys.push(item.uploadKey);
+      }
+    }
+    await claimStaged(tx, staffId, newKeys);
+
+    const removed = current.items.filter((item) => !keptIds.has(item.id));
+    if (removed.length > 0) {
+      await tx.highlightItem.deleteMany({ where: { id: { in: removed.map((item) => item.id) } } });
+    }
+    const orderedIds: string[] = [];
+    for (const [index, item] of input.items.entries()) {
+      if ('id' in item) {
+        await tx.highlightItem.update({ where: { id: item.id }, data: { sortOrder: index } });
+        orderedIds.push(item.id);
+      } else {
+        const created = await tx.highlightItem.create({
+          data: { highlightId: id, imageUrl: item.uploadKey, sortOrder: index },
+          select: { id: true },
+        });
+        orderedIds.push(created.id);
+      }
+    }
+    await tx.highlight.update({
+      where: { id },
+      data: {
+        title: input.title,
+        coverItemId: input.coverIndex != null ? orderedIds[input.coverIndex] : null,
+      },
+    });
+    if (newKeys.length > 0) await tx.highlightUpload.deleteMany({ where: { key: { in: newKeys } } });
+
+    const row = await tx.highlight.findUniqueOrThrow({ where: { id }, include: { items: itemsInOrder } });
+    return { row, removedKeys: removed.map((item) => item.imageUrl) };
+  }, TX_OPTIONS);
+};
+
+/** Deletes staged uploads older than the TTL (rows first, then files). Returns how many were removed. */
+export const cleanupStaleUploads = async (now: number = Date.now()): Promise<number> => {
+  const cutoff = new Date(now - STAGED_UPLOAD_TTL_MS);
+  let total = 0;
+  for (;;) {
+    const stale = await prisma.highlightUpload.findMany({
+      where: { createdAt: { lt: cutoff } },
+      select: { id: true, key: true },
+      take: 200,
+    });
+    if (stale.length === 0) return total;
+    await prisma.highlightUpload.deleteMany({ where: { id: { in: stale.map((row) => row.id) } } });
+    await deleteHighlightFiles(stale.map((row) => row.key));
+    total += stale.length;
   }
 };
