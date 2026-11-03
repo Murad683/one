@@ -40,6 +40,16 @@ const DOWNLOAD_ALL: FaqEntry = {
   a: 'Layihə Faylları səhifəsində başlığa klikləyin, tam ekran önizləmə açılır. **Yüklə** düyməsinə basın:\n- Bir fayl varsa, birbaşa endirilir.\n- Birdən çox fayl varsa menyu açılır: **Bu faylı yüklə** (baxdığınız fayl) və **Hamısını yüklə (ZIP)** (hamısı bir arxivdə).\nZIP limiti: ən çox 30 fayl və 200 MB; aşarsa faylları ayrı-ayrılıqda yükləyin.\nHər şəkil öz orijinalında endirilir. Qeyd: köhnə çox şəkilli postlarda yalnız ilk şəklin orijinalı var, qalanları kiçildilmiş nüsxə kimi endirilir.\nMüştəri də eyni menyunu öz portalında görür.',
 };
 
+const HIGHLIGHT_ADD: FaqEntry = {
+  q: 'Müştəri üçün highlight necə əlavə edirəm?',
+  a: 'Layihə Faylları səhifəsində **Önə Çıxanlar (Highlights)** tabı:\n1. Müştərini seçin.\n2. **Yeni highlight** dairəsinə basın, başlıq yazın (maks. 30 simvol), **Yarat**.\n3. **Şəkil əlavə et** ilə bir neçə şəkli birdən seçin və ya sürüşdürüb atın (JPG, PNG, WEBP, HEIC, hər biri ən çox 10 MB).\nHər dəyişiklik özü yadda qalır, **Yadda saxla** düyməsi yoxdur. Limit: müştəridə 20 highlight, hər birində 30 şəkil. Video hələ dəstəklənmir.\nMüştəri dairəyə basanda şəkillər story kimi açılır.',
+};
+
+const HIGHLIGHT_ARRANGE: FaqEntry = {
+  q: 'Highlight-ın kovərini və şəkil sırasını necə dəyişim?',
+  a: 'Müştərinin highlight-ına basın:\n- **Kover:** dairənin üzündəki şəkildir (defolt birinci). Başqasını seçmək üçün şəklin altındakı **Kover et**.\n- **Sıra:** şəkilləri sürüşdürün və ya altındakı ◀ ▶ düymələrindən istifadə edin (telefonda yalnız düymələr). Highlight dairələrinin sırası da eyni qaydada dəyişir.\n- **Silmək:** şəklin üzərindəki × (əvvəl "Silinsin?" soruşulur) və ya səhifənin altındakı **Highlight-ı sil**. Silinənlər geri qaytarılmır.',
+};
+
 export const STAFF_FAQ: FaqEntry[] = [
   {
     q: 'Müştəriyə paketi necə təyin edim?',
@@ -83,6 +93,8 @@ export const STAFF_FAQ: FaqEntry[] = [
   VIDEO_RETENTION,
   NOTICE_MAIL,
   DOWNLOAD_ALL,
+  HIGHLIGHT_ADD,
+  HIGHLIGHT_ARRANGE,
 ];
 
 export const CREATOR_FAQ: FaqEntry[] = [
@@ -111,6 +123,8 @@ export const CREATOR_FAQ: FaqEntry[] = [
     a: 'Müştərini seçdikdən sonra paylaşım linkini yarada, yeniləyə və ləğv edə bilərsiniz.\nLinki yeniləmək və ya ləğv etmək köhnə linki dərhal işləməz edir, ona görə sistem əvvəl təsdiq soruşur.',
   },
   DOWNLOAD_ALL,
+  HIGHLIGHT_ADD,
+  HIGHLIGHT_ARRANGE,
 ];
 
 const normalize = (s: string): string =>

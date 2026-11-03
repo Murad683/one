@@ -4,7 +4,7 @@ import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { hashPassword } from '../utils/password.util';
 import { collectDeliverableKeys, deleteUnreferencedDeliverableKeys } from '../services/upload.service';
-import { collectUserHighlightKeys, deleteHighlightFiles } from '../services/highlight.service';
+import { collectUserHighlightKeys, deleteHighlightFiles, parseLegacy } from '../services/highlight.service';
 import { EMAIL_IN_USE_MESSAGE, isUniqueViolation, looksLikeEmail, normalizeEmail } from '../utils/email';
 import { canReceiveNotices } from '../utils/notices';
 
@@ -40,6 +40,7 @@ export const getUsers = async (req: Request, res: Response) => {
           shareToken: true,
           shareTokenExpiresAt: true,
           emailBouncedAt: true,
+          _count: { select: { highlights: true } },
         },
       }),
       prisma.user.count({ where }),
@@ -47,7 +48,12 @@ export const getUsers = async (req: Request, res: Response) => {
 
     return sendSuccess(res, {
       // canReceiveNotices: a real, working mailbox of an active client (utils/notices.ts)
-      items: items.map((u) => ({ ...u, canReceiveNotices: canReceiveNotices(u) })),
+      items: items.map(({ _count, ...u }) => ({
+        ...u,
+        canReceiveNotices: canReceiveNotices(u),
+        // Highlights shown on the client's profile: rows, or the old JSON form until it is first edited.
+        highlightCount: _count.highlights > 0 ? _count.highlights : parseLegacy(u.igHighlights).length,
+      })),
       total,
       page: pageNumber,
       limit: limitNumber,
@@ -78,12 +84,15 @@ export const updateUser = async (req: Request, res: Response) => {
     }
 
     const { name, email, password, isActive, igHighlights } = req.body;
+    // Highlights live in their own tables now (/api/v1/highlights); the old JSON write is closed.
+    if (igHighlights !== undefined) {
+      return sendError(res, 'Köhnə highlight sistemi bağlanıb. Səhifəni yeniləyin.', 410);
+    }
     const data: {
       name?: string;
       email?: string;
       password?: string;
       isActive?: boolean;
-      igHighlights?: any;
       emailBouncedAt?: null;
     } = {};
 
@@ -104,7 +113,6 @@ export const updateUser = async (req: Request, res: Response) => {
       if (normalized !== existing.email) data.emailBouncedAt = null;
     }
     if (isActive !== undefined) data.isActive = isActive;
-    if (igHighlights !== undefined) data.igHighlights = igHighlights;
     if (password) data.password = await hashPassword(password);
 
     const user = await prisma.user.update({
