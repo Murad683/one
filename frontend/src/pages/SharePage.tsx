@@ -4,6 +4,8 @@ import axios from 'axios';
 import { AnimatePresence } from 'framer-motion';
 import { Grid3X3, Video, Image as ImageIcon } from 'lucide-react';
 import { PreviewModal } from './portal/DeliverablesPage';
+import { HighlightsSection } from '../components/ui/HighlightsSection';
+import type { HighlightDetail, HighlightSummary } from '../components/ui/highlightTypes';
 
 interface SharedDeliverable {
   id: string;
@@ -111,13 +113,26 @@ const SharePage = () => {
     fetchPage(1);
   }, [fetchPage]);
 
+  // Highlight circles (cover + count); the images are fetched when one is opened.
+  const [highlights, setHighlights] = useState<HighlightSummary[]>([]);
+  useEffect(() => {
+    if (!token) return;
+    publicApi
+      .get(`/share/${token}/highlights`)
+      .then((res) => setHighlights(Array.isArray(res.data?.data) ? (res.data.data as HighlightSummary[]) : []))
+      .catch(() => setHighlights([]));
+  }, [token]);
+  const loadHighlight = useCallback(
+    (id: string) => publicApi.get(`/share/${token}/highlights/${id}`).then((res) => res.data.data as HighlightDetail),
+    [token],
+  );
+
   const igUsername = client?.igUsername || 'username';
   const igProfilePic = sanitizeUrl(client?.igProfilePic || null);
   const igBio = client?.igBio || '';
   const igFollowers = client?.igFollowers || '0';
   const igFollowing = client?.igFollowing || '0';
   const igPostsCount = client?.igPostsCount || '0';
-  const igHighlights = client?.igHighlights ?? [];
   const displayPostCount = igPostsCount !== '0' ? igPostsCount : String(totalPosts);
 
   if (invalid) {
@@ -228,35 +243,7 @@ const SharePage = () => {
               <p className="whitespace-pre-line leading-[18px]">{igBio}</p>
             </div>
 
-            {/* Highlights */}
-            {igHighlights.length > 0 && (
-              <div className="mt-4 md:mt-6 overflow-x-auto no-scrollbar">
-                <div className="flex gap-4 md:gap-8 pb-1" style={{ minWidth: 'min-content' }}>
-                  {igHighlights.map((h, idx) => (
-                    <div key={idx} className="flex flex-col items-center gap-2 shrink-0 select-none w-[72px] md:w-[85px]">
-                      <div
-                        className="rounded-full flex items-center justify-center shrink-0 w-[64px] h-[64px] md:w-[80px] md:h-[80px]"
-                        style={{ border: '1px solid var(--ig-border)', padding: '3px' }}
-                      >
-                        <div className="w-full h-full rounded-full overflow-hidden" style={{ backgroundColor: 'var(--ig-bg)' }}>
-                          <img
-                            src={resolveFileUrl(h.imageUrl)}
-                            alt={h.title}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            decoding="async"
-                            draggable={false}
-                          />
-                        </div>
-                      </div>
-                      <span className="text-[11px] md:text-[12px] text-center truncate w-full" style={{ color: 'var(--ig-text)' }}>
-                        {h.title}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <HighlightsSection highlights={highlights} loadDetail={loadHighlight} />
 
             {/* Mobile: Buttons Row */}
             <div className="flex md:hidden items-center gap-2 mt-4">
