@@ -298,7 +298,7 @@ const GuidePage = () => {
               <>Materialı açın.</>,
               <>Endirmək istədiyiniz fayla keçin (bir neçə varsa).</>,
               <><strong style={{ color: 'var(--text-primary)' }}>Endirmə ikonuna</strong> (↓) basın. Fayl cihazınızın "Yükləmələr" qovluğuna enir.</>,
-              <>Bir neçə şəkilli postda ikona basanda menyu açılır: <strong style={{ color: 'var(--text-primary)' }}>"Bu şəkli yüklə"</strong> baxdığınız şəkli, <strong style={{ color: 'var(--text-primary)' }}>"Hamısını yüklə (ZIP)"</strong> bütün şəkilləri bir arxivdə endirir (arxivi açıb şəkilləri ayrı-ayrı istifadə edin).</>,
+              <>Bir neçə şəkilli postda ikona basanda menyu açılır: <strong style={{ color: 'var(--text-primary)' }}>"Bu şəkli yüklə"</strong> (video olanda "Bu videonu yüklə") baxdığınız faylı, <strong style={{ color: 'var(--text-primary)' }}>"Hamısını yüklə (ZIP)"</strong> bütün şəkilləri bir arxivdə endirir (arxivi açıb şəkilləri ayrı-ayrı istifadə edin).</>,
             ]}
           />
           <Callout label="Bilməli olduğunuz">

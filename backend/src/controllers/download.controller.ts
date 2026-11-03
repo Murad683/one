@@ -27,7 +27,8 @@ export const createClientZipTicket = async (req: Request, res: Response): Promis
       select: zipSelect,
     });
     if (!deliverable) { sendError(res, 'Tapılmadı', 404); return; }
-    await assertZipAllowed(planZip(deliverable).entries);
+    const plan = planZip(deliverable);
+    await assertZipAllowed(plan.entries, plan.needsSizeCheck);
     sendSuccess(res, { ticket: signZipTicket({ deliverableId: deliverable.id, userId, kind: 'client' }) });
   } catch (err) {
     sendZipError(res, err);
@@ -42,7 +43,8 @@ export const createStaffZipTicket = async (req: Request, res: Response): Promise
     const deliverable = await prisma.deliverable.findUnique({ where: { id: String(req.params.id) }, select: zipSelect });
     if (!deliverable) { sendError(res, 'Tapılmadı', 404); return; }
     if (!canModifyDeliverable(req.user, deliverable)) { sendError(res, 'Forbidden', 403); return; }
-    await assertZipAllowed(planZip(deliverable).entries);
+    const plan = planZip(deliverable);
+    await assertZipAllowed(plan.entries, plan.needsSizeCheck);
     sendSuccess(res, { ticket: signZipTicket({ deliverableId: deliverable.id, userId, kind: 'staff' }) });
   } catch (err) {
     sendZipError(res, err);
@@ -82,7 +84,8 @@ export const downloadZip = async (req: Request, res: Response): Promise<void> =>
     if (!deliverable) { sendError(res, 'Tapılmadı', 404); return; }
 
     const { base, entries } = planZip(deliverable);
-    await assertZipAllowed(entries);
+    // Sizes were checked when the ticket was issued (where needed); streamZip also enforces the byte limit.
+    await assertZipAllowed(entries, false);
 
     if (!acquireZipSlot()) {
       sendError(res, 'Server məşğuldur, bir neçə saniyədən sonra yenidən cəhd edin.', 429);
