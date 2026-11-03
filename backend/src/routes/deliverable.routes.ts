@@ -8,7 +8,8 @@ import {
   updateDeliverableStatusSchema,
   updateDeliverableSchema,
 } from '../utils/validators/deliverable.validators';
-import { uploadRateLimiter } from '../middleware/rateLimiter.middleware';
+import { uploadRateLimiter, zipRateLimiter } from '../middleware/rateLimiter.middleware';
+import { createStaffZipTicket } from '../controllers/download.controller';
 
 const router = Router();
 
@@ -278,5 +279,6 @@ router.patch(
  *         description: Deliverable not found
  */
 router.delete('/:id', verifyTokenMiddleware, isAdminOrCreator, ctrl.deleteDeliverable);
+router.post('/:id/zip-ticket', verifyTokenMiddleware, isAdminOrCreator, zipRateLimiter, createStaffZipTicket);
 
 export default router;

@@ -267,6 +267,8 @@ const GuidePage = () => {
                   <strong style={{ color: 'var(--text-primary)' }}>Endirmə ikonu</strong> (↓) — faylın{' '}
                   <strong style={{ color: 'var(--text-primary)' }}>orijinal, tam keyfiyyətli</strong> nüsxəsini kompüterinizə/telefonunuza yükləyir.
                   Portalda gördüyünüz önizləmə sıxılmış versiyadır; endirdiyiniz fayl tam keyfiyyətdədir.
+                  Bir neçə şəkilli postda ikona basanda menyu açılır: <strong style={{ color: 'var(--text-primary)' }}>Bu şəkli yüklə</strong> və{' '}
+                  <strong style={{ color: 'var(--text-primary)' }}>Hamısını yüklə (ZIP)</strong>.
                 </>],
                 ['Rəy yazmaq', <>
                   <strong style={{ color: 'var(--text-primary)' }}>Şərh sahəsi</strong> — materialla bağlı fikirlərinizi, düzəliş istəklərinizi yazıb göndərirsiniz.
@@ -296,10 +298,11 @@ const GuidePage = () => {
               <>Materialı açın.</>,
               <>Endirmək istədiyiniz fayla keçin (bir neçə varsa).</>,
               <><strong style={{ color: 'var(--text-primary)' }}>Endirmə ikonuna</strong> (↓) basın. Fayl cihazınızın "Yükləmələr" qovluğuna enir.</>,
+              <>Bir neçə şəkilli postda ikona basanda menyu açılır: <strong style={{ color: 'var(--text-primary)' }}>"Bu şəkli yüklə"</strong> baxdığınız şəkli, <strong style={{ color: 'var(--text-primary)' }}>"Hamısını yüklə (ZIP)"</strong> bütün şəkilləri bir arxivdə endirir (arxivi açıb şəkilləri ayrı-ayrı istifadə edin).</>,
             ]}
           />
           <Callout label="Bilməli olduğunuz">
-            <p><strong style={{ color: 'var(--text-primary)' }}>Önizləmə ≠ endirilən fayl.</strong> Portalda sürətli baxış üçün sıxılmış (məs. 720p) versiya oynadılır. <strong style={{ color: 'var(--text-primary)' }}>Endirdiyiniz fayl həmişə orijinal, tam keyfiyyətlidir</strong> — sosial şəbəkəyə yükləmək və ya arxivləmək üçün onu istifadə edin.</p>
+            <p><strong style={{ color: 'var(--text-primary)' }}>Önizləmə ≠ endirilən fayl.</strong> Portalda sürətli baxış üçün sıxılmış (məs. 720p) versiya oynadılır. <strong style={{ color: 'var(--text-primary)' }}>Endirdiyiniz fayl orijinal, tam keyfiyyətlidir</strong> — sosial şəbəkəyə yükləmək və ya arxivləmək üçün onu istifadə edin. Yalnız köhnə, çox şəkilli postlarda ilk şəkil orijinaldır, qalan şəkillər yüksək keyfiyyətli, lakin kiçildilmiş nüsxə kimi endirilir.</p>
           </Callout>
           <Callout label="Məsləhət">
             <p>Böyük video faylları yüklənərkən bir neçə saniyə çəkə bilər — internet sürətinizdən asılıdır. Səbirli olun, pəncərəni bağlamayın.</p>

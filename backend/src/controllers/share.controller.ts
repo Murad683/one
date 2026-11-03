@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { getSecureDownloadUrl, getSecureDownloadUrlForDownload, getCoverDownloadUrl } from '../services/upload.service';
+import { getSecureDownloadUrl, getSecureDownloadUrlForDownload, getAttachmentUrl } from '../services/upload.service';
 import { CLIENT_VISIBLE_WHERE, presentForClient } from '../utils/retention';
 
 // ─── GET /api/v1/share/:token ───────────────────
@@ -50,7 +50,7 @@ export const getSharedProfile = async (req: Request, res: Response): Promise<voi
               const previewSignedUrl = f.previewUrl
                 ? await getSecureDownloadUrl(f.previewUrl)
                 : (f.url ? await getSecureDownloadUrl(f.url) : null);
-              return { ...f, downloadUrl, previewUrl: previewSignedUrl };
+              return { ...f, downloadUrl, previewUrl: previewSignedUrl, originalDownloadUrl: await getAttachmentUrl(f.originalUrl) };
             } catch {
               return { ...f, downloadUrl: null };
             }
@@ -83,7 +83,7 @@ export const getSharedProfile = async (req: Request, res: Response): Promise<voi
           ...rest,
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
-          thumbnailDownloadUrl: await getCoverDownloadUrl(d.thumbnailUrl),
+          thumbnailDownloadUrl: await getAttachmentUrl(d.thumbnailUrl),
           originalUrl: signedOriginalUrl,
         });
       })

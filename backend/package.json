@@ -23,6 +23,7 @@
     "@ffprobe-installer/ffprobe": "^2.1.2",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "archiver": "^7.0.1",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -47,6 +48,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/archiver": "^6.0.3",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",

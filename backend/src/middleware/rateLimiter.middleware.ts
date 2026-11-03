@@ -65,6 +65,20 @@ export const uploadRateLimiter = rateLimit({
   skip: (req) => req.method === 'OPTIONS',
 });
 
+// "Download all as ZIP": a ticket request per signed-in user (these routes run after auth).
+export const zipRateLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req: Request) => req.user?.id ?? clientKey(req),
+  message: {
+    success: false,
+    message: 'Çox tez-tez ZIP istəyirsiniz, bir az gözləyin.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
+});
+
 // Help assistant: limited per signed-in user (these routes run after auth),
 // plus a shared cap so one Gemini API key's quota can't be exhausted by all
 // users together.

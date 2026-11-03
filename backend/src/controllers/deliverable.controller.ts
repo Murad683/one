@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
-import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloadUrlForDownload, getCoverDownloadUrl, collectDeliverableKeys, deleteUnreferencedDeliverableKeys, getPresignedUploadUrl, getBlobProperties, downloadBlobToFile, createMultipartUpload, getMultipartUploadUrls, completeMultipartUpload as completeMultipartUploadStorage, abortMultipartUpload as abortMultipartUploadStorage } from '../services/upload.service';
+import { processAndStoreFile, deleteFile, getSecureDownloadUrl, getSecureDownloadUrlForDownload, getAttachmentUrl, collectDeliverableKeys, deleteUnreferencedDeliverableKeys, getPresignedUploadUrl, getBlobProperties, downloadBlobToFile, createMultipartUpload, getMultipartUploadUrls, completeMultipartUpload as completeMultipartUploadStorage, abortMultipartUpload as abortMultipartUploadStorage } from '../services/upload.service';
 import { uploadSiteMediaWithThumbnail } from '../middleware/upload.middleware';
 import { optimizeImage } from '../services/image.service';
 import {
@@ -132,7 +132,7 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
               const previewSignedUrl = f.previewUrl
                 ? await getSecureDownloadUrl(f.previewUrl)
                 : (f.url ? await getSecureDownloadUrl(f.url) : null);
-              return { ...f, downloadUrl, previewUrl: previewSignedUrl };
+              return { ...f, downloadUrl, previewUrl: previewSignedUrl, originalDownloadUrl: await getAttachmentUrl(f.originalUrl) };
             } catch {
               return { ...f, downloadUrl: null };
             }
@@ -160,7 +160,7 @@ export const getMyDeliverables = async (req: Request, res: Response): Promise<vo
           }
         }
 
-        return presentForClient({ ...d, files: filesWithSignedUrls, thumbnailUrl: signedThumbnailUrl, thumbnailDownloadUrl: await getCoverDownloadUrl(d.thumbnailUrl), originalUrl: signedOriginalUrl });
+        return presentForClient({ ...d, files: filesWithSignedUrls, thumbnailUrl: signedThumbnailUrl, thumbnailDownloadUrl: await getAttachmentUrl(d.thumbnailUrl), originalUrl: signedOriginalUrl });
       })
     );
 
@@ -206,7 +206,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
               const previewSignedUrl = f.previewUrl
                 ? await getSecureDownloadUrl(f.previewUrl)
                 : (f.url ? await getSecureDownloadUrl(f.url) : null);
-              return { ...f, downloadUrl, previewUrl: previewSignedUrl };
+              return { ...f, downloadUrl, previewUrl: previewSignedUrl, originalDownloadUrl: await getAttachmentUrl(f.originalUrl) };
             } catch {
               return { ...f, downloadUrl: null };
             }
@@ -238,7 +238,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
           ...d,
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
-          thumbnailDownloadUrl: await getCoverDownloadUrl(d.thumbnailUrl),
+          thumbnailDownloadUrl: await getAttachmentUrl(d.thumbnailUrl),
           originalUrl: signedOriginalUrl,
           client: d.client && {
             ...d.client,
@@ -601,6 +601,8 @@ const processDeliverableBackground = async (
 
       let result: { url: string; fileName: string; fileSize: number; mimeType: string };
       let optimizedTempPath: string | null = null;
+      // This file's own untouched original (images), so every image of a carousel downloads in full quality.
+      let fileOriginalUrl: string | undefined;
 
       if (isImageByMimeForOptimize && file.path) {
         // Read dimensions and optimize BEFORE uploading the original —
@@ -609,6 +611,7 @@ const processDeliverableBackground = async (
         const fallbackDims = optimized ? null : await getMediaDimensions(file.path, false);
         const originalUploadResult = await processAndStoreFile(file, folder);
         createdKeys.push(originalUploadResult.url);
+        fileOriginalUrl = originalUploadResult.url;
 
         if (optimized) {
           optimizedTempPath = optimized.path;
@@ -668,6 +671,7 @@ const processDeliverableBackground = async (
         size: result.fileSize,
         type: result.mimeType,
         ...(previewUrl && { previewUrl }),
+        ...(fileOriginalUrl && { originalUrl: fileOriginalUrl }),
       });
     }
 
@@ -1066,6 +1070,8 @@ const processDirectUploadBackground = async (
       const isImageByMimeForOptimize = file.mimeType?.startsWith('image/') || isImageFileExt;
 
       let result: { url: string; fileName: string; fileSize: number; mimeType: string };
+      // This file's own untouched original (images), so every image of a carousel downloads in full quality.
+      let fileOriginalUrl: string | undefined;
 
       if (isImageByMimeForOptimize) {
         // Read dimensions and optimize BEFORE uploading the original —
@@ -1087,6 +1093,7 @@ const processDirectUploadBackground = async (
         };
         const originalUploadResult = await processAndStoreFile(originalMulterFile, folder);
         createdKeys.push(originalUploadResult.url);
+        fileOriginalUrl = originalUploadResult.url;
 
         if (optimized) {
           tempFilesToCleanup.push(optimized.path);
@@ -1154,6 +1161,7 @@ const processDirectUploadBackground = async (
         size: result.fileSize,
         type: result.mimeType,
         ...(previewUrl && { previewUrl }),
+        ...(fileOriginalUrl && { originalUrl: fileOriginalUrl }),
       });
     }
 
