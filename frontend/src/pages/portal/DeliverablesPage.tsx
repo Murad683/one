@@ -265,6 +265,11 @@ export const PreviewModal = ({
   const activeDownloadUrl =
     activeFile?.originalDownloadUrl || (activeIndex === 0 ? item.originalUrl : null) || activeFile?.downloadUrl || url;
   const hasMultipleFiles = (item.files?.length ?? 0) > 1;
+  const activeFileLabel = isVideoFile(activeFile?.type ?? null, activeFile?.name ?? null)
+    ? 'Bu videonu yüklə'
+    : isImageFile(activeFile?.type ?? null, activeFile?.name ?? null)
+      ? 'Bu şəkli yüklə'
+      : 'Bu faylı yüklə';
   // One download icon; on a post with several files it opens a small menu (this file / all as ZIP).
   // The ZIP needs the signed-in portal, so the shared link keeps the plain per-file download.
   const showDownloadMenu = hasMultipleFiles && !readOnly;
@@ -293,14 +298,16 @@ export const PreviewModal = ({
     setZipBusy(true);
     setZipError('');
     try {
-      const res = (await apiClient.post(`/dashboard/deliverables/${item.id}/zip-ticket`)) as unknown as {
+      // Time limit so "Hazırlanır…" can never spin forever when the storage is slow.
+      const res = (await apiClient.post(`/dashboard/deliverables/${item.id}/zip-ticket`, undefined, { timeout: 60000 })) as unknown as {
         data: { ticket: string };
       };
       saveUrl(`${BACKEND}/api/v1/downloads/${res.data.ticket}`);
       setDownloadMenuOpen(false);
     } catch (err) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setZipError(message || 'ZIP hazırlana bilmədi. Yenidən cəhd edin.');
+      const timedOut = (err as { code?: string })?.code === 'ECONNABORTED';
+      setZipError(message || (timedOut ? 'Hazırlanması çox çəkdi, yenidən cəhd edin.' : 'ZIP hazırlana bilmədi. Yenidən cəhd edin.'));
     } finally {
       setZipBusy(false);
     }
@@ -567,7 +574,7 @@ export const PreviewModal = ({
                        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] hover:opacity-60 disabled:opacity-40 transition-opacity"
                      >
                        <Download size={16} strokeWidth={1.75} />
-                       Bu şəkli yüklə
+                       {activeFileLabel}
                      </button>
                      <button
                        role="menuitem"

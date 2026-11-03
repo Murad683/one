@@ -218,11 +218,13 @@ const PreviewOverlay = ({
     setZipBusy(true);
     setZipError('');
     try {
-      const response = await api.post<ApiEnvelope<{ ticket: string }>>(`/deliverables/${item.id}/zip-ticket`);
+      // Time limit so "Hazırlanır…" can never spin forever when the storage is slow.
+      const response = await api.post<ApiEnvelope<{ ticket: string }>>(`/deliverables/${item.id}/zip-ticket`, undefined, { timeout: 60000 });
       saveUrl(`${BACKEND}/api/v1/downloads/${response.data.data.ticket}`);
       setDownloadMenuOpen(false);
     } catch (err) {
-      setZipError(requestErrorMessage(err, 'ZIP hazırlana bilmədi. Yenidən cəhd edin.'));
+      const timedOut = (err as { code?: string })?.code === 'ECONNABORTED';
+      setZipError(requestErrorMessage(err, timedOut ? 'Hazırlanması çox çəkdi, yenidən cəhd edin.' : 'ZIP hazırlana bilmədi. Yenidən cəhd edin.'));
     } finally {
       setZipBusy(false);
     }

@@ -8,6 +8,9 @@ import { canStreamObjects, extractStorageKey, getBlobProperties, getObjectStream
 export const MAX_ZIP_FILES = 30;
 export const MAX_ZIP_BYTES = 200 * 1024 * 1024;
 const MAX_CONCURRENT_ZIPS = 2;
+// Asking the storage for every file's size is slow and erratic (single calls took 10 ms to 6 s), so it is
+// done only where a ZIP can really get big: a post with a video or with many files.
+const SIZE_CHECK_MIN_FILES = 12;
 
 let activeZips = 0;
 export const acquireZipSlot = (): boolean => {
@@ -60,9 +63,9 @@ const asciiFallback = (name: string): string =>
  * uploaded after per-file originals were recorded), else the first file's
  * row-level original, else the file as shown in the portal.
  */
-export const planZip = (row: ZipSource): { base: string; entries: ZipEntry[] } => {
+export const planZip = (row: ZipSource): { base: string; entries: ZipEntry[]; needsSizeCheck: boolean } => {
   const files = Array.isArray(row.files)
-    ? (row.files as Array<{ url?: unknown; originalUrl?: unknown; name?: unknown }>)
+    ? (row.files as Array<{ url?: unknown; originalUrl?: unknown; name?: unknown; type?: unknown }>)
     : [];
   const base = safeBase(row.title);
   const entries: ZipEntry[] = [];
@@ -73,24 +76,30 @@ export const planZip = (row: ZipSource): { base: string; entries: ZipEntry[] } =
     const ext = path.extname(extractStorageKey(key) || '') || path.extname(String(f?.name ?? ''));
     entries.push({ key, name: `${base}-${entries.length + 1}${ext}` });
   });
-  return { base, entries };
+  const hasVideo = files.some((f) => typeof f?.type === 'string' && f.type.toLowerCase().startsWith('video/'));
+  return { base, entries, needsSizeCheck: hasVideo || entries.length > SIZE_CHECK_MIN_FILES };
 };
 
-/** Throws a ZipError the caller can show as is, before any byte of the ZIP is sent. */
-export const assertZipAllowed = async (entries: ZipEntry[]): Promise<void> => {
+/**
+ * Throws a ZipError the caller can show as is, before any byte of the ZIP is sent.
+ * The size check (one storage call per file, run in parallel) only runs when `checkSizes` is true;
+ * streamZip also stops a ZIP that grows past the limit.
+ */
+export const assertZipAllowed = async (entries: ZipEntry[], checkSizes: boolean): Promise<void> => {
   if (!canStreamObjects()) throw new ZipError('ZIP yükləmə hazırda mövcud deyil.', 501);
   if (entries.length < 2) throw new ZipError('ZIP yalnız bir neçə fayl olanda lazımdır.', 400);
   if (entries.length > MAX_ZIP_FILES) {
     throw new ZipError(`Bir ZIP-də ən çox ${MAX_ZIP_FILES} fayl ola bilər. Faylları ayrı-ayrılıqda yükləyin.`, 413);
   }
+  if (!checkSizes) return;
+  const sizes = await Promise.all(entries.map((entry) => getBlobProperties(entry.key)));
   let total = 0;
-  for (const entry of entries) {
-    const props = await getBlobProperties(entry.key);
+  for (const props of sizes) {
     if (!props.exists) throw new ZipError('Fayllardan biri tapılmadı.', 404);
     total += props.contentLength ?? 0;
-    if (total > MAX_ZIP_BYTES) {
-      throw new ZipError('Fayllar ZIP üçün çox böyükdür. Faylları ayrı-ayrılıqda yükləyin.', 413);
-    }
+  }
+  if (total > MAX_ZIP_BYTES) {
+    throw new ZipError('Fayllar ZIP üçün çox böyükdür. Faylları ayrı-ayrılıqda yükləyin.', 413);
   }
 };
 
@@ -116,6 +125,7 @@ export const streamZip = async (res: Response, base: string, entries: ZipEntry[]
   let failCurrent: ((err: unknown) => void) | null = null;
   archive.on('error', (err) => failCurrent?.(err));
 
+  let bytes = 0;
   try {
     for (const entry of entries) {
       if (aborted) return;
@@ -123,6 +133,11 @@ export const streamZip = async (res: Response, base: string, entries: ZipEntry[]
       await new Promise<void>((resolve, reject) => {
         failCurrent = reject;
         body.once('error', reject);
+        // Safety net for ZIPs that skipped the size check: stop once the packed bytes pass the limit.
+        body.on('data', (chunk: Buffer) => {
+          bytes += chunk.length;
+          if (bytes > MAX_ZIP_BYTES) body.destroy(new Error('ZIP size limit exceeded'));
+        });
         archive.once('entry', () => resolve());
         archive.append(body, { name: entry.name });
       });
