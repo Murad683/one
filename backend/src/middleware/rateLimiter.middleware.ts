@@ -136,3 +136,20 @@ export const contactRateLimiter = rateLimit({
   legacyHeaders: false,
   skip: (req) => req.method === 'OPTIONS',
 });
+
+// Highlight editor: one request per image, so a 30-image highlight must go through. Keyed by staff member (the route is authenticated).
+export const highlightUploadRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  keyGenerator: (req) => {
+    const id = (req.user as { id?: string } | undefined)?.id;
+    return id ? `staff:${id}` : clientKey(req);
+  },
+  message: {
+    success: false,
+    message: 'Çox sayda yükləmə. Bir az gözləyin.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
+});

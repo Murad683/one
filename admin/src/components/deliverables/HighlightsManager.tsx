@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Image as ImageIcon, Plus } from 'lucide-react';
 import {
   MAX_HIGHLIGHTS,
-  createHighlight,
   listHighlights,
   reorderHighlights,
   type HighlightSummary,
 } from '../../api/highlights.api';
 import { requestErrorMessage } from '../../lib/apiHelpers';
+import useToastStore from '@/store/useToastStore';
+import Button from '../ui/Button';
 import Combobox from '../ui/Combobox';
-import { HighlightEditor } from './highlights/HighlightEditor';
-import { HighlightGrid } from './highlights/HighlightGrid';
-import { SaveStatus } from './highlights/SaveStatus';
-import { useSaveStatus } from './highlights/useSaveStatus';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import { HighlightEditorModal } from './highlights/HighlightEditorModal';
+import { SortableGrid } from './highlights/SortableGrid';
 
 interface HighlightClient {
   id: string;
@@ -26,17 +27,28 @@ interface HighlightsManagerProps {
   onRefreshClients: () => void;
 }
 
+/** The list in the order the admin dragged it into (ids the server does not know yet go last). */
+const applyOrder = (list: HighlightSummary[], order: string[] | null): HighlightSummary[] => {
+  if (!order) return list;
+  const rank = new Map(order.map((id, index) => [id, index]));
+  return [...list].sort((a, b) => (rank.get(a.id) ?? order.length) - (rank.get(b.id) ?? order.length));
+};
+
 /**
- * "Önə çıxanlar" tab: pick a client, see their highlights as circles, open one to add and arrange
- * its images. Every change is saved at once (no "Save" button). Admins and creators use the same screen.
+ * "Önə çıxanlar" tab: pick a client, see their highlights as circles, open one in an editor window.
+ * Nothing reaches the client until "Yadda saxla" (in the editor, or in the bar that appears after
+ * the circles were rearranged). Admins and creators use the same screen.
  */
 export const HighlightsManager = ({ clients, onRefreshClients }: HighlightsManagerProps) => {
   const [clientId, setClientId] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editor, setEditor] = useState<{ highlightId: string | null } | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
   const [loaded, setLoaded] = useState<{ clientId: string; list: HighlightSummary[] } | null>(null);
   const [failure, setFailure] = useState<{ clientId: string; message: string } | null>(null);
-  const { state: saveState, track } = useSaveStatus();
+  const [order, setOrder] = useState<string[] | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [switchTo, setSwitchTo] = useState<string | null>(null);
+  const addToast = useToastStore((state) => state.addToast);
 
   const client = clients.find((entry) => entry.id === clientId);
   const options = useMemo(
@@ -69,36 +81,60 @@ export const HighlightsManager = ({ clients, onRefreshClients }: HighlightsManag
     };
   }, [clientId, reloadTick]);
 
+  // Rearranged circles that are not saved yet: warn before the tab or page is closed.
+  useEffect(() => {
+    if (!order) return undefined;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [order]);
+
   const list = loaded && loaded.clientId === clientId ? loaded.list : null;
   const error = failure && failure.clientId === clientId ? failure.message : '';
+  const shown = list ? applyOrder(list, order) : null;
+  const full = (list?.length ?? 0) >= MAX_HIGHLIGHTS;
 
   const reload = () => setReloadTick((tick) => tick + 1);
 
-  const handleCreate = async (title: string) => {
-    const created = await track(createHighlight(clientId, title), 'Highlight yaradıla bilmədi.');
-    if (created) {
-      reload();
-      onRefreshClients();
-      setEditingId(created.id);
+  const selectClient = (value: string) => {
+    if (value === clientId) return;
+    if (order) setSwitchTo(value);
+    else setClientId(value);
+  };
+
+  const handleReorder = (ids: string[]) => {
+    const original = (list ?? []).map((entry) => entry.id);
+    const same = ids.length === original.length && ids.every((id, index) => id === original[index]);
+    setOrder(same ? null : ids);
+  };
+
+  const saveOrder = async () => {
+    if (!order || savingOrder) return;
+    setSavingOrder(true);
+    try {
+      const saved = await reorderHighlights(clientId, order);
+      setLoaded({ clientId, list: saved });
+      setOrder(null);
+      addToast('Sıra yadda saxlandı', 'success');
+    } catch (err) {
+      addToast(requestErrorMessage(err, 'Sıra yadda saxlanmadı. Yenidən cəhd edin.'), 'error');
+    } finally {
+      setSavingOrder(false);
     }
   };
 
-  const handleReorder = async (next: HighlightSummary[]) => {
-    setLoaded({ clientId, list: next });
-    const saved = await track(reorderHighlights(clientId, next.map((entry) => entry.id)));
-    if (saved) setLoaded({ clientId, list: saved });
-    else reload();
-  };
-
-  const closeEditor = () => {
-    setEditingId(null);
+  const closeEditor = () => setEditor(null);
+  const handleChanged = () => {
     reload();
     onRefreshClients();
   };
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div className="rounded-xl border border-edge bg-surface p-6 shadow-sm">
+      <div className="rounded-xl border border-edge bg-surface p-4 shadow-sm sm:p-6">
         <h3 className="mb-1 text-lg font-semibold text-heading">Önə çıxanlar (Highlights)</h3>
         <p className="mb-4 text-sm text-muted">
           Müştərinin profilindəki dairələr. Hər highlight-a bir neçə şəkil əlavə edə bilərsiniz, müştəri üzərinə basıb story kimi izləyir.
@@ -109,10 +145,7 @@ export const HighlightsManager = ({ clients, onRefreshClients }: HighlightsManag
             label="Müştəri seçin"
             options={options}
             value={clientId}
-            onChange={(value) => {
-              setClientId(value);
-              setEditingId(null);
-            }}
+            onChange={selectClient}
             placeholder="Müştəri axtar..."
           />
         </div>
@@ -123,23 +156,18 @@ export const HighlightsManager = ({ clients, onRefreshClients }: HighlightsManag
           </div>
         )}
 
-        {client && editingId && <HighlightEditor key={editingId} highlightId={editingId} onBack={closeEditor} />}
-
-        {client && !editingId && (
+        {client && (
           <div className="space-y-4 border-t border-edge pt-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h4 className="font-medium text-heading">{client.name}</h4>
                 {client.email && <p className="text-sm text-muted">{client.email}</p>}
               </div>
-              <div className="flex items-center gap-3">
-                <SaveStatus state={saveState} />
-                {list && (
-                  <span className="rounded-md border border-edge bg-surface-alt px-2 py-1 text-xs font-medium text-muted">
-                    {list.length} / {MAX_HIGHLIGHTS}
-                  </span>
-                )}
-              </div>
+              {list && (
+                <span className="rounded-md border border-edge bg-surface-alt px-2 py-1 text-xs font-medium text-muted">
+                  {list.length} / {MAX_HIGHLIGHTS}
+                </span>
+              )}
             </div>
 
             {error && (
@@ -147,18 +175,103 @@ export const HighlightsManager = ({ clients, onRefreshClients }: HighlightsManag
                 {error}
               </p>
             )}
-            {!error && !list && <p className="text-sm text-muted">Yüklənir…</p>}
-            {list && (
-              <HighlightGrid
-                highlights={list}
-                onOpen={setEditingId}
-                onCreate={handleCreate}
-                onReorder={(next) => void handleReorder(next)}
-              />
+            {!error && !shown && <p className="text-sm text-muted">Yüklənir…</p>}
+
+            {shown && (
+              <div className="space-y-3">
+                <SortableGrid
+                  items={shown}
+                  getId={(entry) => entry.id}
+                  getLabel={(entry) => `${entry.title} highlight-ı`}
+                  onReorder={handleReorder}
+                  disabled={savingOrder}
+                  className="flex flex-wrap items-start gap-x-1 sm:gap-x-3 gap-y-5 rounded-xl border border-edge bg-surface-alt p-3 sm:p-4"
+                  renderItem={(entry) => (
+                    <button
+                      type="button"
+                      onClick={() => setEditor({ highlightId: entry.id })}
+                      aria-label={`${entry.title} highlight-ını redaktə et`}
+                      className="group flex w-[4.75rem] sm:w-24 flex-col items-center gap-1.5 rounded-lg p-1 focus:outline-none"
+                    >
+                      <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-edge bg-surface shadow-sm transition group-hover:border-accent">
+                        {entry.coverUrl ? (
+                          <img src={entry.coverUrl} alt="" className="h-full w-full object-cover" draggable={false} />
+                        ) : (
+                          <ImageIcon size={20} className="text-faint" aria-hidden="true" />
+                        )}
+                      </span>
+                      <span className="w-full truncate text-center text-xs font-medium text-body" title={entry.title}>
+                        {entry.title}
+                      </span>
+                      <span className="text-xs text-muted">{entry.itemCount} şəkil</span>
+                    </button>
+                  )}
+                  trailing={
+                    full ? null : (
+                      <button
+                        type="button"
+                        onClick={() => setEditor({ highlightId: null })}
+                        className="flex w-[4.75rem] sm:w-24 flex-col items-center gap-1.5 rounded-lg p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      >
+                        <span className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-edge text-muted transition hover:border-accent hover:text-accent">
+                          <Plus size={22} aria-hidden="true" />
+                        </span>
+                        <span className="w-full text-center text-xs font-medium text-body">Yeni highlight</span>
+                      </button>
+                    )
+                  }
+                />
+
+                {shown.length === 0 && (
+                  <p className="text-sm text-muted">Bu müştərinin hələ highlight-ı yoxdur. "Yeni highlight" ilə başlayın.</p>
+                )}
+                {full && <p className="text-sm text-muted">Bir müştəridə ən çox {MAX_HIGHLIGHTS} highlight ola bilər.</p>}
+                <p className="text-sm text-muted">
+                  Redaktə etmək üçün highlight-a basın. Sıranı dəyişmək üçün dairəni sürüşdürün (telefonda uzun basıb).
+                </p>
+              </div>
             )}
           </div>
         )}
       </div>
+
+      {order && (
+        <div className="sticky bottom-3 z-10 flex flex-col gap-2 rounded-xl border border-edge bg-surface p-3 shadow-lg sm:flex-row sm:items-center sm:justify-between sm:px-4">
+          <p className="text-sm font-medium text-heading">Sıra dəyişdi, müştəri hələ köhnə sıranı görür.</p>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setOrder(null)} disabled={savingOrder} className="max-sm:flex-1">
+              Ləğv et
+            </Button>
+            <Button onClick={() => void saveOrder()} isLoading={savingOrder} className="max-sm:flex-1">
+              Yadda saxla
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {client && editor && (
+        <HighlightEditorModal
+          key={editor.highlightId ?? 'new'}
+          clientId={client.id}
+          highlightId={editor.highlightId}
+          onClose={closeEditor}
+          onChanged={handleChanged}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={switchTo !== null}
+        onClose={() => setSwitchTo(null)}
+        onConfirm={() => {
+          setOrder(null);
+          setClientId(switchTo ?? '');
+          setSwitchTo(null);
+        }}
+        title="Sıra yadda saxlanmayıb"
+        message="Müştərini dəyişsəniz sıra dəyişikliyi itəcək."
+        confirmText="Davam et"
+        cancelText="Geri qayıt"
+      />
     </div>
   );
 };
