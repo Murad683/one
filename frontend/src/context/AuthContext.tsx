@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../api/client';
 
 interface User {
@@ -34,11 +34,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [restored, setRestored] = useState(false);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const inPortal = pathname.startsWith('/portal');
+  const restoreStarted = useRef(false);
 
-  // Restore session on mount
+  // Only the portal needs to know who is signed in. Public pages skip the
+  // /auth/me call (it answered 401 for every anonymous visitor).
+  const isLoading = inPortal && !restored;
+
+  // Restore session the first time the portal is reached
   useEffect(() => {
+    if (!inPortal || restoreStarted.current) return;
+    restoreStarted.current = true;
     (apiClient.get('/auth/me') as Promise<{ data: { user: User } }>)
       .then((res) => {
         setUser(res.data.user);
@@ -47,9 +56,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(null);
       })
       .finally(() => {
-        setIsLoading(false);
+        setRestored(true);
       });
-  }, []);
+  }, [inPortal]);
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await apiClient.post('/auth/login', { email, password }) as unknown as {
@@ -62,6 +71,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.setItem('refreshToken', res.data.refreshToken);
     }
     setUser(res.data.user);
+    restoreStarted.current = true;
+    setRestored(true);
     navigate('/portal/panel');
   }, [navigate]);
 
