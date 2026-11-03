@@ -5,6 +5,8 @@ import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { X, FileX, Video, Image, Grid3X3, MessageCircle, Heart, Send, Download, Archive, Loader2, ChevronLeft, ChevronRight, Pencil, Trash2, Clock } from 'lucide-react';
 import { daysUntil, retentionLabel, RETENTION_WARNING_DAYS } from '../../utils/retention';
+import { HighlightsSection } from '../../components/ui/HighlightsSection';
+import type { HighlightDetail, HighlightSummary } from '../../components/ui/highlightTypes';
 
 interface Deliverable {
   id: string;
@@ -831,6 +833,19 @@ const DeliverablesPage = () => {
 
   const lastFetched = useRef(0);
 
+  // Highlight circles (cover + count); the images are fetched when one is opened.
+  const [highlights, setHighlights] = useState<HighlightSummary[]>([]);
+  useEffect(() => {
+    (apiClient.get('/dashboard/highlights') as Promise<{ data: HighlightSummary[] }>)
+      .then((res) => setHighlights(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setHighlights([]));
+  }, []);
+  const loadHighlight = useCallback(
+    (id: string) =>
+      (apiClient.get(`/dashboard/highlights/${id}`) as Promise<{ data: HighlightDetail }>).then((res) => res.data),
+    [],
+  );
+
   const fetchItems = useCallback((currentPage: number) => {
     if (currentPage === 1) setLoading(true);
     else setLoadingMore(true);
@@ -903,7 +918,6 @@ const DeliverablesPage = () => {
   const igFollowing = user?.igFollowing || '0';
   const igPostsCount = user?.igPostsCount || '0';
   const igProfilePic = sanitizeUrl(user?.igProfilePic || null);
-  const igHighlights: { title: string; imageUrl: string }[] = Array.isArray(user?.igHighlights) ? user.igHighlights : [];
 
   const displayPostCount = igPostsCount !== '0' ? igPostsCount : String(totalPosts);
 
@@ -1032,42 +1046,7 @@ const DeliverablesPage = () => {
               <p className="whitespace-pre-line leading-[18px]">{igBio}</p>
             </div>
 
-            {/* ── Instagram Highlights Row ── */}
-            {igHighlights.length > 0 && (
-              <div className="mt-4 md:mt-6 overflow-x-auto no-scrollbar">
-                <div className="flex gap-4 md:gap-8 pb-1" style={{ minWidth: 'min-content' }}>
-                  {igHighlights.map((h, idx) => (
-                    <div key={idx} className="flex flex-col items-center gap-2 shrink-0 select-none w-[72px] md:w-[85px]">
-                      {/* Outer grey ring */}
-                      <div
-                        className="rounded-full flex items-center justify-center shrink-0 w-[64px] h-[64px] md:w-[80px] md:h-[80px]"
-                        style={{
-                          border: '1px solid var(--ig-border)',
-                          padding: '3px',
-                        }}
-                      >
-                        <div className="w-full h-full rounded-full overflow-hidden" style={{ backgroundColor: 'var(--ig-bg)' }}>
-                          <img
-                            src={resolveFileUrl(h.imageUrl)}
-                            alt={h.title}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            decoding="async"
-                            draggable={false}
-                          />
-                        </div>
-                      </div>
-                      <span
-                        className="text-[11px] md:text-[12px] text-center truncate w-full"
-                        style={{ color: 'var(--ig-text)' }}
-                      >
-                        {h.title}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <HighlightsSection highlights={highlights} loadDetail={loadHighlight} />
 
             {/* Mobile: Buttons Row (Hidden on Desktop) */}
             <div className="flex md:hidden items-center gap-2 mt-4">

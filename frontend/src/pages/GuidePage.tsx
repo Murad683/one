@@ -255,6 +255,15 @@ const GuidePage = () => {
             <li>Hər elementin üzərində <strong style={{ color: 'var(--text-primary)' }}>status nişanı</strong> var: <Pill tone="ok">Hazırdır</Pill> və ya <Pill tone="wait">Hazırlanır</Pill>.</li>
           </ul>
 
+          <h3 className="text-lg font-semibold mt-6 mb-2" style={{ color: 'var(--text-primary)' }}>Profilin yuxarısındakı highlight-lar</h3>
+          <p className="mb-3">Profil başlığının altındakı <strong style={{ color: 'var(--text-primary)' }}>dairələr</strong> (Önə çıxanlar) Instagram-dakı kimi işləyir: dairəyə basın, içindəki şəkillər tam ekranda story kimi açılır.</p>
+          <ul className="list-disc list-inside space-y-2 mb-3">
+            <li>Hər şəkil bir neçə saniyə göstərilir və özü növbətiyə keçir; sonda növbəti highlight açılır.</li>
+            <li>Növbəti şəkil üçün ekranın sağına, əvvəlkinə qayıtmaq üçün sol tərəfinə basın (kompüterdə ← → düymələri də işləyir).</li>
+            <li>Ekrana <strong style={{ color: 'var(--text-primary)' }}>basılı saxlasanız</strong> şəkil dayanır, buraxanda davam edir.</li>
+            <li>Telefonda yana sürüşdürmək highlight-lar arasında keçir, aşağı sürüşdürmək bağlayır. Kompüterdə bağlamaq üçün × və ya Esc.</li>
+          </ul>
+
           <h3 className="text-lg font-semibold mt-6 mb-2" style={{ color: 'var(--text-primary)' }}>Bir materialın içində nə var</h3>
           <p className="mb-3">Şəbəkədə istənilən elementə <strong style={{ color: 'var(--text-primary)' }}>klikləyin</strong> — tam ekran pəncərə açılır. Bir "çatdırılma" bir və ya bir neçə fayldan ibarət ola bilər (məsələn: bir video + bir neçə şəkil). Fayllar arasında <strong style={{ color: 'var(--text-primary)' }}>ox düymələri</strong> ilə keçirsiniz.</p>
 
