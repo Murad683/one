@@ -224,6 +224,17 @@ export const uploadSiteMediaArray = wrapMulterArray(
   10
 );
 
+// Story-style highlight images: up to 10 per request (MAX_FILES_PER_REQUEST in highlight.service), 10 MB each.
+export const uploadHighlightImages = wrapMulterArray(
+  multer({
+    storage,
+    fileFilter: imageFilter,
+    limits: { fileSize: MAX_IMAGE_SIZE_BYTES },
+  }),
+  'files',
+  10
+);
+
 export const wrapMulterFields = (
   multerInstance: multer.Multer,
   fields: multer.Field[]

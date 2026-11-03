@@ -3,6 +3,7 @@ import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { getSecureDownloadUrl, getSecureDownloadUrlForDownload, getAttachmentUrl } from '../services/upload.service';
 import { CLIENT_VISIBLE_WHERE, presentForClient } from '../utils/retention';
+import { getForViewer, listForViewer } from '../services/highlight.service';
 
 // ─── GET /api/v1/share/:token ───────────────────
 // Public, unauthenticated — read-only view of a client's READY deliverables.
@@ -110,5 +111,45 @@ export const getSharedProfile = async (req: Request, res: Response): Promise<voi
   } catch (err) {
     console.error('getSharedProfile error:', err);
     sendError(res, 'Məlumatları yükləmək mümkün olmadı', 500);
+  }
+};
+
+// The client behind a valid, unexpired share link; null otherwise (same rule as getSharedProfile).
+const findSharedClient = async (token: string) => {
+  const client = await prisma.user.findUnique({ where: { shareToken: token } });
+  if (!client || client.role !== 'CLIENT' || !client.shareTokenExpiresAt || client.shareTokenExpiresAt < new Date()) {
+    return null;
+  }
+  return client;
+};
+
+// GET /api/v1/share/:token/highlights - public, read-only list of the client's highlights.
+export const getSharedHighlights = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const client = await findSharedClient(req.params.token as string);
+    if (!client) {
+      sendError(res, 'Link tapılmadı və ya vaxtı bitib', 404);
+      return;
+    }
+    sendSuccess(res, await listForViewer(client.id));
+  } catch (err) {
+    console.error('getSharedHighlights error:', err);
+    sendError(res, 'Highlight-ları yükləmək mümkün olmadı', 500);
+  }
+};
+
+// GET /api/v1/share/:token/highlights/:id - one highlight with its images.
+export const getSharedHighlight = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const client = await findSharedClient(req.params.token as string);
+    const highlight = client ? await getForViewer(client.id, req.params.id as string) : null;
+    if (!highlight) {
+      sendError(res, 'Link tapılmadı və ya vaxtı bitib', 404);
+      return;
+    }
+    sendSuccess(res, highlight);
+  } catch (err) {
+    console.error('getSharedHighlight error:', err);
+    sendError(res, 'Highlight-ı yükləmək mümkün olmadı', 500);
   }
 };

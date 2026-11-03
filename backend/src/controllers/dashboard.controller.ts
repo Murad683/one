@@ -3,6 +3,7 @@ import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { getSecureDownloadUrl, getSecureDownloadUrlForDownload, getAttachmentUrl } from '../services/upload.service';
 import { CLIENT_VISIBLE_WHERE, presentForClient } from '../utils/retention';
+import { getForViewer, listForViewer } from '../services/highlight.service';
 
 // ─── GET /api/v1/dashboard/overview ────────────
 export const getOverview = async (req: Request, res: Response): Promise<void> => {
@@ -277,5 +278,30 @@ export const deleteFeedback = async (req: Request, res: Response): Promise<void>
   } catch (err) {
     console.error('deleteFeedback error:', err);
     sendError(res, 'Rəy silinə bilmədi', 500);
+  }
+};
+
+// GET /api/v1/dashboard/highlights - the signed-in client's highlight circles (cover + image count).
+export const getMyHighlights = async (req: Request, res: Response): Promise<void> => {
+  try {
+    sendSuccess(res, await listForViewer(req.user!.id));
+  } catch (err) {
+    console.error('getMyHighlights error:', err);
+    sendError(res, 'Highlight-ları yükləmək mümkün olmadı', 500);
+  }
+};
+
+// GET /api/v1/dashboard/highlights/:id - one highlight with its images, only if it is the client's own.
+export const getMyHighlight = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const highlight = await getForViewer(req.user!.id, req.params.id as string);
+    if (!highlight) {
+      sendError(res, 'Highlight tapılmadı', 404);
+      return;
+    }
+    sendSuccess(res, highlight);
+  } catch (err) {
+    console.error('getMyHighlight error:', err);
+    sendError(res, 'Highlight-ı yükləmək mümkün olmadı', 500);
   }
 };

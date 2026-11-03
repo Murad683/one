@@ -30,6 +30,7 @@ model User {
   payments     Payment[]
   tickets      Ticket[]
   refreshTokens RefreshToken[]
+  highlights   Highlight[]
   createdDeliverables Deliverable[] @relation("DeliverableCreatedBy")
   // Retention notice mails (services/notice.service.ts)
   emailBouncedAt    DateTime?   // the address bounced or complained: no more mail until it is changed
@@ -283,4 +284,34 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+// Instagram-style highlights: a circle (cover + title) that opens a story viewer.
+// User.igHighlights (JSON) is the older one-image form; it is never dropped and is
+// copied into these tables the first time staff edit a client's highlights.
+model Highlight {
+  id          String          @id @default(cuid())
+  userId      String
+  title       String
+  // The item shown on the circle; null = the first item.
+  coverItemId String?
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       HighlightItem[]
+
+  @@index([userId, sortOrder])
+}
+
+model HighlightItem {
+  id          String    @id @default(cuid())
+  highlightId String
+  // Storage key of the (optimized) image.
+  imageUrl    String
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  highlight   Highlight @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+
+  @@index([highlightId, sortOrder])
 }

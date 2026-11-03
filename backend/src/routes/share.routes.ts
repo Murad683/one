@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getSharedProfile } from '../controllers/share.controller';
+import { getSharedHighlight, getSharedHighlights, getSharedProfile } from '../controllers/share.controller';
 
 const router = Router();
 
@@ -37,5 +37,7 @@ const router = Router();
  *         description: Link not found or expired
  */
 router.get('/:token', getSharedProfile);
+router.get('/:token/highlights', getSharedHighlights);
+router.get('/:token/highlights/:id', getSharedHighlight);
 
 export default router;
