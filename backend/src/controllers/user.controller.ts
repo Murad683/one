@@ -4,6 +4,7 @@ import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { hashPassword } from '../utils/password.util';
 import { collectDeliverableKeys, deleteUnreferencedDeliverableKeys } from '../services/upload.service';
+import { collectUserHighlightKeys, deleteHighlightFiles } from '../services/highlight.service';
 import { EMAIL_IN_USE_MESSAGE, isUniqueViolation, looksLikeEmail, normalizeEmail } from '../utils/email';
 import { canReceiveNotices } from '../utils/notices';
 
@@ -159,12 +160,15 @@ export const deleteUser = async (req: Request, res: Response) => {
       select: { files: true, thumbnailUrl: true, originalUrl: true },
     });
     const keys = deliverables.flatMap(collectDeliverableKeys);
+    // Same for the highlight images (rows cascade with the user; the old JSON form goes with the row).
+    const highlightKeys = await collectUserHighlightKeys(id, existing.igHighlights);
 
     await prisma.user.delete({ where: { id } });
 
     res.status(204).send();
     // Storage cleanup runs after the response; a failure only leaves orphans.
     void deleteUnreferencedDeliverableKeys(keys);
+    void deleteHighlightFiles(highlightKeys);
     return;
   } catch (error) {
     return sendError(res, 'Error deleting user', 500, error);
