@@ -550,7 +550,7 @@ export const GuidePage = () => {
               şəkilləri əlavə edin və <B>"Yadda saxla"</B>ya basın.
             </li>
             <li>
-              <B>Redaktə:</B> dairəyə basın, eyni pəncərə açılır. Başlığı, şəkilləri, sırasını və koveri dəyişib
+              <B>Redaktə:</B> dairəyə basın (kənarındakı ✎ nişanı bunu göstərir), eyni pəncərə açılır. Başlığı, şəkilləri, sırasını və koveri dəyişib
               "Yadda saxla"ya basın. Telefonda pəncərə tam ekran açılır.
             </li>
             <li>
@@ -574,8 +574,9 @@ export const GuidePage = () => {
               həqiqətən silinir. "Ləğv et" onu geri qaytarır.
             </li>
             <li>
-              <B>Highlight-ı silmək:</B> pəncərənin sol altındakı "Highlight-ı sil", təsdiqdən sonra dərhal və
-              şəkillərlə birlikdə silinir. Geri qaytarılmır.
+              <B>Highlight-ı silmək:</B> dairənin sağ-yuxarı küncündəki <B>×</B> düyməsi (sürətli yol) və ya
+              redaktə pəncərəsinin sol altındakı "Highlight-ı sil". Hər ikisində təsdiq soruşulur, təsdiqdən sonra
+              highlight şəkillərlə birlikdə dərhal silinir. Geri qaytarılmır.
             </li>
             <li>
               <Callout tone="info" title="Yadda saxlamayana qədər müştəri heç nə görmür">
