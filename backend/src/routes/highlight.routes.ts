@@ -9,11 +9,12 @@ import {
   stageUpload,
   updateHighlight,
 } from '../controllers/highlight.controller';
+import { createStaffHighlightZipTicket } from '../controllers/download.controller';
 import { verifyTokenMiddleware } from '../middleware/verifyToken.middleware';
 import { isAdminOrCreator } from '../middleware/rbac.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { uploadImage } from '../middleware/upload.middleware';
-import { highlightUploadRateLimiter } from '../middleware/rateLimiter.middleware';
+import { highlightUploadRateLimiter, zipRateLimiter } from '../middleware/rateLimiter.middleware';
 import {
   createHighlightSchema,
   deleteUploadsSchema,
@@ -37,5 +38,7 @@ router.put('/client/:clientId/order', validate(orderSchema), reorderHighlights);
 router.get('/:id', getHighlight);
 router.put('/:id', validate(updateHighlightSchema), updateHighlight);
 router.delete('/:id', deleteHighlight);
+// All images of one highlight as a ZIP (same 60-second ticket as posts, see download.controller).
+router.post('/:id/zip-ticket', zipRateLimiter, createStaffHighlightZipTicket);
 
 export default router;

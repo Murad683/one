@@ -2,7 +2,7 @@ import fs from 'fs';
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendError, sendSuccess } from '../utils/response.util';
-import { optimizeAndStore } from '../services/image.service';
+import { storeWithOriginal } from '../services/image.service';
 import {
   MAX_STAGED_UPLOADS,
   SaveError,
@@ -19,7 +19,7 @@ import {
 // Staff (admin, super admin, creator) endpoints for story-style highlights. Creators may edit any
 // client's highlights, as they could with the older JSON form; the target must be a CLIENT.
 
-const itemsInOrder = { orderBy: { sortOrder: 'asc' as const }, select: { id: true, imageUrl: true } };
+const itemsInOrder = { orderBy: { sortOrder: 'asc' as const }, select: { id: true, imageUrl: true, originalUrl: true } };
 
 const staffIdOf = (req: Request): string => (req.user as { id: string }).id;
 
@@ -118,7 +118,7 @@ export const deleteHighlight = async (req: Request, res: Response): Promise<void
     await prisma.highlight.delete({ where: { id } });
     res.status(204).send();
     // After the response: a failure here only leaves orphaned files.
-    void deleteHighlightFiles(row.items.map((item) => item.imageUrl));
+    void deleteHighlightFiles(row.items.flatMap((item) => [item.imageUrl, item.originalUrl ?? '']));
   } catch (err) {
     fail(res, err, 'delete');
   }
@@ -135,11 +135,14 @@ export const stageUpload = async (req: Request, res: Response): Promise<void> =>
       await fs.promises.unlink(file.path).catch(() => {});
       return void sendError(res, 'Çoxlu yüklənmiş şəkil saxlanmayıb. Əvvəlcə yadda saxlayın və ya ləğv edin.', 400);
     }
-    const result = await optimizeAndStore(file, 'highlights', { maxEdge: 1920, quality: 85 });
+    // The original is kept for downloads, the optimized copy is what the story shows.
+    const result = await storeWithOriginal(file, 'highlights', { maxEdge: 1920, quality: 85 });
     try {
-      await prisma.highlightUpload.create({ data: { key: result.url, uploadedById: staffId } });
+      await prisma.highlightUpload.create({
+        data: { key: result.url, originalKey: result.originalUrl, uploadedById: staffId },
+      });
     } catch (err) {
-      await deleteHighlightFiles([result.url]);
+      await deleteHighlightFiles([result.url, result.originalUrl ?? '']);
       throw err;
     }
     sendSuccess(res, { key: result.url, url: await signKey(result.url) }, 201);
@@ -156,12 +159,12 @@ export const discardUploads = async (req: Request, res: Response): Promise<void>
     const { keys } = req.body as { keys: string[] };
     const own = await prisma.highlightUpload.findMany({
       where: { key: { in: keys }, uploadedById: staffIdOf(req) },
-      select: { key: true },
+      select: { key: true, originalKey: true },
     });
     const ownKeys = own.map((row) => row.key);
     await prisma.highlightUpload.deleteMany({ where: { key: { in: ownKeys } } });
     res.status(204).send();
-    void deleteHighlightFiles(ownKeys);
+    void deleteHighlightFiles(own.flatMap((row) => [row.key, row.originalKey ?? '']));
   } catch (err) {
     fail(res, err, 'discard uploads');
   }

@@ -845,6 +845,23 @@ const DeliverablesPage = () => {
       (apiClient.get(`/dashboard/highlights/${id}`) as Promise<{ data: HighlightDetail }>).then((res) => res.data),
     [],
   );
+  // Same 60-second ZIP ticket as posts; the browser then downloads the archive from the ticket link.
+  const downloadHighlightZip = useCallback(async (id: string) => {
+    try {
+      const res = (await apiClient.post(`/dashboard/highlights/${id}/zip-ticket`, undefined, { timeout: 60000 })) as unknown as {
+        data: { ticket: string };
+      };
+      const link = document.createElement('a');
+      link.href = `${BACKEND}/api/v1/downloads/${res.data.ticket}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const timedOut = (err as { code?: string })?.code === 'ECONNABORTED';
+      throw new Error(message || (timedOut ? 'Hazırlanması çox çəkdi, yenidən cəhd edin.' : 'ZIP hazırlana bilmədi. Yenidən cəhd edin.'), { cause: err });
+    }
+  }, []);
 
   const fetchItems = useCallback((currentPage: number) => {
     if (currentPage === 1) setLoading(true);
@@ -1046,7 +1063,7 @@ const DeliverablesPage = () => {
               <p className="whitespace-pre-line leading-[18px]">{igBio}</p>
             </div>
 
-            <HighlightsSection highlights={highlights} loadDetail={loadHighlight} />
+            <HighlightsSection highlights={highlights} loadDetail={loadHighlight} downloadAll={downloadHighlightZip} />
 
             {/* Mobile: Buttons Row (Hidden on Desktop) */}
             <div className="flex md:hidden items-center gap-2 mt-4">

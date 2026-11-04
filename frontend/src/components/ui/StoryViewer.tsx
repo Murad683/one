@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Loader2, Pause, Play, X } from 'lucide-react';
-import type { HighlightDetail, HighlightSummary, LoadHighlight } from './highlightTypes';
+import { Archive, ChevronLeft, ChevronRight, Download, Loader2, Pause, Play, X } from 'lucide-react';
+import type {
+  DownloadHighlightZip,
+  HighlightDetail,
+  HighlightItemView,
+  HighlightSummary,
+  LoadHighlight,
+} from './highlightTypes';
 
 // How long one image stays on screen, and how long a press must last to count as "hold to pause".
 const SLIDE_MS = 5000;
@@ -11,6 +17,21 @@ const SWIPE_X = 60;
 const SWIPE_DOWN = 80;
 const TAP_SLOP = 12;
 const BACK_ZONE = 0.3;
+
+type ShownItem = HighlightItemView & { url: string };
+
+/** Saves a file through a temporary link (the signed link itself asks the browser to download). */
+const saveUrl = (href: string) => {
+  const link = document.createElement('a');
+  link.href = href;
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+const MENU_ROW =
+  'flex min-h-[44px] w-full items-center gap-3 px-4 text-left text-sm text-white transition-colors hover:bg-white/10 disabled:opacity-50';
 
 interface Gesture {
   x: number;
@@ -28,11 +49,14 @@ export const StoryViewer = ({
   highlights,
   startIndex,
   loadDetail,
+  downloadAll,
   onClose,
 }: {
   highlights: HighlightSummary[];
   startIndex: number;
   loadDetail: LoadHighlight;
+  /** Portal only: every image as a ZIP. Without it the menu offers single images. */
+  downloadAll?: DownloadHighlightZip;
   onClose: () => void;
 }) => {
   const [pos, setPos] = useState({ h: startIndex, s: 0 });
@@ -42,6 +66,9 @@ export const StoryViewer = ({
   const [holding, setHolding] = useState(false);
   const [manualPause, setManualPause] = useState(false);
   const [hidden, setHidden] = useState(() => typeof document !== 'undefined' && document.hidden);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [zipBusy, setZipBusy] = useState(false);
+  const [zipError, setZipError] = useState('');
 
   const requested = useRef(new Set<string>());
   const elapsed = useRef(0);
@@ -52,16 +79,19 @@ export const StoryViewer = ({
   const gesture = useRef<Gesture | null>(null);
   const goNextRef = useRef<() => void>(() => {});
   const goPrevRef = useRef<() => void>(() => {});
+  const menuOpenRef = useRef(false);
 
   const summary = highlights[pos.h];
   const detail = details[summary.id];
   const items = useMemo(
-    () => (detail ? detail.items.filter((item): item is { id: string; url: string } => Boolean(item.url)) : []),
+    () => (detail ? detail.items.filter((item): item is ShownItem => Boolean(item.url)) : []),
     [detail],
   );
   const item = items[pos.s];
   const status: 'loading' | 'error' | 'ready' = failed[summary.id] || (detail && items.length === 0) ? 'error' : detail ? 'ready' : 'loading';
-  const paused = holding || manualPause || hidden;
+  const paused = holding || manualPause || hidden || menuOpen;
+  // The image on the circle: the chosen cover, else the first image.
+  const coverItem = items.find((entry) => entry.id === detail?.coverItemId) ?? items[0];
   const imageReady = Boolean(item) && loadedUrl === item?.url;
 
   const fetchDetail = useCallback(
@@ -88,6 +118,8 @@ export const StoryViewer = ({
   const goHighlight = useCallback(
     (delta: 1 | -1) => {
       const next = pos.h + delta;
+      setMenuOpen(false);
+      setZipError('');
       if (next >= 0 && next < highlights.length) setPos({ h: next, s: 0 });
       else if (delta > 0) onClose();
     },
@@ -113,6 +145,10 @@ export const StoryViewer = ({
     goNextRef.current = goNext;
     goPrevRef.current = goPrev;
   }, [goNext, goPrev]);
+
+  useEffect(() => {
+    menuOpenRef.current = menuOpen;
+  }, [menuOpen]);
 
   // Fetch this highlight and the next one.
   useEffect(() => {
@@ -183,7 +219,9 @@ export const StoryViewer = ({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        // Esc closes the download menu first, the viewer only when the menu is shut.
+        if (menuOpenRef.current) setMenuOpen(false);
+        else onClose();
       } else if (e.key === 'ArrowRight') {
         goNextRef.current();
       } else if (e.key === 'ArrowLeft') {
@@ -217,6 +255,11 @@ export const StoryViewer = ({
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('[data-no-gesture]')) return;
+    if (menuOpenRef.current) {
+      // A tap outside the open download menu only closes it.
+      setMenuOpen(false);
+      return;
+    }
     const timer = window.setTimeout(() => {
       if (gesture.current) {
         gesture.current.held = true;
@@ -245,6 +288,36 @@ export const StoryViewer = ({
   };
 
   const barCount = status === 'ready' ? items.length : Math.max(1, summary.itemCount);
+
+  const download = (href: string | null | undefined) => {
+    if (!href) return;
+    saveUrl(href);
+    setMenuOpen(false);
+  };
+
+  // One image: save it straight away (like a single-file post). Several: open the menu.
+  const onDownloadButton = () => {
+    if (items.length === 1) {
+      download(items[0].downloadUrl);
+      return;
+    }
+    setZipError('');
+    setMenuOpen((open) => !open);
+  };
+
+  const onDownloadAll = async () => {
+    if (!downloadAll || zipBusy) return;
+    setZipBusy(true);
+    setZipError('');
+    try {
+      await downloadAll(summary.id);
+      setMenuOpen(false);
+    } catch (err) {
+      setZipError(err instanceof Error && err.message ? err.message : 'ZIP hazırlana bilmədi. Yenidən cəhd edin.');
+    } finally {
+      setZipBusy(false);
+    }
+  };
 
   return (
     <div
@@ -344,6 +417,66 @@ export const StoryViewer = ({
               {summary.coverUrl && <img src={summary.coverUrl} alt="" className="h-full w-full object-cover" draggable={false} />}
             </div>
             <span className="min-w-0 flex-1 truncate text-sm font-semibold drop-shadow">{summary.title}</span>
+            {status === 'ready' && items.length > 0 && (
+              <div className="pointer-events-auto relative" data-no-gesture>
+                <button
+                  type="button"
+                  onClick={onDownloadButton}
+                  aria-label={items.length === 1 ? 'Şəkli yüklə' : 'Yüklə'}
+                  aria-haspopup={items.length > 1 ? 'menu' : undefined}
+                  aria-expanded={items.length > 1 ? menuOpen : undefined}
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15"
+                >
+                  <Download size={19} />
+                </button>
+                {menuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-xl border border-white/10 bg-neutral-900/95 py-1 shadow-2xl backdrop-blur"
+                  >
+                    <button
+                      role="menuitem"
+                      type="button"
+                      className={MENU_ROW}
+                      disabled={!item?.downloadUrl}
+                      onClick={() => download(item?.downloadUrl)}
+                    >
+                      <Download size={18} className="shrink-0" />
+                      Bu şəkli yüklə
+                    </button>
+                    <button
+                      role="menuitem"
+                      type="button"
+                      className={MENU_ROW}
+                      disabled={!coverItem?.downloadUrl}
+                      onClick={() => download(coverItem?.downloadUrl)}
+                    >
+                      <span className="h-[18px] w-[18px] shrink-0 overflow-hidden rounded-full ring-1 ring-white/70">
+                        {coverItem && <img src={coverItem.url} alt="" className="h-full w-full object-cover" draggable={false} />}
+                      </span>
+                      Koveri yüklə
+                    </button>
+                    {downloadAll && (
+                      <button
+                        role="menuitem"
+                        type="button"
+                        className={MENU_ROW}
+                        disabled={zipBusy}
+                        onClick={() => void onDownloadAll()}
+                      >
+                        {zipBusy ? <Loader2 size={18} className="shrink-0 animate-spin" /> : <Archive size={18} className="shrink-0" />}
+                        {zipBusy ? 'Hazırlanır…' : `Hamısını yüklə (${items.length} şəkil, ZIP)`}
+                      </button>
+                    )}
+                    {zipError && (
+                      <p className="px-4 pb-2 pt-1 text-xs leading-snug text-red-300" role="alert">
+                        {zipError}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             <button
               type="button"
               data-no-gesture

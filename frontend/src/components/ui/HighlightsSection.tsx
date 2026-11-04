@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StoryViewer } from './StoryViewer';
-import type { HighlightSummary, LoadHighlight } from './highlightTypes';
+import type { DownloadHighlightZip, HighlightSummary, LoadHighlight } from './highlightTypes';
 
 /**
  * The row of highlight circles under the profile bio, plus the story viewer they open.
@@ -9,9 +9,12 @@ import type { HighlightSummary, LoadHighlight } from './highlightTypes';
 export const HighlightsSection = ({
   highlights,
   loadDetail,
+  downloadAll,
 }: {
   highlights: HighlightSummary[];
   loadDetail: LoadHighlight;
+  /** Omitted on the share page (a ZIP needs the signed-in portal). */
+  downloadAll?: DownloadHighlightZip;
 }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
@@ -60,6 +63,7 @@ export const HighlightsSection = ({
           highlights={highlights}
           startIndex={openIndex}
           loadDetail={loadDetail}
+          downloadAll={downloadAll}
           onClose={() => setOpenIndex(null)}
         />
       )}

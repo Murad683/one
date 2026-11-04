@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { AlertCircle, Loader2, MoreHorizontal, RotateCw, Star, Trash2, X } from 'lucide-react';
+import { AlertCircle, Download, Loader2, MoreHorizontal, RotateCw, Star, Trash2, X } from 'lucide-react';
 import Popover from '../../ui/Popover';
 import type { DraftItem } from './useHighlightDraft';
 
@@ -32,6 +32,8 @@ export const ImageTile = ({ item, index, isCover, onCover, onRemove, onRetry }: 
   const waiting = item.kind === 'new' && (item.status === 'queued' || item.status === 'uploading');
   const failed = item.kind === 'new' && item.status === 'error';
   const canBeCover = !isCover && !waiting && !failed;
+  // Only images already saved can be downloaded (a new one is still a draft).
+  const downloadUrl = item.kind === 'saved' ? item.downloadUrl : null;
 
   return (
     <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-edge bg-surface-alt shadow-sm">
@@ -71,6 +73,21 @@ export const ImageTile = ({ item, index, isCover, onCover, onRemove, onRetry }: 
                 >
                   <Star size={16} aria-hidden="true" />
                   Kover et
+                </MenuButton>
+              )}
+              {downloadUrl && (
+                <MenuButton
+                  onClick={() => {
+                    setMenuOpen(false);
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                >
+                  <Download size={16} aria-hidden="true" />
+                  Yüklə
                 </MenuButton>
               )}
               <MenuButton

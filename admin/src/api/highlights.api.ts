@@ -18,6 +18,8 @@ export interface HighlightSummary {
 export interface HighlightItem {
   id: string;
   url: string | null;
+  /** Saves the file (the original when kept); null when it could not be signed. */
+  downloadUrl?: string | null;
 }
 
 export interface HighlightDetail {
@@ -67,6 +69,11 @@ export const saveHighlight = async (
 
 export const reorderHighlights = async (clientId: string, ids: string[]): Promise<HighlightSummary[]> =>
   unwrap(await client.put<Envelope<HighlightSummary[]>>(`/highlights/client/${clientId}/order`, { ids }));
+
+/** One-time (60 s) link that downloads every image of a highlight as a ZIP, like posts. */
+export const getHighlightZipTicket = async (id: string): Promise<string> =>
+  unwrap(await client.post<Envelope<{ ticket: string }>>(`/highlights/${id}/zip-ticket`, undefined, { timeout: 60000 }))
+    .ticket;
 
 export const deleteHighlight = async (id: string): Promise<void> => {
   await client.delete(`/highlights/${id}`);

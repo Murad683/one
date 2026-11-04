@@ -81,6 +81,25 @@ export const planZip = (row: ZipSource): { base: string; entries: ZipEntry[]; ne
 };
 
 /**
+ * A highlight's images in the order the client sees them, each as its original when kept.
+ * The cover (chosen, else the first image) is marked in its file name: "Atmosfer-2-kover.jpg".
+ */
+export const planHighlightZip = (row: {
+  title: string;
+  coverItemId: string | null;
+  items: { id: string; imageUrl: string; originalUrl: string | null }[];
+}): { base: string; entries: ZipEntry[]; needsSizeCheck: boolean } => {
+  const base = safeBase(row.title);
+  const coverId = row.items.some((item) => item.id === row.coverItemId) ? row.coverItemId : row.items[0]?.id;
+  const entries = row.items.map((item, index) => {
+    const key = item.originalUrl || item.imageUrl;
+    const ext = path.extname(extractStorageKey(key) || '');
+    return { key, name: `${base}-${index + 1}${item.id === coverId ? '-kover' : ''}${ext}` };
+  });
+  return { base, entries, needsSizeCheck: entries.length > SIZE_CHECK_MIN_FILES };
+};
+
+/**
  * Throws a ZipError the caller can show as is, before any byte of the ZIP is sent.
  * The size check (one storage call per file, run in parallel) only runs when `checkSizes` is true;
  * streamZip also stops a ZIP that grows past the limit.

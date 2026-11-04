@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
-import { cleanupOrphanFiles, extractStorageKey, getSecureDownloadUrl } from './upload.service';
+import { cleanupOrphanFiles, extractStorageKey, getAttachmentUrl, getSecureDownloadUrl } from './upload.service';
 
 // Limits of the story-style highlights (see prisma Highlight / HighlightItem).
 export const MAX_HIGHLIGHTS = 20;
@@ -30,6 +30,8 @@ export interface HighlightSummary {
 export interface HighlightItemView {
   id: string;
   url: string | null;
+  /** Saves the file instead of opening it: the original when kept, else the image as shown. */
+  downloadUrl: string | null;
 }
 
 export interface HighlightDetail {
@@ -94,7 +96,7 @@ interface RowWithItems {
   title: string;
   coverItemId: string | null;
   updatedAt?: Date;
-  items: { id: string; imageUrl: string }[];
+  items: { id: string; imageUrl: string; originalUrl?: string | null }[];
 }
 
 const coverKeyOf = (row: RowWithItems): string | null => {
@@ -102,7 +104,7 @@ const coverKeyOf = (row: RowWithItems): string | null => {
   return cover ? cover.imageUrl : null;
 };
 
-const itemsInOrder = { orderBy: { sortOrder: 'asc' as const }, select: { id: true, imageUrl: true } };
+const itemsInOrder = { orderBy: { sortOrder: 'asc' as const }, select: { id: true, imageUrl: true, originalUrl: true } };
 
 const toSummary = async (row: RowWithItems): Promise<HighlightSummary> => ({
   id: row.id,
@@ -181,7 +183,13 @@ export const detailOf = async (row: RowWithItems): Promise<HighlightDetail> => (
   title: row.title,
   coverItemId: row.coverItemId,
   ...(row.updatedAt && { updatedAt: row.updatedAt.toISOString() }),
-  items: await Promise.all(row.items.map(async (item) => ({ id: item.id, url: await signKey(item.imageUrl) }))),
+  items: await Promise.all(
+    row.items.map(async (item) => ({
+      id: item.id,
+      url: await signKey(item.imageUrl),
+      downloadUrl: await getAttachmentUrl(item.originalUrl || item.imageUrl),
+    })),
+  ),
 });
 
 /** One highlight with its images for a viewer; `null` when it is not this user's. */
@@ -195,7 +203,7 @@ export const getForViewer = async (userId: string, id: string): Promise<Highligh
       id,
       title: entry.title,
       coverItemId: null,
-      items: [{ id: `${id}-0`, url: await signKey(entry.imageUrl) }],
+      items: [{ id: `${id}-0`, url: await signKey(entry.imageUrl), downloadUrl: await getAttachmentUrl(entry.imageUrl) }],
     };
   }
   const row = await prisma.highlight.findFirst({
@@ -209,9 +217,12 @@ export const getForViewer = async (userId: string, id: string): Promise<Highligh
 export const collectUserHighlightKeys = async (userId: string, legacyJson?: unknown): Promise<string[]> => {
   const items = await prisma.highlightItem.findMany({
     where: { highlight: { userId } },
-    select: { imageUrl: true },
+    select: { imageUrl: true, originalUrl: true },
   });
-  const keys = [...items.map((item) => item.imageUrl), ...parseLegacy(legacyJson).map((entry) => entry.imageUrl)];
+  const keys = [
+    ...items.flatMap((item) => [item.imageUrl, item.originalUrl ?? '']),
+    ...parseLegacy(legacyJson).map((entry) => entry.imageUrl),
+  ];
   return [...new Set(keys.filter(Boolean))];
 };
 
@@ -225,10 +236,10 @@ export const deleteHighlightFiles = async (keys: string[]): Promise<void> => {
   if (unique.length === 0) return;
   try {
     const stillUsed = await prisma.highlightItem.findMany({
-      where: { imageUrl: { in: unique } },
-      select: { imageUrl: true },
+      where: { OR: [{ imageUrl: { in: unique } }, { originalUrl: { in: unique } }] },
+      select: { imageUrl: true, originalUrl: true },
     });
-    const keep = new Set(stillUsed.map((item) => item.imageUrl));
+    const keep = new Set(stillUsed.flatMap((item) => [item.imageUrl, item.originalUrl ?? '']));
     await cleanupOrphanFiles(
       unique.filter((key) => !keep.has(key)),
       [],
@@ -264,17 +275,22 @@ export class SaveError extends Error {
 }
 
 /** The staged uploads this staff member may use; throws when a key is unknown, someone else's, or listed twice. */
-const claimStaged = async (tx: Prisma.TransactionClient, staffId: string, keys: string[]): Promise<string[]> => {
-  if (keys.length === 0) return [];
+const claimStaged = async (
+  tx: Prisma.TransactionClient,
+  staffId: string,
+  keys: string[],
+): Promise<Map<string, string | null>> => {
+  if (keys.length === 0) return new Map();
   if (new Set(keys).size !== keys.length) throw new SaveError(400, 'Eyni şəkil iki dəfə göndərilib.');
   const rows = await tx.highlightUpload.findMany({
     where: { key: { in: keys }, uploadedById: staffId },
-    select: { key: true },
+    select: { key: true, originalKey: true },
   });
   if (rows.length !== keys.length) {
     throw new SaveError(400, 'Yüklənmiş şəkillərdən biri tapılmadı. Şəkli yenidən əlavə edin.');
   }
-  return keys;
+  // staged key -> its original (null when no separate copy was made)
+  return new Map(rows.map((row) => [row.key, row.originalKey]));
 };
 
 const checkCover = (input: SaveInput): void => {
@@ -301,7 +317,7 @@ export const createHighlightWithItems = async (clientId: string, staffId: string
     if ((await tx.highlight.count({ where: { userId: clientId } })) >= MAX_HIGHLIGHTS) {
       throw new SaveError(400, `Bir müştəridə ən çox ${MAX_HIGHLIGHTS} highlight ola bilər.`);
     }
-    await claimStaged(tx, staffId, keys);
+    const originals = await claimStaged(tx, staffId, keys);
     const last = await tx.highlight.aggregate({ where: { userId: clientId }, _max: { sortOrder: true } });
     const row = await tx.highlight.create({
       data: { userId: clientId, title: input.title, sortOrder: (last._max.sortOrder ?? -1) + 1 },
@@ -309,7 +325,7 @@ export const createHighlightWithItems = async (clientId: string, staffId: string
     const ids: string[] = [];
     for (const [index, key] of keys.entries()) {
       const item = await tx.highlightItem.create({
-        data: { highlightId: row.id, imageUrl: key, sortOrder: index },
+        data: { highlightId: row.id, imageUrl: key, originalUrl: originals.get(key) ?? null, sortOrder: index },
         select: { id: true },
       });
       ids.push(item.id);
@@ -356,7 +372,7 @@ export const saveHighlightWithItems = async (
         newKeys.push(item.uploadKey);
       }
     }
-    await claimStaged(tx, staffId, newKeys);
+    const originals = await claimStaged(tx, staffId, newKeys);
 
     const removed = current.items.filter((item) => !keptIds.has(item.id));
     if (removed.length > 0) {
@@ -369,7 +385,7 @@ export const saveHighlightWithItems = async (
         orderedIds.push(item.id);
       } else {
         const created = await tx.highlightItem.create({
-          data: { highlightId: id, imageUrl: item.uploadKey, sortOrder: index },
+          data: { highlightId: id, imageUrl: item.uploadKey, originalUrl: originals.get(item.uploadKey) ?? null, sortOrder: index },
           select: { id: true },
         });
         orderedIds.push(created.id);
@@ -385,7 +401,7 @@ export const saveHighlightWithItems = async (
     if (newKeys.length > 0) await tx.highlightUpload.deleteMany({ where: { key: { in: newKeys } } });
 
     const row = await tx.highlight.findUniqueOrThrow({ where: { id }, include: { items: itemsInOrder } });
-    return { row, removedKeys: removed.map((item) => item.imageUrl) };
+    return { row, removedKeys: removed.flatMap((item) => [item.imageUrl, item.originalUrl ?? '']) };
   }, TX_OPTIONS);
 };
 
@@ -396,12 +412,12 @@ export const cleanupStaleUploads = async (now: number = Date.now()): Promise<num
   for (;;) {
     const stale = await prisma.highlightUpload.findMany({
       where: { createdAt: { lt: cutoff } },
-      select: { id: true, key: true },
+      select: { id: true, key: true, originalKey: true },
       take: 200,
     });
     if (stale.length === 0) return total;
     await prisma.highlightUpload.deleteMany({ where: { id: { in: stale.map((row) => row.id) } } });
-    await deleteHighlightFiles(stale.map((row) => row.key));
+    await deleteHighlightFiles(stale.flatMap((row) => [row.key, row.originalKey ?? '']));
     total += stale.length;
   }
 };

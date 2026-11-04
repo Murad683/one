@@ -570,6 +570,12 @@ export const GuidePage = () => {
               şəklin üzərindəki <B>⋯</B> menyusundan "Kover et"i seçin.
             </li>
             <li>
+              <B>Endirmək:</B> şəklin ⋯ menyusundan "Yüklə" (yalnız yadda saxlanmış şəkillər). Bütün şəkillər
+              üçün "Şəkillər" başlığının sağındakı "Hamısını yüklə (ZIP)". ZIP-də kover faylının adında "-kover" var.
+              Müştəri də öz portalında story-dəki <B>↓</B> düyməsi ilə bu şəkli, koveri və ya hamısını (ZIP) endirir;
+              paylaşım linkində ZIP yoxdur. Yeni yüklənən şəkillər orijinal keyfiyyətdə endirilir.
+            </li>
+            <li>
               <B>Şəkli silmək:</B> ⋯ menyusundan "Sil". Şəkil yalnız qaralamadan çıxır, "Yadda saxla"dan sonra
               həqiqətən silinir. "Ləğv et" onu geri qaytarır.
             </li>
