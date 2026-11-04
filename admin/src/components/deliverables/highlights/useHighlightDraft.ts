@@ -20,6 +20,7 @@ export interface SavedDraftItem {
   key: string;
   id: string;
   url: string | null;
+  downloadUrl: string | null;
 }
 
 export interface NewDraftItem {
@@ -90,7 +91,13 @@ const reducer = (state: DraftState, action: Action): DraftState => {
 const initialState = (initial: DraftInitial): DraftState => ({
   title: initial.title,
   coverKey: initial.coverItemId,
-  items: initial.items.map((item) => ({ kind: 'saved', key: item.id, id: item.id, url: item.url })),
+  items: initial.items.map((item) => ({
+    kind: 'saved',
+    key: item.id,
+    id: item.id,
+    url: item.url,
+    downloadUrl: item.downloadUrl ?? null,
+  })),
 });
 
 /** Splits the chosen files into the ones we can send and a human message for each we cannot. */

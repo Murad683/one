@@ -3,7 +3,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 import sharp from 'sharp';
 import heicConvert from 'heic-convert';
-import { processAndStoreFile } from './upload.service';
+import { deleteFile, processAndStoreFile } from './upload.service';
 import { UploadResult } from './storage/storage.interface';
 
 export const isHeicFile = (filePath: string): boolean =>
@@ -166,4 +166,57 @@ export const optimizeAndStore = async (
   };
   const result = await processAndStoreFile(synthetic, folder);
   return { ...result, width: optimized.width, height: optimized.height };
+};
+
+/**
+ * Stores an image twice, like carousel images: the untouched original (for downloads) and a
+ * web-optimized WebP copy (for display). `originalUrl` is null when no separate copy was made
+ * (not an optimizable image, an already small WebP, or optimization failed): then `url` is
+ * the original itself.
+ */
+export const storeWithOriginal = async (
+  file: Express.Multer.File,
+  folder: string,
+  opts: { maxEdge?: number; quality?: number } = {}
+): Promise<{ url: string; originalUrl: string | null }> => {
+  if (!isOptimizableImage(file)) {
+    return { url: (await processAndStoreFile(file, folder)).url, originalUrl: null };
+  }
+  try {
+    const meta = await sharp(file.path).metadata();
+    const longestEdge = Math.max(meta.width ?? 0, meta.height ?? 0);
+    if (meta.format === 'webp' && longestEdge > 0 && longestEdge <= (opts.maxEdge ?? 1920)) {
+      return { url: (await processAndStoreFile(file, folder)).url, originalUrl: null };
+    }
+  } catch {
+    // metadata read failed: let optimizeImage try / fail safely
+  }
+
+  // Optimize BEFORE storing the original: the providers delete the temp file once it is stored.
+  const optimized = await optimizeImage(file.path, opts);
+  const original = await processAndStoreFile(file, folder);
+  if (!optimized) return { url: original.url, originalUrl: null };
+
+  try {
+    const buffer = fs.readFileSync(optimized.path);
+    const synthetic: Express.Multer.File = {
+      fieldname: file.fieldname,
+      originalname: `${path.basename(file.originalname, path.extname(file.originalname))}.webp`,
+      encoding: file.encoding,
+      mimetype: 'image/webp',
+      buffer,
+      size: buffer.length,
+      stream: null as any,
+      destination: os.tmpdir(),
+      filename: path.basename(optimized.path),
+      path: optimized.path,
+    };
+    const display = await processAndStoreFile(synthetic, folder);
+    return { url: display.url, originalUrl: original.url };
+  } catch (err) {
+    await deleteFile(original.url).catch(() => {});
+    throw err;
+  } finally {
+    await fs.promises.unlink(optimized.path).catch(() => {});
+  }
 };

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertCircle, Image as ImageIcon, ImagePlus, Loader2, Trash2 } from 'lucide-react';
+import { AlertCircle, Archive, Image as ImageIcon, ImagePlus, Loader2, Trash2 } from 'lucide-react';
 import {
   MAX_ITEMS,
   TITLE_MAX,
   createHighlight,
   deleteHighlight,
   getHighlight,
+  getHighlightZipTicket,
   saveHighlight,
   type HighlightDetail,
 } from '../../../api/highlights.api';
@@ -49,6 +50,7 @@ const DraftEditor = ({ clientId, highlightId, detail, onClose, onChanged }: Body
   const [confirmClose, setConfirmClose] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [dropActive, setDropActive] = useState(false);
+  const [zipBusy, setZipBusy] = useState(false);
 
   const busy = saving;
   const dialogOpen = confirmClose || confirmDelete;
@@ -111,6 +113,30 @@ const DraftEditor = ({ clientId, highlightId, detail, onClose, onChanged }: Body
     addToast('Highlight silindi', 'success');
     onChanged();
     onClose();
+  };
+
+  // ZIP of the saved highlight (what the client has), like "Hamısını yüklə" on posts.
+  const canZip = Boolean(highlightId) && (detail?.items.length ?? 0) >= 2;
+  const handleDownloadAll = async () => {
+    if (!highlightId || zipBusy) return;
+    setZipBusy(true);
+    try {
+      const ticket = await getHighlightZipTicket(highlightId);
+      const apiBase = import.meta.env.VITE_API_BASE_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1`;
+      const link = document.createElement('a');
+      link.href = `${apiBase}/downloads/${ticket}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      const timedOut = (err as { code?: string })?.code === 'ECONNABORTED';
+      addToast(
+        requestErrorMessage(err, timedOut ? 'Hazırlanması çox çəkdi, yenidən cəhd edin.' : 'ZIP hazırlana bilmədi. Yenidən cəhd edin.'),
+        'error',
+      );
+    } finally {
+      setZipBusy(false);
+    }
   };
 
   const coverItem = draft.items.find((item) => item.key === draft.effectiveCover);
@@ -252,10 +278,23 @@ const DraftEditor = ({ clientId, highlightId, detail, onClose, onChanged }: Body
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-heading">Şəkillər</h3>
-              <span className="text-xs text-muted">
-                {draft.items.length} / {MAX_ITEMS}
-              </span>
+              <h3 className="text-sm font-semibold text-heading">
+                Şəkillər{' '}
+                <span className="font-normal text-muted">
+                  {draft.items.length} / {MAX_ITEMS}
+                </span>
+              </h3>
+              {canZip && (
+                <button
+                  type="button"
+                  onClick={() => void handleDownloadAll()}
+                  disabled={zipBusy}
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-accent transition hover:bg-accent/10 disabled:opacity-60"
+                >
+                  {zipBusy ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <Archive size={16} aria-hidden="true" />}
+                  {zipBusy ? 'Hazırlanır…' : 'Hamısını yüklə (ZIP)'}
+                </button>
+              )}
             </div>
 
             <SortableGrid

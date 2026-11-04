@@ -8,7 +8,7 @@ import {
   submitFeedback,
   deleteFeedback,
 } from '../controllers/dashboard.controller';
-import { createClientZipTicket } from '../controllers/download.controller';
+import { createClientHighlightZipTicket, createClientZipTicket } from '../controllers/download.controller';
 import { getMyHighlight, getMyHighlights } from '../controllers/dashboard.controller';
 import { zipRateLimiter } from '../middleware/rateLimiter.middleware';
 import { verifyTokenMiddleware } from '../middleware/verifyToken.middleware';
@@ -122,5 +122,6 @@ router.delete('/deliverables/:id/feedback', verifyTokenMiddleware, isAdminOrClie
 router.post('/deliverables/:id/zip-ticket', verifyTokenMiddleware, isAdminOrClient, zipRateLimiter, createClientZipTicket);
 router.get('/highlights', verifyTokenMiddleware, isAdminOrClient, getMyHighlights);
 router.get('/highlights/:id', verifyTokenMiddleware, isAdminOrClient, getMyHighlight);
+router.post('/highlights/:id/zip-ticket', verifyTokenMiddleware, isAdminOrClient, zipRateLimiter, createClientHighlightZipTicket);
 
 export default router;

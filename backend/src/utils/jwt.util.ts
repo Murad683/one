@@ -22,10 +22,12 @@ export const signToken = (payload: JwtPayload): string => {
  * One-shot download ticket for the "download all as ZIP" link. A browser
  * navigation cannot carry the Authorization header, and a long-lived token in a
  * URL would leak, so the page first asks (authenticated) for a ticket that is
- * valid for one deliverable and 60 seconds only.
+ * valid for one deliverable (or one highlight) and 60 seconds only.
  */
 export interface ZipTicket {
-  deliverableId: string;
+  /** Exactly one of the two: a post (deliverable) or a highlight. */
+  deliverableId?: string;
+  highlightId?: string;
   userId: string;
   kind: 'client' | 'staff';
 }
@@ -38,11 +40,13 @@ export const signZipTicket = (ticket: ZipTicket): string =>
 export const verifyZipTicket = (token: string): ZipTicket => {
   try {
     const decoded = jwt.verify(token, getSecret()) as Record<string, unknown>;
-    if (decoded.purpose !== 'zip' || typeof decoded.deliverableId !== 'string' || typeof decoded.userId !== 'string') {
+    const deliverableId = typeof decoded.deliverableId === 'string' ? decoded.deliverableId : undefined;
+    const highlightId = typeof decoded.highlightId === 'string' ? decoded.highlightId : undefined;
+    if (decoded.purpose !== 'zip' || typeof decoded.userId !== 'string' || !deliverableId === !highlightId) {
       throw new Error('wrong ticket');
     }
     return {
-      deliverableId: decoded.deliverableId,
+      ...(deliverableId ? { deliverableId } : { highlightId }),
       userId: decoded.userId,
       kind: decoded.kind === 'staff' ? 'staff' : 'client',
     };

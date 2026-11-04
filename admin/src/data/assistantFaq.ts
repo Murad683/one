@@ -45,6 +45,11 @@ const HIGHLIGHT_ADD: FaqEntry = {
   a: 'Layihə Faylları səhifəsində **Önə Çıxanlar (Highlights)** tabı:\n1. Müştərini seçin.\n2. **Yeni highlight** dairəsinə basın.\n3. Pəncərədə başlıq yazın (maks. 30 simvol), **Şəkil əlavə et** ilə bir neçə şəkli seçin və ya sürüşdürüb atın (JPG, PNG, WEBP, HEIC, hər biri ən çox 10 MB).\n4. **Yadda saxla**.\nYadda saxlamayana qədər müştəri heç nə görmür. **Ləğv et** hər şeyi atır. Limit: müştəridə 20 highlight, hər birində 30 şəkil. Video hələ dəstəklənmir.',
 };
 
+const HIGHLIGHT_DOWNLOAD: FaqEntry = {
+  q: 'Highlight şəkillərini necə endirim?',
+  a: 'Müştərinin highlight-ına basın, redaktə pəncərəsi açılır:\n- **Bir şəkil:** şəklin **⋯** menyusundan **Yüklə** (yalnız yadda saxlanmış şəkillər). Koveri də belə endirirsiniz, üzərində **Kover** nişanı var.\n- **Hamısı:** **Şəkillər** başlığının sağındakı **Hamısını yüklə (ZIP)**. ZIP-də kover faylının adında -kover var.\nMüştəri öz portalında story açıqkən **↓** düyməsi ilə bu şəkli, koveri və ya hamısını (ZIP) endirir. Yeni yüklənən şəkillər orijinal keyfiyyətdə endirilir.',
+};
+
 const HIGHLIGHT_ARRANGE: FaqEntry = {
   q: 'Highlight-ın kovərini və şəkil sırasını necə dəyişim?',
   a: 'Müştərinin highlight-ına basın, redaktə pəncərəsi açılır:\n- **Kover:** dairənin üzündəki şəkildir (defolt birinci). Başqasını seçmək üçün şəklin **⋯** menyusundan **Kover et**.\n- **Sıra:** şəkli sürüşdürün (telefonda uzun basıb). Highlight dairələrinin sırasını da sürüşdürürsünüz, aşağıdakı zolaqda **Yadda saxla**.\n- **Silmək:** ⋯ menyusundan **Sil** şəkli qaralamadan çıxarır, **Yadda saxla**dan sonra həqiqətən silinir. Bütün highlight-ı dairənin sağ-yuxarı küncündəki **×** (sürətli) və ya pəncərənin sol altındakı **Highlight-ı sil** silir, hər ikisi təsdiq soruşur, geri qaytarılmır.\nDəyişikliklər **Yadda saxla**ya qədər müştəriyə görünmür.',
@@ -95,6 +100,7 @@ export const STAFF_FAQ: FaqEntry[] = [
   DOWNLOAD_ALL,
   HIGHLIGHT_ADD,
   HIGHLIGHT_ARRANGE,
+  HIGHLIGHT_DOWNLOAD,
 ];
 
 export const CREATOR_FAQ: FaqEntry[] = [
@@ -125,6 +131,7 @@ export const CREATOR_FAQ: FaqEntry[] = [
   DOWNLOAD_ALL,
   HIGHLIGHT_ADD,
   HIGHLIGHT_ARRANGE,
+  HIGHLIGHT_DOWNLOAD,
 ];
 
 const normalize = (s: string): string =>

@@ -309,6 +309,8 @@ model HighlightItem {
   highlightId String
   // Storage key of the (optimized) image.
   imageUrl    String
+  // Untouched original for downloads; null for images stored before originals were kept.
+  originalUrl String?
   sortOrder   Int       @default(0)
   createdAt   DateTime  @default(now())
   highlight   Highlight @relation(fields: [highlightId], references: [id], onDelete: Cascade)
@@ -321,6 +323,8 @@ model HighlightItem {
 model HighlightUpload {
   id           String   @id @default(cuid())
   key          String   @unique
+  // The untouched original next to the optimized copy (`key`); null when no separate copy was made.
+  originalKey  String?
   uploadedById String
   createdAt    DateTime @default(now())
 

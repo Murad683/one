@@ -262,6 +262,11 @@ const GuidePage = () => {
             <li>Növbəti şəkil üçün ekranın sağına, əvvəlkinə qayıtmaq üçün sol tərəfinə basın (kompüterdə ← → düymələri də işləyir).</li>
             <li>Ekrana <strong style={{ color: 'var(--text-primary)' }}>basılı saxlasanız</strong> şəkil dayanır, buraxanda davam edir.</li>
             <li>Telefonda yana sürüşdürmək highlight-lar arasında keçir, aşağı sürüşdürmək bağlayır. Kompüterdə bağlamaq üçün × və ya Esc.</li>
+            <li>
+              <strong style={{ color: 'var(--text-primary)' }}>Endirmək:</strong> yuxarıdakı <strong style={{ color: 'var(--text-primary)' }}>↓</strong> düyməsinə basın. Bir şəkil varsa dərhal endirilir. Bir neçə şəkil varsa menyu açılır:{' '}
+              <strong style={{ color: 'var(--text-primary)' }}>"Bu şəkli yüklə"</strong>, <strong style={{ color: 'var(--text-primary)' }}>"Koveri yüklə"</strong> (dairədə görünən şəkil) və{' '}
+              <strong style={{ color: 'var(--text-primary)' }}>"Hamısını yüklə (ZIP)"</strong>. Menyu açıq olanda story dayanır.
+            </li>
           </ul>
 
           <h3 className="text-lg font-semibold mt-6 mb-2" style={{ color: 'var(--text-primary)' }}>Bir materialın içində nə var</h3>

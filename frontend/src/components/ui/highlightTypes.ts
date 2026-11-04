@@ -12,12 +12,19 @@ export interface HighlightItemView {
   id: string;
   /** Signed link; null when it could not be signed (the viewer skips it). */
   url: string | null;
+  /** Saves the file (the original when kept); null when it could not be signed. */
+  downloadUrl: string | null;
 }
 
 export interface HighlightDetail {
   id: string;
   title: string;
+  /** The image on the circle; null = the first one. */
+  coverItemId: string | null;
   items: HighlightItemView[];
 }
 
 export type LoadHighlight = (id: string) => Promise<HighlightDetail>;
+
+/** Downloads every image of one highlight as a ZIP; rejects with a message to show. Portal only. */
+export type DownloadHighlightZip = (id: string) => Promise<void>;

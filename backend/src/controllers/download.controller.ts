@@ -4,9 +4,25 @@ import { sendError, sendSuccess } from '../utils/response.util';
 import { CLIENT_VISIBLE_WHERE } from '../utils/retention';
 import { signZipTicket, verifyZipTicket } from '../utils/jwt.util';
 import { canModifyDeliverable } from './deliverable.controller';
-import { ZipError, acquireZipSlot, assertZipAllowed, planZip, releaseZipSlot, streamZip } from '../services/deliverableZip';
+import {
+  ZipError,
+  acquireZipSlot,
+  assertZipAllowed,
+  planHighlightZip,
+  planZip,
+  releaseZipSlot,
+  streamZip,
+} from '../services/deliverableZip';
 
 const zipSelect = { id: true, title: true, files: true, originalUrl: true, createdById: true } as const;
+const highlightZipSelect = {
+  id: true,
+  title: true,
+  userId: true,
+  coverItemId: true,
+  items: { orderBy: { sortOrder: 'asc' as const }, select: { id: true, imageUrl: true, originalUrl: true } },
+} as const;
+const STAFF_ROLES = ['ADMIN', 'SUPER_ADMIN', 'CREATOR'];
 
 const sendZipError = (res: Response, err: unknown): void => {
   if (err instanceof ZipError) {
@@ -51,6 +67,52 @@ export const createStaffZipTicket = async (req: Request, res: Response): Promise
   }
 };
 
+// POST /api/v1/dashboard/highlights/:id/zip-ticket — a client asks for all images of one of their own highlights.
+export const createClientHighlightZipTicket = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) { sendError(res, 'Unauthorized', 401); return; }
+    const highlight = await prisma.highlight.findFirst({
+      where: { id: String(req.params.id), userId },
+      select: highlightZipSelect,
+    });
+    if (!highlight) { sendError(res, 'Tapılmadı', 404); return; }
+    const plan = planHighlightZip(highlight);
+    await assertZipAllowed(plan.entries, plan.needsSizeCheck);
+    sendSuccess(res, { ticket: signZipTicket({ highlightId: highlight.id, userId, kind: 'client' }) });
+  } catch (err) {
+    sendZipError(res, err);
+  }
+};
+
+// POST /api/v1/highlights/:id/zip-ticket — admins and creators (they manage every client's highlights).
+export const createStaffHighlightZipTicket = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) { sendError(res, 'Unauthorized', 401); return; }
+    const highlight = await prisma.highlight.findUnique({ where: { id: String(req.params.id) }, select: highlightZipSelect });
+    if (!highlight) { sendError(res, 'Tapılmadı', 404); return; }
+    const plan = planHighlightZip(highlight);
+    await assertZipAllowed(plan.entries, plan.needsSizeCheck);
+    sendSuccess(res, { ticket: signZipTicket({ highlightId: highlight.id, userId, kind: 'staff' }) });
+  } catch (err) {
+    sendZipError(res, err);
+  }
+};
+
+/** The highlight a ticket opens, re-checked against the database; null when it is no longer allowed. */
+const highlightForTicket = async (highlightId: string, userId: string, kind: 'client' | 'staff') => {
+  if (kind === 'client') {
+    return prisma.highlight.findFirst({
+      where: { id: highlightId, userId, user: { isActive: true } },
+      select: highlightZipSelect,
+    });
+  }
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, isActive: true } });
+  if (!user || !user.isActive || !STAFF_ROLES.includes(user.role)) return null;
+  return prisma.highlight.findUnique({ where: { id: highlightId }, select: highlightZipSelect });
+};
+
 // GET /api/v1/downloads/:ticket — the browser navigates here. The ticket is the only credential (60 s,
 // one deliverable); access is re-checked against the database before anything is sent.
 export const downloadZip = async (req: Request, res: Response): Promise<void> => {
@@ -63,6 +125,21 @@ export const downloadZip = async (req: Request, res: Response): Promise<void> =>
       sendError(res, 'Yükləmə linkinin vaxtı bitib. Yenidən cəhd edin.', 401);
       return;
     }
+
+    if (ticket.highlightId) {
+      const highlight = await highlightForTicket(ticket.highlightId, ticket.userId, ticket.kind);
+      if (!highlight) { sendError(res, 'Tapılmadı', 404); return; }
+      const plan = planHighlightZip(highlight);
+      await assertZipAllowed(plan.entries, false);
+      if (!acquireZipSlot()) {
+        sendError(res, 'Server məşğuldur, bir neçə saniyədən sonra yenidən cəhd edin.', 429);
+        return;
+      }
+      slotHeld = true;
+      await streamZip(res, plan.base, plan.entries);
+      return;
+    }
+    if (!ticket.deliverableId) { sendError(res, 'Tapılmadı', 404); return; }
 
     let deliverable;
     if (ticket.kind === 'client') {
