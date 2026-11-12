@@ -211,6 +211,10 @@ router.post(
   ctrl.abortMultipartUpload
 );
 
+// Upload tracking: a ping while a file uploads, and continuing a finished-but-unprocessed upload.
+router.post('/:id/upload-progress', verifyTokenMiddleware, isAdminOrCreator, ctrl.reportUploadProgress);
+router.post('/:id/resume-finalize', verifyTokenMiddleware, isAdminOrCreator, ctrl.resumeFinalize);
+
 /**
  * @swagger
  * /deliverables/{id}/status:

@@ -8,10 +8,11 @@ import {
   UploadPartCommand,
   CompleteMultipartUploadCommand,
   AbortMultipartUploadCommand,
+  ListMultipartUploadsCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl as presignS3Url } from '@aws-sdk/s3-request-presigner';
 import type { Readable } from 'stream';
-import { IStorageProvider, UploadResult, MultipartPartUrl, CompletedPart, ObjectStream } from './storage.interface';
+import { IStorageProvider, UploadResult, MultipartPartUrl, CompletedPart, ObjectStream, IncompleteMultipartUpload } from './storage.interface';
 import { extractStorageKey } from '../../utils/storageKey';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -268,6 +269,31 @@ export class S3StorageProvider implements IStorageProvider {
         UploadId: uploadId,
       })
     );
+  }
+
+  async listIncompleteMultipartUploads(prefix: string): Promise<IncompleteMultipartUpload[]> {
+    const found: IncompleteMultipartUpload[] = [];
+    let keyMarker: string | undefined;
+    let uploadIdMarker: string | undefined;
+    for (let page = 0; page < 50; page += 1) {
+      const result = await this.client.send(
+        new ListMultipartUploadsCommand({
+          Bucket: this.bucket,
+          Prefix: prefix,
+          KeyMarker: keyMarker,
+          UploadIdMarker: uploadIdMarker,
+        })
+      );
+      for (const upload of result.Uploads ?? []) {
+        if (upload.Key && upload.UploadId && upload.Initiated) {
+          found.push({ storageKey: upload.Key, uploadId: upload.UploadId, initiated: upload.Initiated });
+        }
+      }
+      if (!result.IsTruncated) break;
+      keyMarker = result.NextKeyMarker;
+      uploadIdMarker = result.NextUploadIdMarker;
+    }
+    return found;
   }
 
   async getBlobProperties(storageKey: string): Promise<{ exists: boolean; contentLength?: number }> {

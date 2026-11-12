@@ -44,4 +44,12 @@ export interface IStorageProvider {
   getMultipartUploadUrls(storageKey: string, uploadId: string, partCount: number, expiresInSeconds?: number): Promise<MultipartPartUrl[]>;
   completeMultipartUpload(storageKey: string, uploadId: string, parts: CompletedPart[]): Promise<void>;
   abortMultipartUpload(storageKey: string, uploadId: string): Promise<void>;
+  /** Optional: only the S3 provider can list multipart uploads that were started and never finished. */
+  listIncompleteMultipartUploads?(prefix: string): Promise<IncompleteMultipartUpload[]>;
+}
+
+export interface IncompleteMultipartUpload {
+  storageKey: string;
+  uploadId: string;
+  initiated: Date;
 }

@@ -174,6 +174,11 @@ export async function abortMultipartUpload(storageKey: string, uploadId: string)
   return storageProvider.abortMultipartUpload(storageKey, uploadId);
 }
 
+/** Multipart uploads started and never finished (S3 only; other providers have none to list). */
+export async function listIncompleteMultipartUploads(prefix: string) {
+  return storageProvider.listIncompleteMultipartUploads ? storageProvider.listIncompleteMultipartUploads(prefix) : [];
+}
+
 export async function downloadBlobToFile(storageKey: string, localPath: string) {
   return storageProvider.downloadToFile(storageKey, localPath);
 }

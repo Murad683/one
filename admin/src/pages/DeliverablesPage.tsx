@@ -25,6 +25,8 @@ import {
 } from '../components/deliverables/DeliverableColumnFilters';
 import ActiveFilterChips from '../components/deliverables/ActiveFilterChips';
 import MobileFilterSheet from '../components/deliverables/MobileFilterSheet';
+import UploadStateNote from '../components/deliverables/UploadStateNote';
+import { isUploadProblem, type UploadState } from '../lib/uploadState';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import {
   DEFAULT_PAGE_SIZE,
@@ -100,6 +102,12 @@ interface Deliverable extends Record<string, unknown> {
   expiresAt?: string | null;
   hiddenAt?: string | null;
   mediaDeletedAt?: string | null;
+  // Upload tracking (backend/src/services/deliverableUpload.service.ts).
+  createdBy?: { id: string; name: string } | null;
+  uploadState?: UploadState | null;
+  uploadProgress?: number | null;
+  uploadReason?: string | null;
+  uploadAt?: string | null;
 }
 
 interface DeliverableFormValues {
@@ -439,6 +447,11 @@ export const DeliverablesPage = () => {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  // Uploads that need attention (cut off, not processed, cancelled): drives the strip above the table.
+  const [problemCount, setProblemCount] = useState(0);
+  const reuploadInput = useRef<HTMLInputElement>(null);
+  const reuploadTarget = useRef<Deliverable | null>(null);
+  const [resumingId, setResumingId] = useState('');
   // Only the newest request may update the table (filters change faster than the API answers).
   const requestId = useRef(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -526,9 +539,9 @@ export const DeliverablesPage = () => {
     }
   };
 
-  const fetchDeliverables = async () => {
+  const fetchDeliverables = async (silent = false) => {
     const currentRequest = ++requestId.current;
-    setIsLoading(true);
+    if (!silent) setIsLoading(true);
     setError('');
     try {
       const params = buildListParams({ page, pageSize, sort, search: debouncedSearch, filters });
@@ -538,6 +551,7 @@ export const DeliverablesPage = () => {
       setDeliverables(data.items || []);
       setTotal(data.total ?? 0);
       setTotalPages(Math.max(1, data.totalPages ?? 1));
+      setProblemCount((data as { problemCount?: number }).problemCount ?? 0);
       // The last row of the last page was removed: step back one page.
       if ((data.items || []).length === 0 && page > 1 && (data.total ?? 0) > 0) setPage(page - 1);
     } catch (err) {
@@ -553,6 +567,65 @@ export const DeliverablesPage = () => {
   useEffect(() => {
     fetchRef.current = fetchDeliverables;
   });
+
+  // Another admin's (or another tab's) upload is only known to the server: refresh the rows quietly
+  // while one is in flight so its percentage and its end show up without a manual reload.
+  const serverUploadRunning = deliverables.some((d) => d.uploadState === 'uploading' && !upload.uploadFor(d.id));
+  useEffect(() => {
+    if (!serverUploadRunning) return;
+    const timer = setInterval(() => void fetchRef.current(true), 20000);
+    return () => clearInterval(timer);
+  }, [serverUploadRunning]);
+
+  // "Yenidən yüklə" on a row whose upload did not finish: pick the file, then the usual upload starts.
+  const askReupload = (d: Deliverable) => {
+    reuploadTarget.current = d;
+    reuploadInput.current?.click();
+  };
+  const onReuploadPicked = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const target = reuploadTarget.current;
+    const picked = Array.from(event.target.files ?? []);
+    event.target.value = '';
+    reuploadTarget.current = null;
+    if (!target || picked.length === 0) return;
+    if (!upload.canStart) {
+      setError(`Eyni anda ən çox ${MAX_PARALLEL_UPLOADS} yükləmə ola bilər. Əvvəlkilərdən biri bitəndən sonra yenidən cəhd edin.`);
+      return;
+    }
+    setError('');
+    upload.start(target.id, picked, null, () => {
+      fetchRef.current();
+    });
+  };
+  const resumeUpload = async (d: Deliverable) => {
+    setResumingId(d.id);
+    setError('');
+    let failure = '';
+    try {
+      await api.post(`/deliverables/${d.id}/resume-finalize`);
+    } catch (err) {
+      failure = requestErrorMessage(err, 'Emal başladıla bilmədi. Faylı yenidən yükləyin.');
+    }
+    setResumingId('');
+    await fetchDeliverables(true); // clears the banner first, so the message is set after it
+    if (failure) setError(failure);
+  };
+  // What the server says about the row's upload, unless this very tab is uploading it (that card is live).
+  const noteFor = (d: Deliverable) => {
+    if (!d.uploadState || upload.uploadFor(d.id)) return null;
+    return (
+      <UploadStateNote
+        state={d.uploadState}
+        progress={d.uploadProgress}
+        reason={d.uploadReason}
+        at={d.uploadAt}
+        uploader={!isCreator ? d.createdBy?.name : null}
+        busy={resumingId === d.id}
+        onReupload={() => askReupload(d)}
+        onResume={() => void resumeUpload(d)}
+      />
+    );
+  };
 
   // Any filter/search/sort/page-size change goes back to page 1.
   const updateFilters = (patch: Partial<DeliverableFilters>) => {
@@ -730,6 +803,7 @@ export const DeliverablesPage = () => {
           <span>{deliverable.client?.name || 'Naməlum müştəri'}</span>
           {/* Phones hide the title column: keep the file name visible under the client. */}
           <span className="max-w-[180px] truncate text-xs text-muted sm:hidden">{deliverable.title || 'Başlıqsız'}</span>
+          {isUploadProblem(deliverable.uploadState) && <div className="mt-1.5 sm:hidden">{noteFor(deliverable)}</div>}
         </div>
       ),
     },
@@ -760,7 +834,7 @@ export const DeliverablesPage = () => {
             </span>
           </button>
         ) : (
-          <span className="text-faint text-xs italic">{deliverable.title || 'Başlıksız'} (Fayl yoxdur)</span>
+          <span className="text-faint text-xs italic">{deliverable.title || 'Başlıksız'}{!deliverable.uploadState && ' (Fayl yoxdur)'}</span>
         );
       },
     },
@@ -785,15 +859,16 @@ export const DeliverablesPage = () => {
       header: headerFor(
         'status',
         'Status',
-        <ColumnFilter label="Status" active={Boolean(filters.status || filters.stale || filters.hasFeedback || filters.retention)} width={300}>
+        <ColumnFilter label="Status" active={Boolean(filters.status || filters.stale || filters.hasFeedback || filters.uploadProblem || filters.retention)} width={300}>
           {(close) => <StatusFilterPanel statusLabels={statusLabels} filters={filters} onChange={updateFilters} close={close} />}
         </ColumnFilter>,
       ),
       ariaSort: ariaSortFor('status'),
       hideOnMobile: true,
       render: (deliverable) => {
-        const isStale = isStalePending(deliverable);
+        const isStale = isStalePending(deliverable) && !deliverable.uploadState;
         const retention = retentionNote(deliverable);
+        const uploadNote = noteFor(deliverable);
 
         return (
           <div className="flex flex-col gap-1 items-start">
@@ -810,7 +885,7 @@ export const DeliverablesPage = () => {
                 </Badge>
               </span>
               {isStale && (
-                <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-sm" title="2 saatdan çoxdur gözləmədədir">
+                <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-sm" title="2 saatdan çoxdur gözləmədədir. Yükləmə tamamlanmayıb, faylı yenidən yükləyin.">
                   Gözləmədə qalıb
                 </span>
               )}
@@ -829,6 +904,7 @@ export const DeliverablesPage = () => {
                 </button>
               )}
             </div>
+            {uploadNote}
             {upload.uploadFor(deliverable.id) && (
               <span className="text-[10px] text-faint italic ml-1">
                 Fayl yüklənir… {upload.uploadFor(deliverable.id)!.pct}%
@@ -949,6 +1025,26 @@ export const DeliverablesPage = () => {
         <HighlightsManager clients={clients} onRefreshClients={fetchClients} />
       ) : (
         <>
+          <input ref={reuploadInput} type="file" multiple className="hidden" onChange={onReuploadPicked} aria-hidden="true" tabIndex={-1} />
+          {(problemCount > 0 || filters.uploadProblem) && (
+            <div
+              role="status"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-amber-500/10 px-4 py-2 text-sm text-amber-400 ring-1 ring-inset ring-amber-500/20"
+            >
+              <span>
+                {problemCount > 0
+                  ? `${problemCount} yükləmə diqqət tələb edir`
+                  : 'Diqqət tələb edən yükləmə qalmayıb'}
+              </span>
+              <button
+                type="button"
+                className="font-medium underline-offset-2 hover:underline"
+                onClick={() => updateFilters({ uploadProblem: !filters.uploadProblem })}
+              >
+                {filters.uploadProblem ? 'Hamısını göstər' : 'Göstər'}
+              </button>
+            </div>
+          )}
           {!isCreator && (
           <section className="space-y-4 pt-2">
             <div>
@@ -1074,7 +1170,7 @@ export const DeliverablesPage = () => {
             data={deliverables}
             isLoading={isLoading}
             emptyMessage={filtersActive ? 'Filtrə uyğun fayl tapılmadı.' : 'Fayl tapılmadı.'}
-            rowClassName={(row) => (isStalePending(row) ? 'bg-red-50/50 hover:bg-red-50' : row.mediaDeletedAt ? 'opacity-60' : '')}
+            rowClassName={(row) => (isUploadProblem(row.uploadState) ? 'bg-amber-500/5' : isStalePending(row) ? 'bg-red-50/50 hover:bg-red-50' : row.mediaDeletedAt ? 'opacity-60' : '')}
           />
           <div className="flex flex-col gap-3 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
             <span>{filtersActive ? `Tapıldı: ${total} fayl` : `Cəmi: ${total} fayl`}</span>
@@ -1295,7 +1391,11 @@ export const DeliverablesPage = () => {
               await fetchDeliverables();
             }}
             title="Faylı sil"
-            message="Bu fayl və ona bağlı məlumatlar həmişəlik silinəcək."
+            message={
+              deleting && isUploadProblem(deleting.uploadState)
+                ? 'Bu fayl və ona bağlı məlumatlar həmişəlik silinəcək. Yarımçıq qalmış yükləmə və serverdə qalan hissələr də silinəcək.'
+                : 'Bu fayl və ona bağlı məlumatlar həmişəlik silinəcək.'
+            }
           />
 
           {/* ── Admin Custom File Preview Overlay ── */}

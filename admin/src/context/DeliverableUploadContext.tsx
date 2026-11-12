@@ -135,7 +135,12 @@ export function DeliverableUploadProvider({ children }: { children: ReactNode })
                   Bu vərəqi <span className="font-medium">bağlamayın və yeniləməyin</span>.
                 </p>
               )}
-              {u.status === 'error' && u.errorText && <p className="mt-2 text-[11px] text-red-600">{u.errorText}</p>}
+              {u.status === 'error' && (
+                <p className="mt-2 text-[11px] text-red-600">
+                  {u.errorText ? `${u.errorText} ` : ''}
+                  Faylı yenidən yükləyin və "Yükləndi ✓" yazısını görənə qədər səhifəni bağlamayın.
+                </p>
+              )}
             </div>
           ))}
         </div>

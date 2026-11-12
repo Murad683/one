@@ -12,7 +12,12 @@ export interface FaqEntry {
 
 const UPLOAD_PENDING: FaqEntry = {
   q: 'Fayl niyə "Gözləmədə" qalıb?',
-  a: 'Fayl 2 saatdan çox **Gözləmədə** qalarsa, adətən yükləmə uğursuz olub.\n- Faylı redaktə edin, yeni fayl seçin və yadda saxlayın.\n- Davam edərsə developerlə əlaqə saxlayın.',
+  a: 'Faylsız **Gözləmədə** qalan sətirdə statusun altında səbəb və nə etmək lazım olduğu yazılır.\n- **Yükləmə dayanıb** (səhifə bağlanıb, internet kəsilib): **Yenidən yüklə**.\n- **Fayl yüklənib, emal başlamayıb**: **Emalı başlat**, yenidən yükləmək lazım deyil.\n- **Yükləmə ləğv edildi**: 6 saat dayanıb, yarımçıq hissələr silinib. Faylı yenidən yükləyin.\nSəhifənin yuxarısında "N yükləmə diqqət tələb edir" zolağı da çıxır. Köhnə sətirdə 2 saatdan çox gözləyirsə redaktə edib faylı yenidən seçin. Davam edərsə developerlə əlaqə saxlayın.',
+};
+
+const UPLOAD_INTERRUPTED: FaqEntry = {
+  q: 'Yükləmə zamanı səhifəni bağlasam və ya internet getsə nə olur?',
+  a: 'Yükləmə yarımçıq qalır, fayl qeydə bağlanmır. Sistem bunu bir neçə dəqiqəyə görür və sətirdə yazır.\n- **Yükləmə dayanıb**: **Yenidən yüklə** ilə faylı yenidən seçin.\n- Fayl tam yüklənmişdisə **Emalı başlat** kifayətdir.\n- 6 saat dayanmış yükləmənin yarımçıq hissələri avtomatik ləğv olunur və sətirdə qeyd edilir. Tam yüklənmiş fayl heç vaxt avtomatik silinmir.\n- Admin hamının, creator yalnız öz yükləmələrinin vəziyyətini görür.\nYükləyəndə **Yükləndi ✓** yazısını görənə qədər səhifəni bağlamayın.',
 };
 
 const REPLACE_BLOCKED: FaqEntry = {
@@ -93,6 +98,7 @@ export const STAFF_FAQ: FaqEntry[] = [
     a: 'Xeyr. Sorğular və Mesajlar bölmələri yalnız oxumaq və status dəyişmək üçündür, cavab yazmaq olmur.\nMüştəri ilə e-poçt və ya başqa kanaldan əlaqə saxlayın.',
   },
   UPLOAD_PENDING,
+  UPLOAD_INTERRUPTED,
   FIND_FILES,
   REPLACE_BLOCKED,
   VIDEO_RETENTION,
@@ -113,6 +119,7 @@ export const CREATOR_FAQ: FaqEntry[] = [
     a: 'Müştəri sizin yüklədiyiniz fayla rəy yazanda, faylın yanında mavi **Rəy** çipi görünür. Üzərinə klikləyəndə müştərinin yazdığı mətn açılır.',
   },
   UPLOAD_PENDING,
+  UPLOAD_INTERRUPTED,
   FIND_FILES,
   REPLACE_BLOCKED,
   VIDEO_RETENTION,

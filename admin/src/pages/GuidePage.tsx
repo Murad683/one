@@ -446,10 +446,34 @@ export const GuidePage = () => {
             <Badge variant="danger">Xəta</Badge>
             <Badge variant="default">Arxivlənib</Badge>
           </div>
-          <Callout tone="warn" title='"Gözləmədə qalıb" xəbərdarlığı'>
+          <Callout tone="warn" title="Yükləmə yarımçıq qalıbsa">
             <p>
-              Fayl 2 saatdan çox <B>Gözləmədə</B> statusunda qalarsa, sətir açıq-qırmızı rənglə işarələnir və
-              "Gözləmədə qalıb" çipi görünür — bu, adətən yükləmənin uğursuz olduğunu göstərir, yoxlanılmalıdır.
+              Yükləmə kəsilərsə (səhifə bağlanıb, internet gedib, kompüter yatıb), qeyd faylsız <B>Gözləmədə</B>{' '}
+              qalır. Sistem bunu özü görür və statusun altında nə baş verdiyini və nə etmək lazım olduğunu yazır:
+            </p>
+            <p>
+              <B>Yüklənir… 45%</B> — yükləmə gedir (başqa kompüterdən də görünür). Səhifəni bağlamayın, bitənə
+              qədər gözləyin.
+            </p>
+            <p>
+              <B>Yükləmə dayanıb</B> — bir neçə dəqiqədir siqnal yoxdur. <B>"Yenidən yüklə"</B> ilə faylı yenidən
+              seçin.
+            </p>
+            <p>
+              <B>Fayl yüklənib, emal başlamayıb</B> — fayl serverdədir, yalnız təsdiq çatmayıb. <B>"Emalı
+              başlat"</B> basın, yenidən yükləmək lazım deyil.
+            </p>
+            <p>
+              <B>Yükləmə ləğv edildi</B> — 6 saat dayanmış yükləmənin yarımçıq hissələri avtomatik ləğv olunur və
+              səbəb sətirdə yazılır. Faylı yenidən yükləyin.
+            </p>
+            <p>
+              Belə sətirlər sarı rənglə işarələnir və səhifənin yuxarısında <B>"N yükləmə diqqət tələb edir"</B>{' '}
+              zolağı çıxır ("Göstər" yalnız onları göstərir; Status hunisində də "Yükləmə problemi olanlar" var).
+              Admin bütün yükləmələri və kimin yüklədiyini görür, creator yalnız öz yükləmələrini. Tam yüklənmiş
+              fayl heç vaxt avtomatik silinmir; sətri silsəniz, yarımçıq yükləmə də silinir. Köhnə sətirlərdə və
+              kiçik fayllarda isə 2 saatdan çox gözləyəndə qırmızı "Gözləmədə qalıb" çipi görünür: faylı yenidən
+              yükləyin.
             </p>
           </Callout>
           <p>
@@ -522,7 +546,8 @@ export const GuidePage = () => {
               <p>
                 Yükləmə davam edərkən panelin <B>başqa səhifələrinə keçə bilərsiniz</B> — irəliləyiş göstəricisi
                 küncdə qalır və yükləmə arxa planda davam edir. Amma brauzer tabını <B>bağlamayın və
-                yeniləməyin</B> (F5): bu, yükləməni dayandırır və faylı yenidən yükləmək lazım olur.
+                yeniləməyin</B> (F5): bu, yükləməni dayandırır. "Yükləndi ✓" yazısını görənə qədər gözləyin. Dayanarsa
+                sətirdə nə etmək lazım olduğu yazılır (yuxarıdakı "Yükləmə yarımçıq qalıbsa" bölməsi).
               </p>
             </Callout>
           </Callout>
