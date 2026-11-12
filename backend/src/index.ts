@@ -35,6 +35,7 @@ import { globalRateLimiter, contactRateLimiter, uploadRateLimiter } from './midd
 import { xssSanitize } from './middleware/xss.middleware';
 import { startRetentionScheduler } from './jobs/retention';
 import { startHighlightUploadCleanup } from './jobs/highlightUploads';
+import { startUploadCleanup } from './jobs/deliverableUploads';
 import { resendWebhook } from './controllers/webhook.controller';
 import { mediaRouter } from './routes/media.routes';
 
@@ -176,6 +177,7 @@ app.listen(PORT, () => {
   console.log(`ðŸš€ Server running on http://localhost:${PORT}`);
   startRetentionScheduler();
   startHighlightUploadCleanup();
+  startUploadCleanup();
 });
 
 export default app;

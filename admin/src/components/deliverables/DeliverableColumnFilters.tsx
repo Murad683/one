@@ -110,7 +110,7 @@ export const StatusFilterPanel = ({
   close,
 }: {
   statusLabels: Record<string, string>;
-  filters: Pick<DeliverableFilters, 'status' | 'stale' | 'hasFeedback' | 'retention'>;
+  filters: Pick<DeliverableFilters, 'status' | 'stale' | 'hasFeedback' | 'uploadProblem' | 'retention'>;
   onChange: Patch;
   close: () => void;
 }) => (
@@ -144,6 +144,15 @@ export const StatusFilterPanel = ({
           onChange={(event) => onChange({ hasFeedback: event.target.checked })}
         />
         Müştəri rəyi var
+      </label>
+      <label className="flex items-center gap-2 px-2.5 text-sm text-body">
+        <input
+          type="checkbox"
+          className={checkboxClass}
+          checked={filters.uploadProblem}
+          onChange={(event) => onChange({ uploadProblem: event.target.checked })}
+        />
+        Yükləmə problemi olanlar
       </label>
     </div>
     <div className="border-t border-edge pt-2">

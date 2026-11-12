@@ -22,6 +22,8 @@ import { buildDeliverableListQuery } from '../utils/deliverableList';
 import { CLIENT_VISIBLE_WHERE, isRetentionLocked, presentForAdmin, presentForClient, RETENTION_LOCKED_MESSAGE } from '../utils/retention';
 import { stampFirstReady } from '../services/retention.service';
 import { canReceiveNotices } from '../utils/notices';
+import { markAborted, markUploadsByKey, problemDeliverableIds, touchUpload, trackUploadStart, uploadViewsFor } from '../services/deliverableUpload.service';
+import { ABORTED_REASON } from '../utils/deliverableUploads';
 
 // Video helpers (getVideoHeight / getVideoRotationDegrees / getMediaDimensions /
 // generateVideoThumbnail / generateWebPreview / applyVideoFaststart) moved to
@@ -179,6 +181,14 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
     const isCreator = req.user!.role === 'CREATOR';
     const { where, orderBy, page, limit, skip } = buildDeliverableListQuery(req.query, req.user!);
 
+    // Upload tracking (services/deliverableUpload.service.ts): the ids whose upload needs attention.
+    // Creators only ever count their own rows, the same scope the list itself applies.
+    const problemIds = await problemDeliverableIds(isCreator ? req.user!.id : undefined);
+    if (req.query.upload === 'problem') {
+      const and = (where.AND as Array<Record<string, unknown>> | undefined) ?? [];
+      where.AND = [...and, { id: { in: problemIds } }];
+    }
+
     const [items, total] = await Promise.all([
       prisma.deliverable.findMany({
         where: where as any,
@@ -190,10 +200,12 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
             select: { id: true, name: true, email: true, shareToken: true, shareTokenExpiresAt: true, role: true, isActive: true, emailBouncedAt: true },
           },
           category: true,
+          createdBy: { select: { id: true, name: true } },
         },
       }),
       prisma.deliverable.count({ where: where as any }),
     ]);
+    const uploadViews = await uploadViewsFor(items);
 
     // Sign URLs in files array
     const serialized = await Promise.all(
@@ -234,8 +246,13 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
           }
         }
 
+        const uploadView = uploadViews.get(d.id);
         return presentForAdmin({
           ...d,
+          uploadState: uploadView?.state ?? null,
+          uploadProgress: uploadView?.progress ?? null,
+          uploadReason: uploadView?.reason ?? null,
+          uploadAt: uploadView?.at ?? null,
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
           thumbnailDownloadUrl: await getAttachmentUrl(d.thumbnailUrl),
@@ -260,6 +277,7 @@ export const getAllDeliverables = async (req: Request, res: Response): Promise<v
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+      problemCount: problemIds.length,
     });
   } catch (err) {
     console.error('getAllDeliverables error:', err);
@@ -738,6 +756,15 @@ export const initiateDirectUpload = async (req: Request, res: Response): Promise
     const { uploadUrl, storageKey } = await getPresignedUploadUrl(
       folder, fileName, mimeType, SAS_UPLOAD_EXPIRY_SECONDS
     );
+    await trackUploadStart({
+      deliverableId: id,
+      createdById: req.user!.id,
+      kind: 'SINGLE',
+      storageKey,
+      fileName,
+      fileSize: Number(fileSize) || 0,
+      mimeType: mimeType || '',
+    });
 
     sendSuccess(res, { uploadUrl, storageKey, folder });
   } catch (err) {
@@ -788,6 +815,16 @@ export const initiateMultipartUpload = async (req: Request, res: Response): Prom
 
     const { storageKey, uploadId } = await createMultipartUpload(folder, fileName, mimeType);
     const partUrls = await getMultipartUploadUrls(storageKey, uploadId, partCount, SAS_UPLOAD_EXPIRY_SECONDS);
+    await trackUploadStart({
+      deliverableId: id,
+      createdById: req.user!.id,
+      kind: 'MULTIPART',
+      storageKey,
+      uploadId,
+      fileName,
+      fileSize,
+      mimeType,
+    });
 
     sendSuccess(res, { storageKey, uploadId, partSize, partCount, partUrls, folder });
   } catch (err) {
@@ -831,7 +868,15 @@ export const completeMultipartUpload = async (req: Request, res: Response): Prom
     }
     if (!(await creatorMultipartAllowed(req, res, storageKey))) return;
 
-    await completeMultipartUploadStorage(storageKey, uploadId, parts);
+    try {
+      await completeMultipartUploadStorage(storageKey, uploadId, parts);
+    } catch (completeErr) {
+      // The browser retries this call when its answer was lost. A second assemble of an upload that
+      // already finished fails in storage, but the object is there: that counts as done.
+      const props = await getBlobProperties(storageKey).catch(() => ({ exists: false }));
+      if (!props.exists) throw completeErr;
+    }
+    await markUploadsByKey([storageKey], 'ASSEMBLED');
     sendSuccess(res, { storageKey });
   } catch (err) {
     console.error('completeMultipartUpload error:', err);
@@ -854,6 +899,7 @@ export const abortMultipartUpload = async (req: Request, res: Response): Promise
     } catch (e) {
       console.warn('abortMultipartUpload: storage abort failed (ignored):', e);
     }
+    await markAborted([storageKey]);
     sendSuccess(res, { aborted: true });
   } catch (err) {
     console.error('abortMultipartUpload error:', err);
@@ -861,13 +907,72 @@ export const abortMultipartUpload = async (req: Request, res: Response): Promise
   }
 };
 
-// POST /api/v1/deliverables/:id/finalize-upload
-export const finalizeDirectUpload = async (req: Request, res: Response): Promise<void> => {
+// POST /api/v1/deliverables/:id/upload-progress
+// The browser pings this about every 30 s while a file uploads, so the server can tell a running
+// upload from a cut-off one (the admin list shows the difference). `done` = a single PUT finished.
+export const reportUploadProgress = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const { files, thumbnailStorageKey } = req.body;
-    // files: [{ storageKey, fileName, fileSize, mimeType }]
-    // thumbnailStorageKey: optional string — storageKey for custom thumbnail uploaded via direct upload
+    const { storageKey, progress, done } = req.body as { storageKey?: string; progress?: number; done?: boolean };
+    if (!storageKey || typeof storageKey !== 'string') {
+      sendError(res, 'storageKey is required', 400);
+      return;
+    }
+    const deliverable = await prisma.deliverable.findUnique({ where: { id }, select: { createdById: true } });
+    if (!deliverable) { sendError(res, 'Deliverable not found', 404); return; }
+    if (!canModifyDeliverable(req.user, deliverable)) { sendError(res, 'Forbidden', 403); return; }
+    const live = await touchUpload(id, storageKey, Number(progress), done === true);
+    sendSuccess(res, { live });
+  } catch (err) {
+    console.error('reportUploadProgress error:', err);
+    sendError(res, 'Failed to record upload progress', 500);
+  }
+};
+
+// POST /api/v1/deliverables/:id/finalize-upload
+export const finalizeDirectUpload = async (req: Request, res: Response): Promise<void> => {
+  // files: [{ storageKey, fileName, fileSize, mimeType }]
+  // thumbnailStorageKey: optional string — storageKey for custom thumbnail uploaded via direct upload
+  const { files, thumbnailStorageKey } = req.body;
+  await finalizeFiles(req, res, files, thumbnailStorageKey);
+};
+
+// POST /api/v1/deliverables/:id/resume-finalize
+// The whole file reached storage but the browser never called finalize (tab closed at the last
+// step). The upload rows hold everything finalize needs, so processing can start without a new upload.
+export const resumeFinalize = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const rows = await prisma.deliverableUpload.findMany({
+      where: { deliverableId: id, status: 'ASSEMBLED' },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (rows.length === 0) {
+      const existing = await prisma.deliverable.findUnique({ where: { id }, select: { id: true } });
+      sendError(res, existing ? 'No finished upload to continue' : 'Deliverable not found', existing ? 409 : 404);
+      return;
+    }
+    const files = rows.map((row) => ({
+      storageKey: row.storageKey,
+      fileName: row.fileName,
+      fileSize: Number(row.fileSize),
+      mimeType: row.mimeType,
+    }));
+    await finalizeFiles(req, res, files, null);
+  } catch (err) {
+    console.error('resumeFinalize error:', err);
+    sendError(res, 'Failed to continue upload', 500);
+  }
+};
+
+const finalizeFiles = async (
+  req: Request,
+  res: Response,
+  files: any,
+  thumbnailStorageKey: string | null | undefined,
+): Promise<void> => {
+  try {
+    const id = req.params.id as string;
 
     const deliverable = await prisma.deliverable.findUnique({
       where: { id },
@@ -893,6 +998,7 @@ export const finalizeDirectUpload = async (req: Request, res: Response): Promise
     if (lockedMessage) {
       sendError(res, lockedMessage, 409);
       if (Array.isArray(files)) {
+        await markAborted(files.map((f: any) => f?.storageKey), lockedMessage);
         await deleteUnreferencedDeliverableKeys([
           ...files.map((f: any) => f?.storageKey).filter(Boolean),
           ...(thumbnailStorageKey ? [thumbnailStorageKey] : []),
@@ -912,7 +1018,13 @@ export const finalizeDirectUpload = async (req: Request, res: Response): Promise
     // Mövcudluq yoxlaması
     const missing = verifications.filter((v: any) => !v.blobExists);
     if (missing.length > 0) {
+      // The files that did arrive are unusable without their siblings: record why and drop them.
+      await markAborted(verifications.map((v: any) => v.storageKey), 'Fayllardan biri storage-də tapılmadı.');
       sendError(res, `Blob(s) not found in storage: ${missing.map((m: any) => m.storageKey).join(', ')}`, 400);
+      await deleteUnreferencedDeliverableKeys([
+        ...verifications.filter((v: any) => v.blobExists).map((v: any) => v.storageKey),
+        ...(thumbnailStorageKey ? [thumbnailStorageKey] : []),
+      ]);
       return;
     }
 
@@ -928,6 +1040,7 @@ export const finalizeDirectUpload = async (req: Request, res: Response): Promise
         where: { id },
         data: { status: 'FAILED' },
       });
+      await markAborted(verifications.map((v: any) => v.storageKey), 'Faylın ölçüsü uyğun gəlmədi, yükləmə zədələnib.');
       sendError(res, 'File size mismatch detected. Upload may be corrupted.', 400);
       // The raw uploads are unusable and never referenced; the admin re-uploads.
       await deleteUnreferencedDeliverableKeys([
@@ -942,6 +1055,10 @@ export const finalizeDirectUpload = async (req: Request, res: Response): Promise
       where: { id },
       data: { status: 'PROCESSING' },
     });
+    await markUploadsByKey(
+      [...verifications.map((v: any) => v.storageKey), ...(thumbnailStorageKey ? [thumbnailStorageKey] : [])],
+      'FINALIZED',
+    );
 
     sendSuccess(res, { message: 'Processing started' });
 
@@ -1261,10 +1378,27 @@ export const deleteDeliverable = async (req: Request, res: Response): Promise<vo
     // object-storage calls can take many seconds and the admin should not wait.
     // If the row delete fails, nothing is lost; if the cleanup fails, the files
     // are only orphaned in storage (never shown anywhere) and the error is logged.
+    // The row's unfinished uploads go with it (the upload rows cascade): cut-off multipart uploads
+    // are cancelled and finished-but-unprocessed files removed. This is the admin's explicit delete.
+    const unfinished = await prisma.deliverableUpload.findMany({
+      where: { deliverableId: id, status: { in: ['UPLOADING', 'ASSEMBLED'] } },
+      select: { storageKey: true, uploadId: true, kind: true, status: true },
+    }).catch(() => []);
+
     await prisma.deliverable.delete({ where: { id } });
     res.status(204).send();
 
-    void deleteUnreferencedDeliverableKeys(collectDeliverableKeys(existing)).catch((cleanupErr) => {
+    void (async () => {
+      for (const upload of unfinished) {
+        if (upload.kind === 'MULTIPART' && upload.uploadId && upload.status === 'UPLOADING') {
+          await abortMultipartUploadStorage(upload.storageKey, upload.uploadId).catch(() => undefined);
+        }
+      }
+      await deleteUnreferencedDeliverableKeys([
+        ...collectDeliverableKeys(existing),
+        ...unfinished.filter((u) => u.status === 'ASSEMBLED' || u.kind === 'SINGLE').map((u) => u.storageKey),
+      ]);
+    })().catch((cleanupErr) => {
       console.error(`deleteDeliverable cleanup failed for ${id}:`, cleanupErr);
     });
   } catch (err) {

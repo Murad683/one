@@ -77,6 +77,34 @@ import axios from 'axios';
 const MULTIPART_THRESHOLD_BYTES = 20 * 1024 * 1024; // 20 MB
 const PART_CONCURRENCY = 5;
 const PART_MAX_RETRIES = 3;
+// The server learns an upload is alive from a ping about every 30 s (POST /upload-progress), so it
+// can tell a running upload from a cut-off one. Best effort: a missed ping never stops an upload.
+const HEARTBEAT_MS = 30_000;
+const CALL_MAX_ATTEMPTS = 3;
+
+const startHeartbeat = (id: string, storageKey: string, getPercent: () => number): (() => void) => {
+  const send = (done = false) =>
+    client.post(`/deliverables/${id}/upload-progress`, { storageKey, progress: getPercent(), done }).catch(() => undefined);
+  const timer = setInterval(() => void send(), HEARTBEAT_MS);
+  return () => clearInterval(timer);
+};
+
+// A short API call between two storage steps (complete / finalize): a lost connection must not
+// throw away a finished upload, so network errors and 5xx answers are retried; 4xx answers are final.
+const withRetries = async <T>(call: () => Promise<T>): Promise<T> => {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await call();
+    } catch (err) {
+      attempt += 1;
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      const retryable = status === undefined || status >= 500;
+      if (!retryable || attempt >= CALL_MAX_ATTEMPTS) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+};
 
 // Single presigned PUT (used for small files and the thumbnail).
 const uploadSinglePut = async (
@@ -91,13 +119,26 @@ const uploadSinglePut = async (
   });
   const { uploadUrl, storageKey } = initRes.data.data;
 
-  await axios.put(uploadUrl, file, {
-    headers: { 'Content-Type': file.type },
-    timeout: 0,
-    onUploadProgress: (event) => {
-      if (event.total) onFileProgress?.(Math.round((event.loaded * 100) / event.total));
-    },
-  });
+  let percent = 0;
+  const stopBeat = startHeartbeat(id, storageKey, () => percent);
+  try {
+    await withRetries(() =>
+      axios.put(uploadUrl, file, {
+        headers: { 'Content-Type': file.type },
+        timeout: 0,
+        onUploadProgress: (event) => {
+          if (event.total) {
+            percent = Math.round((event.loaded * 100) / event.total);
+            onFileProgress?.(percent);
+          }
+        },
+      }),
+    );
+  } finally {
+    stopBeat();
+  }
+  // The whole file is in storage: the server row moves on, so a cut-off before "finalize" is visible.
+  await client.post(`/deliverables/${id}/upload-progress`, { storageKey, progress: 100, done: true }).catch(() => undefined);
   return storageKey;
 };
 
@@ -120,11 +161,14 @@ const uploadMultipart = async (
   };
 
   const total = partUrls.length;
+  let lastPercent = 0;
+  const stopBeat = startHeartbeat(id, storageKey, () => lastPercent);
   const loadedPerPart = new Array<number>(total).fill(0);
   const completed = new Array<{ partNumber: number; etag: string } | undefined>(total);
   const reportProgress = () => {
     const loaded = loadedPerPart.reduce((a, b) => a + b, 0);
-    onFileProgress?.(Math.min(100, Math.round((loaded * 100) / file.size)));
+    lastPercent = Math.min(100, Math.round((loaded * 100) / file.size));
+    onFileProgress?.(lastPercent);
   };
 
   const putPart = async (idx: number): Promise<void> => {
@@ -174,6 +218,7 @@ const uploadMultipart = async (
       Array.from({ length: Math.min(PART_CONCURRENCY, total) }, () => worker())
     );
   } catch (err) {
+    stopBeat();
     // Leave no dangling multipart upload behind.
     try {
       await client.post(`/deliverables/${id}/abort-multipart`, { storageKey, uploadId });
@@ -184,7 +229,11 @@ const uploadMultipart = async (
   }
 
   const parts = completed.filter(Boolean) as { partNumber: number; etag: string }[];
-  await client.post(`/deliverables/${id}/complete-multipart`, { storageKey, uploadId, parts });
+  try {
+    await withRetries(() => client.post(`/deliverables/${id}/complete-multipart`, { storageKey, uploadId, parts }));
+  } finally {
+    stopBeat();
+  }
   return storageKey;
 };
 
@@ -223,9 +272,11 @@ export const directUploadDeliverableFile = async (
   }
 
   // Tell the backend everything is in place → verification + processing starts.
-  const response = await client.post(`/deliverables/${id}/finalize-upload`, {
-    files: uploadedFiles,
-    ...(thumbnailStorageKey && { thumbnailStorageKey }),
-  });
+  const response = await withRetries(() =>
+    client.post(`/deliverables/${id}/finalize-upload`, {
+      files: uploadedFiles,
+      ...(thumbnailStorageKey && { thumbnailStorageKey }),
+    }),
+  );
   return response.data;
 };

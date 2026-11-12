@@ -93,6 +93,10 @@ export const MobileFilterSheet = ({
             <input type="checkbox" className={checkboxClass} checked={filters.hasFeedback} onChange={(event) => onFiltersChange({ hasFeedback: event.target.checked })} />
             Müştəri rəyi var
           </label>
+          <label className="flex items-center gap-2 text-sm text-body">
+            <input type="checkbox" className={checkboxClass} checked={filters.uploadProblem} onChange={(event) => onFiltersChange({ uploadProblem: event.target.checked })} />
+            Yükləmə problemi olanlar
+          </label>
           <div className="flex justify-between gap-2 border-t border-edge pt-3">
             <Button variant="ghost" size="sm" onClick={onClearFilters} disabled={activeCount === 0}>Təmizlə</Button>
             <Button size="sm" onClick={close}>Hazırdır</Button>

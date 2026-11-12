@@ -147,10 +147,38 @@ model Deliverable {
   notice7SentAt  DateTime?  // the warning mail covering this video went out (was the 7-day flag; there is a single warning now)
   notice1SentAt  DateTime?  // unused since the single warning (kept: columns are never dropped on deploy)
 
+  uploads        DeliverableUpload[]
+
   @@index([clientId, year, month])
   @@index([createdById])
   @@index([expiresAt])
   @@index([hiddenAt])
+}
+
+// One browser upload of a file for a deliverable (utils/deliverableUploads.ts). The browser writes
+// "started / progress / assembled" through the API, so the server knows an upload was cut off and
+// the admin list can say so. status: UPLOADING -> ASSEMBLED (whole object in storage, finalize not
+// called) -> FINALIZED (processing started); ABORTED (user/error); EXPIRED (the job gave up).
+model DeliverableUpload {
+  id             String      @id @default(cuid())
+  deliverableId  String
+  deliverable    Deliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+  createdById    String?
+  kind           String
+  storageKey     String      @unique
+  uploadId       String?
+  fileName       String
+  fileSize       BigInt
+  mimeType       String
+  status         String      @default("UPLOADING")
+  progress       Int         @default(0)
+  lastActivityAt DateTime    @default(now())
+  createdAt      DateTime    @default(now())
+  endedAt        DateTime?
+  reason         String?
+
+  @@index([deliverableId])
+  @@index([status, lastActivityAt])
 }
 
 model DeliverableCategory {

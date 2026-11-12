@@ -14,6 +14,8 @@ export interface DeliverableFilters {
   /** "Gözləmədə qalıb": PENDING for more than 2 hours. */
   stale: boolean;
   hasFeedback: boolean;
+  /** Uploads that need attention: cut off, finished but not processed, or cancelled. */
+  uploadProblem: boolean;
   /** Video retention stage (backend/src/utils/retention.ts), or '' for all. */
   retention: RetentionFilter;
 }
@@ -35,6 +37,7 @@ export const emptyFilters: DeliverableFilters = {
   to: '',
   stale: false,
   hasFeedback: false,
+  uploadProblem: false,
   retention: '',
 };
 
@@ -110,7 +113,8 @@ export const countActiveFilters = (f: DeliverableFilters): number =>
   [f.clientId, f.categoryId, f.status, f.month, f.retention].filter(Boolean).length +
   (f.from || f.to ? 1 : 0) +
   (f.stale ? 1 : 0) +
-  (f.hasFeedback ? 1 : 0);
+  (f.hasFeedback ? 1 : 0) +
+  (f.uploadProblem ? 1 : 0);
 
 interface ListParamsInput {
   page: number;
@@ -136,6 +140,7 @@ export const buildListParams = ({ page, pageSize, sort, search, filters }: ListP
   if (filters.to) params.set('to', filters.to);
   if (filters.stale) params.set('stale', '1');
   if (filters.hasFeedback) params.set('hasFeedback', '1');
+  if (filters.uploadProblem) params.set('upload', 'problem');
   if (filters.retention) params.set('retention', filters.retention);
   return params;
 };
@@ -174,6 +179,7 @@ export const describeFilters = (f: DeliverableFilters, ctx: ChipContext): Filter
   }
   if (f.stale) chips.push({ id: 'stale', label: 'Gözləmədə qalıb', clear: { stale: false } });
   if (f.hasFeedback) chips.push({ id: 'feedback', label: 'Müştəri rəyi var', clear: { hasFeedback: false } });
+  if (f.uploadProblem) chips.push({ id: 'uploadProblem', label: 'Yükləmə problemi', clear: { uploadProblem: false } });
   if (f.retention) {
     const label = RETENTION_FILTER_OPTIONS.find((o) => o.value === f.retention)?.label ?? f.retention;
     chips.push({ id: 'retention', label: `Saxlama: ${label}`, clear: { retention: '' } });
