@@ -873,6 +873,8 @@ export const DeliverablesPage = () => {
         return (
           <div className="flex flex-col gap-1 items-start">
             <div className="flex items-center gap-1.5">
+              {/* A file-less row whose upload has its own badge below shows only that one. */}
+              {!(uploadNote && deliverable.status === 'PENDING') && (
               <span
                 title={
                   (deliverable.processingDuration ?? 0) > 0 && deliverable.status === 'READY'
@@ -884,6 +886,7 @@ export const DeliverablesPage = () => {
                   {statusLabels[deliverable.status] || deliverable.status}
                 </Badge>
               </span>
+              )}
               {isStale && (
                 <span className="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-sm" title="2 saatdan çoxdur gözləmədədir. Yükləmə tamamlanmayıb, faylı yenidən yükləyin.">
                   Gözləmədə qalıb
@@ -1170,7 +1173,7 @@ export const DeliverablesPage = () => {
             data={deliverables}
             isLoading={isLoading}
             emptyMessage={filtersActive ? 'Filtrə uyğun fayl tapılmadı.' : 'Fayl tapılmadı.'}
-            rowClassName={(row) => (isUploadProblem(row.uploadState) ? 'bg-amber-500/5' : isStalePending(row) ? 'bg-red-50/50 hover:bg-red-50' : row.mediaDeletedAt ? 'opacity-60' : '')}
+            rowClassName={(row) => (isUploadProblem(row.uploadState) ? 'bg-amber-500/5' : isStalePending(row) ? 'bg-red-500/10 hover:bg-red-500/15' : row.mediaDeletedAt ? 'opacity-60' : '')}
           />
           <div className="flex flex-col gap-3 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
             <span>{filtersActive ? `Tapıldı: ${total} fayl` : `Cəmi: ${total} fayl`}</span>
