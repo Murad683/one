@@ -7,6 +7,7 @@ import {
   createDeliverableSchema,
   updateDeliverableStatusSchema,
   updateDeliverableSchema,
+  replySchema,
 } from '../utils/validators/deliverable.validators';
 import { uploadRateLimiter, zipRateLimiter } from '../middleware/rateLimiter.middleware';
 import { createStaffZipTicket } from '../controllers/download.controller';
@@ -92,6 +93,9 @@ router.get('/my', verifyTokenMiddleware, isClient, ctrl.getMyDeliverables);
  *         description: Forbidden — Admin only
  */
 router.get('/', verifyTokenMiddleware, isAdminOrCreator, ctrl.getAllDeliverables);
+
+// Client feedback nobody on the team has answered yet (admin menu badge). Before the /:id routes.
+router.get('/unanswered-count', verifyTokenMiddleware, isAdminOrCreator, ctrl.getUnansweredCount);
 
 /**
  * @swagger
@@ -253,6 +257,8 @@ router.patch(
   validate(updateDeliverableStatusSchema),
   ctrl.updateStatus
 );
+
+router.patch('/:id/reply', verifyTokenMiddleware, isAdminOrCreator, validate(replySchema), ctrl.setReply);
 
 router.patch(
   '/:id',

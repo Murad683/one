@@ -126,6 +126,8 @@ model Deliverable {
   files          Json              @default("[]")
   notes          String?
   clientFeedback String?           @db.Text
+  staffReply     String?           @db.Text
+  staffReplyAt   DateTime?
   uploadedAt     DateTime?
   thumbnailUrl   String?
   processingDuration Int?

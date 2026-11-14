@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { getSecureDownloadUrl, getSecureDownloadUrlForDownload, getAttachmentUrl } from '../services/upload.service';
-import { CLIENT_VISIBLE_WHERE, presentForClient } from '../utils/retention';
+import { CLIENT_LISTED_WHERE, presentForClient } from '../utils/retention';
 import { getForViewer, listForViewer } from '../services/highlight.service';
 
 // ─── GET /api/v1/share/:token ───────────────────
@@ -30,14 +30,14 @@ export const getSharedProfile = async (req: Request, res: Response): Promise<voi
 
     const [deliverables, total] = await Promise.all([
       prisma.deliverable.findMany({
-        where: { clientId: client.id, status: 'READY', ...CLIENT_VISIBLE_WHERE },
+        where: { clientId: client.id, ...CLIENT_LISTED_WHERE },
         include: { category: true },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
       prisma.deliverable.count({
-        where: { clientId: client.id, status: 'READY', ...CLIENT_VISIBLE_WHERE },
+        where: { clientId: client.id, ...CLIENT_LISTED_WHERE },
       }),
     ]);
 
@@ -77,11 +77,12 @@ export const getSharedProfile = async (req: Request, res: Response): Promise<voi
           }
         }
 
-        // clientFeedback is intentionally omitted — never exposed on the public view.
-        const { clientFeedback, ...rest } = d as typeof d & { clientFeedback?: unknown };
+        // clientFeedback and the team's reply are intentionally omitted — never exposed on the public view.
+        const { clientFeedback, staffReply, staffReplyAt, ...rest } = d;
 
         return presentForClient({
           ...rest,
+          status: 'READY',
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
           thumbnailDownloadUrl: await getAttachmentUrl(d.thumbnailUrl),

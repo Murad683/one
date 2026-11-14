@@ -402,6 +402,68 @@ export const updateDeliverable = async (req: Request, res: Response): Promise<vo
   }
 };
 
+// PATCH /api/v1/deliverables/:id/reply — the team answers a client's feedback (empty text removes the reply).
+export const setReply = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const reply = String(req.body.reply ?? '').trim();
+    const existing = await prisma.deliverable.findUnique({
+      where: { id },
+      select: { id: true, createdById: true, clientFeedback: true, staffReply: true },
+    });
+
+    if (!existing) {
+      sendError(res, 'Deliverable not found', 404);
+      return;
+    }
+
+    if (!canModifyDeliverable(req.user, existing)) {
+      sendError(res, 'Forbidden', 403);
+      return;
+    }
+
+    if (!reply) {
+      await prisma.deliverable.update({ where: { id }, data: { staffReply: null, staffReplyAt: null } });
+      sendSuccess(res, { id, staffReply: null, staffReplyAt: null });
+      return;
+    }
+
+    if (!existing.clientFeedback && !existing.staffReply) {
+      sendError(res, 'Bu faylda müştəri rəyi yoxdur', 400);
+      return;
+    }
+
+    const updated = await prisma.deliverable.update({
+      where: { id },
+      data: { staffReply: reply, staffReplyAt: new Date() },
+      select: { id: true, staffReply: true, staffReplyAt: true },
+    });
+    sendSuccess(res, updated);
+  } catch (err) {
+    console.error('setReply error:', err);
+    sendError(res, 'Failed to save reply', 500);
+  }
+};
+
+// GET /api/v1/deliverables/unanswered-count — client feedback without a team reply (a creator counts only their own rows).
+export const getUnansweredCount = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const count = await prisma.deliverable.count({
+      where: {
+        clientFeedback: { not: null },
+        NOT: { clientFeedback: '' },
+        staffReply: null,
+        ...CLIENT_VISIBLE_WHERE,
+        ...(req.user!.role === 'CREATOR' && { createdById: req.user!.id }),
+      },
+    });
+    sendSuccess(res, { count });
+  } catch (err) {
+    console.error('getUnansweredCount error:', err);
+    sendError(res, 'Failed to count unanswered feedback', 500);
+  }
+};
+
 // PATCH /api/v1/deliverables/:id/upload (Admin only)
 export const uploadDeliverableFile = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -703,6 +765,8 @@ const processDeliverableBackground = async (
         status: 'READY',
         processingDuration,
         clientFeedback: null,
+        staffReply: null,
+        staffReplyAt: null,
         ...(newThumbnailUrl !== undefined && { thumbnailUrl: newThumbnailUrl }),
         ...(isUpdatingVideo && { width: newWidth, height: newHeight, originalUrl: newOriginalUrl }),
       },
@@ -1292,6 +1356,8 @@ const processDirectUploadBackground = async (
         status: 'READY',
         processingDuration,
         clientFeedback: null,
+        staffReply: null,
+        staffReplyAt: null,
         ...(newThumbnailUrl !== undefined && { thumbnailUrl: newThumbnailUrl }),
         width: newWidth,
         height: newHeight,
