@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { getSecureDownloadUrl, getSecureDownloadUrlForDownload, getAttachmentUrl } from '../services/upload.service';
-import { CLIENT_VISIBLE_WHERE, presentForClient } from '../utils/retention';
+import { CLIENT_LISTED_WHERE, CLIENT_VISIBLE_WHERE, presentForClient } from '../utils/retention';
 import { getForViewer, listForViewer } from '../services/highlight.service';
 
 // ─── GET /api/v1/dashboard/overview ────────────
@@ -64,14 +64,14 @@ export const getDeliverables = async (req: Request, res: Response): Promise<void
 
     const [deliverables, total] = await Promise.all([
       prisma.deliverable.findMany({
-        where: { clientId: userId, status: 'READY', ...CLIENT_VISIBLE_WHERE },
+        where: { clientId: userId, ...CLIENT_LISTED_WHERE },
         include: { category: true },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
       prisma.deliverable.count({
-        where: { clientId: userId, status: 'READY', ...CLIENT_VISIBLE_WHERE },
+        where: { clientId: userId, ...CLIENT_LISTED_WHERE },
       })
     ]);
 
@@ -116,6 +116,7 @@ export const getDeliverables = async (req: Request, res: Response): Promise<void
 
         return presentForClient({
           ...d,
+          status: 'READY',
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
           thumbnailDownloadUrl: await getAttachmentUrl(d.thumbnailUrl),
@@ -220,6 +221,11 @@ export const submitFeedback = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    if (deliverable.clientFeedback && deliverable.staffReply) {
+      sendError(res, 'Komanda cavab verdiyi üçün rəyi dəyişmək olmur', 403);
+      return;
+    }
+
     const updated = await prisma.deliverable.update({
       where: { id: deliverableId },
       data: {
@@ -241,6 +247,7 @@ export const submitFeedback = async (req: Request, res: Response): Promise<void>
 
     sendSuccess(res, presentForClient({
       ...updated,
+      status: 'READY',
       files: filesWithSignedUrls,
     }));
   } catch (err) {

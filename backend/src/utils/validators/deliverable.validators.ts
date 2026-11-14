@@ -25,4 +25,6 @@ export const updateDeliverableStatusSchema = z.object({
   }),
 });
 
+export const replySchema = z.object({ reply: z.string().max(5000) });
+
 export const updateDeliverableSchema = createDeliverableSchema.partial();

@@ -12,6 +12,8 @@
  * Rows without a video file are never touched.
  */
 
+import type { Prisma } from '@prisma/client';
+
 export const RETENTION_DAYS = 60;
 export const PURGE_BUFFER_DAYS = 7;
 /** Files whose MIME type starts with one of these put a deliverable under the rule. */
@@ -68,6 +70,16 @@ export const RETENTION_LOCKED_MESSAGE =
 
 /** Prisma `where` part every client-facing query adds: hidden and purged rows never reach the client. */
 export const CLIENT_VISIBLE_WHERE = { hiddenAt: null, mediaDeletedAt: null } as const;
+
+/**
+ * Rows a client may list: READY ones, plus rows being replaced or failed after an earlier successful
+ * upload (uploadedAt is written only after a successful processing, so it means "was ready before";
+ * until processing finishes `files` still points at the old files).
+ */
+export const CLIENT_LISTED_WHERE: Prisma.DeliverableWhereInput = {
+  ...CLIENT_VISIBLE_WHERE,
+  OR: [{ status: 'READY' }, { status: { in: ['PROCESSING', 'FAILED'] }, uploadedAt: { not: null } }],
+};
 
 /** What a client sees: only the deadline, and only while the rule is active. */
 export const presentForClient = <T extends Record<string, unknown>>(row: T, mode: RetentionMode = getRetentionMode()) => {

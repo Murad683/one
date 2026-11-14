@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendError, sendSuccess } from '../utils/response.util';
-import { CLIENT_VISIBLE_WHERE } from '../utils/retention';
+import { CLIENT_LISTED_WHERE } from '../utils/retention';
 import { signZipTicket, verifyZipTicket } from '../utils/jwt.util';
 import { canModifyDeliverable } from './deliverable.controller';
 import {
@@ -39,7 +39,7 @@ export const createClientZipTicket = async (req: Request, res: Response): Promis
     const userId = req.user?.id;
     if (!userId) { sendError(res, 'Unauthorized', 401); return; }
     const deliverable = await prisma.deliverable.findFirst({
-      where: { id: String(req.params.id), clientId: userId, status: 'READY', ...CLIENT_VISIBLE_WHERE },
+      where: { id: String(req.params.id), clientId: userId, ...CLIENT_LISTED_WHERE },
       select: zipSelect,
     });
     if (!deliverable) { sendError(res, 'Tapılmadı', 404); return; }
@@ -147,8 +147,7 @@ export const downloadZip = async (req: Request, res: Response): Promise<void> =>
         where: {
           id: ticket.deliverableId,
           clientId: ticket.userId,
-          status: 'READY',
-          ...CLIENT_VISIBLE_WHERE,
+          ...CLIENT_LISTED_WHERE,
           client: { isActive: true },
         },
         select: zipSelect,
