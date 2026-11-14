@@ -21,6 +21,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useMessageStore } from '../store/messageStore';
+import { useReplyStore } from '../store/replyStore';
 import { useThemeStore } from '../store/themeStore';
 import { AssistantWidget } from '../components/AssistantWidget';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -47,6 +48,8 @@ export const AdminLayout = () => {
   const isCreator = user?.role === 'CREATOR';
   const unreadCount = useMessageStore((state) => state.unreadCount);
   const fetchUnreadCount = useMessageStore((state) => state.fetchUnreadCount);
+  const unansweredCount = useReplyStore((state) => state.unansweredCount);
+  const fetchUnansweredCount = useReplyStore((state) => state.fetchUnansweredCount);
   const { theme, toggle: toggleTheme } = useThemeStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -70,6 +73,16 @@ export const AdminLayout = () => {
       isMounted = false;
     };
   }, [fetchUnreadCount, isCreator]);
+
+  // Unanswered client feedback count (admins and creators; a creator's count is scoped by the backend).
+  useEffect(() => {
+    const refresh = () => {
+      fetchUnansweredCount().catch(() => {});
+    };
+    refresh();
+    const timer = setInterval(refresh, 2 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [fetchUnansweredCount]);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -164,7 +177,7 @@ export const AdminLayout = () => {
         <nav className="flex-1 overflow-y-auto px-2 py-4 scrollbar-minimal">
           {isCreator ? (
             <div className="space-y-1">
-              <SidebarLink item={{ icon: FolderOpen, label: 'Layihə Faylları', path: '/deliverables' }} />
+              <SidebarLink item={{ icon: FolderOpen, label: 'Layihə Faylları', path: '/deliverables', badge: unansweredCount }} />
             </div>
           ) : (
           <>
@@ -180,7 +193,7 @@ export const AdminLayout = () => {
             )}
             
             <SidebarLink item={{ icon: UserCircle, label: 'Müştərilər', path: '/users' }} />
-            <SidebarLink item={{ icon: FolderOpen, label: 'Layihə Faylları', path: '/deliverables' }} />
+            <SidebarLink item={{ icon: FolderOpen, label: 'Layihə Faylları', path: '/deliverables', badge: unansweredCount }} />
             <SidebarLink item={{ icon: LifeBuoy, label: 'Sorğular', path: '/tickets' }} />
             <SidebarLink
               item={{
