@@ -25,6 +25,11 @@ const REPLACE_BLOCKED: FaqEntry = {
   a: 'Fayl yüklənərkən və sonra emal olunarkən (1–5 dəqiqə, status **Hazırlanır**) həmin qeydin qələm və silmə düymələri söndürülür, üzərinə gətirəndə səbəb yazılır.\n- Cədvəldə statusun altında "Fayl yüklənir… 43%" və ya "Emal gedir" görünür.\n- Bitib status **Hazırdır** olandan sonra düymələr açılır.\n- Yükləmə gedərkən hesabdan çıxmayın, **Çıxış** basanda panel xəbərdarlıq edir.\n- 2 saatdan çox **Hazırlanır** qalarsa, düymələr yenidən açılır.',
 };
 
+const REVIEW_REPLY: FaqEntry = {
+  q: 'Müştərinin rəyinə necə cavab yazıram?',
+  a: 'Fayl cədvəlində **Rəy** çipinə basın (cavab gözləyəndə narıncı, cavablanıbsa mavi).\n1. Açılan pəncərədə müştərinin rəyini oxuyun.\n2. **Cavabınız** sahəsinə yazın və **Cavabı göndər** basın.\n- Müştəri bunu portalda **ONE Agency cavabı** kimi görür.\n- Boş göndərsəniz cavab silinir.\n- Cavabsız rəylərin sayı menyuda Layihə Faylları yanında görünür.\n- Cavab verilmiş rəyi müştəri redaktə edə bilməz, yalnız silə bilər.\n- Faylı yeni fayl ilə əvəz etsəniz rəy və cavab silinir.',
+};
+
 const FIND_FILES: FaqEntry = {
   q: 'Faylı necə tez tapım? (axtarış, filtr, sıralama)',
   a: 'Layihə Faylları cədvəlində:\n- **Axtarış** qutusu müştəri adı, e-poçt və fayl başlığı üzrə işləyir.\n- **Sıralamaq** üçün sütun başlığına basın (ikinci basış istiqaməti dəyişir).\n- **Süzmək** üçün başlıqdakı kiçik **huni ikonuna** basın: Müştəri, Növ, Status, Əlavə olunub. Status hunisində Gözləmədə qalıb, Müştəri rəyi var və Saxlama müddəti (Silinəcək, Müştəridən gizlədilib, Faylı silinib) da var, Əlavə olunub hunisində Bu gün, Son 7 gün, Bu ay.\n- Aktiv filtrlər çip kimi görünür, **Hamısını təmizlə** ilə silinir.\n- Aşağıda **Səhifədə** (50, 100, 150, 200). Telefonda **Filtr / Sırala** düyməsi.',
@@ -100,6 +105,7 @@ export const STAFF_FAQ: FaqEntry[] = [
   UPLOAD_PENDING,
   UPLOAD_INTERRUPTED,
   FIND_FILES,
+  REVIEW_REPLY,
   REPLACE_BLOCKED,
   VIDEO_RETENTION,
   NOTICE_MAIL,
@@ -116,8 +122,9 @@ export const CREATOR_FAQ: FaqEntry[] = [
   },
   {
     q: 'Müştərinin rəyini harada görürəm?',
-    a: 'Müştəri sizin yüklədiyiniz fayla rəy yazanda, faylın yanında mavi **Rəy** çipi görünür. Üzərinə klikləyəndə müştərinin yazdığı mətn açılır.',
+    a: 'Müştəri sizin yüklədiyiniz fayla rəy yazanda, faylın yanında **Rəy** çipi görünür (cavab gözləyəndə narıncı, cavablanıbsa mavi). Üzərinə klikləyəndə müştərinin yazdığı mətn açılır, altından cavab yaza bilərsiniz.',
   },
+  REVIEW_REPLY,
   UPLOAD_PENDING,
   UPLOAD_INTERRUPTED,
   FIND_FILES,

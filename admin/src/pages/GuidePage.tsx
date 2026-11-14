@@ -477,8 +477,13 @@ export const GuidePage = () => {
             </p>
           </Callout>
           <p>
-            Müştəri həmin fayla rəy yazıbsa, mavi <B>"Rəy"</B> çipi görünür — klikləyəndə müştərinin yazdığı
-            mətn açılır.
+            Müştəri həmin fayla rəy yazıbsa, <B>"Rəy"</B> çipi görünür: cavab gözləyəndə narıncı, cavab yazılıbsa
+            mavi. Klikləyəndə müştərinin rəyi açılır; altındakı <B>"Cavabınız"</B> sahəsinə yazıb{' '}
+            <B>"Cavabı göndər"</B> basın, müştəri bunu portalda <B>"ONE Agency cavabı"</B> kimi görür. Cavab
+            sahəsini boş göndərsəniz, cavab silinir. Cavabsız rəylərin sayı menyuda "Layihə Faylları"nın yanında
+            görünür (2 dəqiqədən bir yenilənir). Müştəri rəyini silərsə, cavab tək qalır; cavab verilmiş rəyi
+            müştəri redaktə edə bilməz, yalnız silə bilər. Faylı yeni fayl yükləməklə əvəz etsəniz, rəy və cavab
+            silinir; emal gedərkən müştəri köhnə faylı görməyə davam edir.
           </p>
 
           <h3 className="pt-2 text-base font-semibold text-heading">Videoların saxlanma müddəti (60 gün)</h3>
@@ -513,6 +518,10 @@ export const GuidePage = () => {
           <FieldTable
             rows={[
               ['Başlıq, Müştəri, Növ, Tarix', 'Hamısı məcburi. Tarix seçdikdə avtomatik ay/il-ə çevrilir.'],
+              [
+                'Müştəriyə qeyd',
+                'İstəyə bağlı, ən çox 2000 simvol. Müştəri bu mətni portalda materialın altında görür; boş qalarsa "Yeni material çatdırıldı!" yazılır.',
+              ],
               ['Fayllar', 'Birdən çox fayl seçilə bilər.'],
               [
                 'Kover şəkli',
@@ -639,7 +648,9 @@ export const GuidePage = () => {
               Statusu əl ilə dəyişmək olmur, status yükləmədən sonra avtomatik dəyişir.
             </li>
             <li>
-              Müştəri rəy yazanda creator öz faylının yanında <B>"Rəy"</B> işarəsini görür və rəyi oxuya bilir.
+              Müştəri rəy yazanda creator öz faylının yanında <B>"Rəy"</B> işarəsini görür, rəyi oxuya və ona
+              cavab yaza bilir. Menyuda "Layihə Faylları"nın yanındakı say yalnız öz fayllarının cavabsız
+              rəylərini göstərir.
             </li>
             <li>
               <B>Önə Çıxanlar</B> və <B>müştərinin paylaşım linki</B> ilə də işləyə bilər (baxmaq, yaratmaq,
