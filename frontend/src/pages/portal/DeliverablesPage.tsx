@@ -8,6 +8,15 @@ import { daysUntil, retentionLabel, RETENTION_WARNING_DAYS } from '../../utils/r
 import { HighlightsSection } from '../../components/ui/HighlightsSection';
 import type { HighlightDetail, HighlightSummary } from '../../components/ui/highlightTypes';
 
+function StaffReply({ text }: { text: string }) {
+  return (
+    <div className="mt-3 ml-11 border-l-2 pl-3" style={{ borderColor: 'var(--ig-border)' }}>
+      <p className="text-xs font-semibold">ONE Agency cavabı</p>
+      <p className="text-sm whitespace-pre-wrap mt-0.5">{text}</p>
+    </div>
+  );
+}
+
 interface Deliverable {
   id: string;
   title: string;
@@ -20,6 +29,8 @@ interface Deliverable {
   files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null; originalDownloadUrl?: string | null }[];
   notes: string | null;
   clientFeedback: string | null;
+  staffReply?: string | null;
+  staffReplyAt?: string | null;
   thumbnailUrl?: string | null;
   /** Attachment-signed link to the cover (absent when there is no cover). */
   thumbnailDownloadUrl?: string | null;
@@ -517,15 +528,18 @@ export const PreviewModal = ({
                    </p>
                  </div>
                  <div className="flex items-start gap-2 shrink-0">
-                   <button onClick={startEditFeedback} title="Redaktə et" className="hover:opacity-60">
-                     <Pencil size={14} />
-                   </button>
+                   {!item.staffReply && (
+                     <button onClick={startEditFeedback} title="Redaktə et" className="hover:opacity-60">
+                       <Pencil size={14} />
+                     </button>
+                   )}
                    <button onClick={handleDeleteFeedback} disabled={isDeletingFeedback} title="Sil" className="hover:opacity-60 disabled:opacity-40">
                      <Trash2 size={14} />
                    </button>
                  </div>
               </div>
             )}
+            {item.staffReply && <StaffReply text={item.staffReply} />}
           </div>
           )}
 
@@ -629,14 +643,15 @@ export const PreviewModal = ({
 
              {/* Caption Preview */}
              <div className="px-4 text-sm flex flex-col gap-1 mt-1">
+               <p className="font-semibold">{item.title}</p>
                <div className="leading-snug">
                  <span className="font-semibold mr-1">one_agency</span>
-                 <span>{item.notes || 'Yeni material çatdırıldı!'}</span>
+                 <span className="whitespace-pre-wrap">{item.notes || 'Yeni material çatdırıldı!'}</span>
                </div>
                {!readOnly && (
                  <div className="md:hidden cursor-pointer" onClick={() => setShowCommentsMobile(true)}>
                    <span style={{ color: 'var(--ig-text-secondary)' }}>
-                     {feedbackHistory ? 'Rəylərə bax' : 'Rəy yaz...'}
+                     {feedbackHistory || item.staffReply ? 'Rəylərə bax' : 'Rəy yaz...'}
                    </span>
                  </div>
                )}
@@ -664,7 +679,7 @@ export const PreviewModal = ({
                       type="text"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Add a comment..."
+                      placeholder="Rəyinizi yazın..."
                       disabled={isSending}
                       className="flex-1 bg-transparent text-sm focus:outline-none"
                       style={{ color: 'var(--ig-text)' }}
@@ -694,7 +709,7 @@ export const PreviewModal = ({
                       disabled={isSending || !newMessage.trim()}
                       className="text-sm font-semibold transition-opacity disabled:opacity-40 text-blue-500"
                     >
-                      {isSending ? '...' : isEditingFeedback ? 'Yenilə' : 'Post'}
+                      {isSending ? '...' : isEditingFeedback ? 'Yenilə' : 'Göndər'}
                     </button>
                   </div>
                </div>
@@ -718,14 +733,15 @@ export const PreviewModal = ({
               >
                 <div className="flex items-center justify-between px-4 py-3 border-b shrink-0" style={{ borderColor: 'var(--ig-border)' }}>
                   <div className="w-8" />
-                  <h3 className="text-sm font-semibold">Comments</h3>
+                  <h3 className="text-sm font-semibold">Rəylər</h3>
                   <button onClick={() => setShowCommentsMobile(false)} className="p-1 hover:opacity-70"><X size={20} /></button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar no-scrollbar">
                   <div className="flex mb-6">
                      <div className="flex-1">
-                       <p className="text-sm">
+                       <p className="font-semibold text-sm mb-1">{item.title}</p>
+                       <p className="text-sm whitespace-pre-wrap">
                          <span className="font-semibold mr-2">one_agency</span>
                          {item.notes || 'Yeni material çatdırıldı!'}
                        </p>
@@ -748,15 +764,18 @@ export const PreviewModal = ({
                          </p>
                        </div>
                        <div className="flex items-start gap-3 shrink-0">
-                         <button onClick={startEditFeedback} title="Redaktə et" className="hover:opacity-60">
-                           <Pencil size={16} />
-                         </button>
+                         {!item.staffReply && (
+                           <button onClick={startEditFeedback} title="Redaktə et" className="hover:opacity-60">
+                             <Pencil size={16} />
+                           </button>
+                         )}
                          <button onClick={handleDeleteFeedback} disabled={isDeletingFeedback} title="Sil" className="hover:opacity-60 disabled:opacity-40">
                            <Trash2 size={16} />
                          </button>
                        </div>
                     </div>
                   )}
+                  {item.staffReply && <StaffReply text={item.staffReply} />}
                 </div>
 
                 {(!feedbackHistory || isEditingFeedback) && (
@@ -770,7 +789,7 @@ export const PreviewModal = ({
                          type="text"
                          value={newMessage}
                          onChange={(e) => setNewMessage(e.target.value)}
-                         placeholder="Add a comment..."
+                         placeholder="Rəyinizi yazın..."
                          disabled={isSending}
                          className="flex-1 bg-transparent text-sm focus:outline-none"
                          style={{ color: 'var(--ig-text)' }}
@@ -800,7 +819,7 @@ export const PreviewModal = ({
                          disabled={isSending || !newMessage.trim()}
                          className="text-sm font-semibold transition-opacity disabled:opacity-40 text-blue-500"
                        >
-                         {isSending ? '...' : isEditingFeedback ? 'Yenilə' : 'Post'}
+                         {isSending ? '...' : isEditingFeedback ? 'Yenilə' : 'Göndər'}
                        </button>
                      </div>
                   </div>
@@ -1198,9 +1217,16 @@ const DeliverablesPage = () => {
                     </div>
                   )}
 
+                  {/* ── Feedback marker on touch devices (no hover there) ── */}
+                  {(d.clientFeedback || d.staffReply) && (
+                    <div className="absolute bottom-1.5 right-1.5 hidden [@media(hover:none)]:block pointer-events-none">
+                      <MessageCircle size={16} className="text-white drop-shadow-lg" strokeWidth={2} />
+                    </div>
+                  )}
+
                   {/* ── Hover overlay with info ── */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-6 pointer-events-none">
-                    {d.clientFeedback && (
+                    {(d.clientFeedback || d.staffReply) && (
                       <div className="flex items-center gap-1.5">
                         <MessageCircle size={18} className="text-white fill-white" />
                       </div>

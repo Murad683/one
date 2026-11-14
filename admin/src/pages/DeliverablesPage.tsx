@@ -9,6 +9,8 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import Select from '../components/ui/Select';
+import Textarea from '../components/ui/Textarea';
+import { useReplyStore } from '../store/replyStore';
 import Combobox from '../components/ui/Combobox';
 import Table from '../components/ui/Table';
 import type { TableColumn } from '../components/ui/Table';
@@ -95,6 +97,9 @@ interface Deliverable extends Record<string, unknown> {
   thumbnailDownloadUrl?: string | null;
   originalUrl?: string | null;
   clientFeedback?: string | null;
+  notes?: string | null;
+  staffReply?: string | null;
+  staffReplyAt?: string | null;
   processingDuration?: number | null;
   createdAt?: string;
   updatedAt?: string;
@@ -112,6 +117,7 @@ interface Deliverable extends Record<string, unknown> {
 
 interface DeliverableFormValues {
   title: string;
+  notes: string;
   clientId: string;
   categoryId: string;
   date: string; // YYYY-MM-DD
@@ -119,6 +125,7 @@ interface DeliverableFormValues {
 
 const defaultValues: DeliverableFormValues = {
   title: '',
+  notes: '',
   clientId: '',
   categoryId: '',
   date: new Date().toISOString().split('T')[0],
@@ -481,7 +488,10 @@ export const DeliverablesPage = () => {
     if (isProcessingBusy(d)) return 'Fayl emal olunur (1–5 dəqiqə). Emal bitəndən sonra redaktə edin və ya silin.';
     return null;
   };
-  const [feedbackView, setFeedbackView] = useState<string | null>(null);
+  const [feedbackView, setFeedbackView] = useState<Deliverable | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replySaving, setReplySaving] = useState(false);
+  const [replyError, setReplyError] = useState('');
   const [sharingClient, setSharingClient] = useState<ClientUser | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
@@ -648,6 +658,28 @@ export const DeliverablesPage = () => {
     fetchDeliverables();
   }, [page, pageSize, sort, filters, debouncedSearch]);
 
+  const openFeedback = (d: Deliverable) => {
+    setFeedbackView(d);
+    setReplyText(d.staffReply ?? '');
+    setReplyError('');
+  };
+
+  const sendReply = async () => {
+    if (!feedbackView) return;
+    setReplySaving(true);
+    setReplyError('');
+    try {
+      await api.patch(`/deliverables/${feedbackView.id}/reply`, { reply: replyText.trim() });
+      setFeedbackView(null);
+      await fetchDeliverables(true);
+      useReplyStore.getState().fetchUnansweredCount().catch(() => {});
+    } catch (err) {
+      setReplyError(requestErrorMessage(err, 'Cavab göndərilə bilmədi.'));
+    } finally {
+      setReplySaving(false);
+    }
+  };
+
   const openModal = (deliverable?: Deliverable) => {
     if (deliverable && (busyReason(deliverable) || deliverable.mediaDeletedAt)) return;
     setEditing(deliverable || null);
@@ -658,6 +690,7 @@ export const DeliverablesPage = () => {
       deliverable
         ? {
           title: deliverable.title,
+          notes: deliverable.notes ?? '',
           clientId: deliverable.clientId,
           categoryId: deliverable.categoryId || '',
           date: `${deliverable.year}-${String(deliverable.month).padStart(2, '0')}-01`,
@@ -684,6 +717,7 @@ export const DeliverablesPage = () => {
       const date = new Date(values.date);
       const payload = {
         title: values.title,
+        notes: values.notes.trim(),
         clientId: values.clientId,
         categoryId: values.categoryId || null,
         month: date.getMonth() + 1,
@@ -892,14 +926,18 @@ export const DeliverablesPage = () => {
                   Gözləmədə qalıb
                 </span>
               )}
-              {deliverable.clientFeedback && (
+              {(deliverable.clientFeedback || deliverable.staffReply) && (
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setFeedbackView(deliverable.clientFeedback!);
+                    openFeedback(deliverable);
                   }}
-                  className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-700 ring-1 ring-inset ring-sky-600/20 hover:bg-sky-100 transition"
+                  className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset transition ${
+                    deliverable.clientFeedback && !deliverable.staffReply
+                      ? 'bg-orange-50 text-orange-700 ring-orange-600/20 hover:bg-orange-100'
+                      : 'bg-sky-50 text-sky-700 ring-sky-600/20 hover:bg-sky-100'
+                  }`}
                   title="Rəyi göstər"
                 >
                   <MessageCircle className="h-3 w-3" />
@@ -1223,6 +1261,12 @@ export const DeliverablesPage = () => {
                 error={errors.title?.message}
                 {...register('title', { required: 'Başlıq mütləqdir' })}
               />
+              <Textarea
+                label="Müştəriyə qeyd (istəyə bağlı)"
+                placeholder="Müştəri bu mətni materialın altında görəcək..."
+                maxLength={2000}
+                {...register('notes')}
+              />
               <Controller
                 name="clientId"
                 control={control}
@@ -1415,13 +1459,24 @@ export const DeliverablesPage = () => {
           >
             <div className="flex flex-col gap-4">
               <div
-                className="rounded-lg bg-surface-alt p-4 text-sm text-body leading-relaxed whitespace-pre-wrap border border-edge-light max-h-[60vh] overflow-y-auto"
+                className="rounded-lg bg-surface-alt p-4 text-sm text-body leading-relaxed whitespace-pre-wrap border border-edge-light max-h-[40vh] overflow-y-auto"
               >
-                {feedbackView}
+                {feedbackView?.clientFeedback || <span className="italic text-faint">Müştəri rəyini silib</span>}
               </div>
-              <div className="flex justify-end border-t border-edge pt-3">
+              <Textarea
+                label="Cavabınız"
+                placeholder="Müştəriyə cavabınızı yazın..."
+                maxLength={5000}
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+              />
+              {replyError && <p className="text-sm text-red-500">{replyError}</p>}
+              <div className="flex justify-end gap-2 border-t border-edge pt-3">
                 <Button variant="secondary" onClick={() => setFeedbackView(null)}>
                   Bağla
+                </Button>
+                <Button onClick={sendReply} isLoading={replySaving}>
+                  Cavabı göndər
                 </Button>
               </div>
             </div>
