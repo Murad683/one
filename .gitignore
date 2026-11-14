@@ -26,3 +26,7 @@ npm-debug.log*
 
 # Private Claude notes (never commit)
 CLAUDE.local.md
+
+# Build cache and private working notes
+*.tsbuildinfo
+docs/
