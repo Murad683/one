@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { getSharedHighlight, getSharedHighlights, getSharedProfile } from '../controllers/share.controller';
+import { getSharedHighlight, getSharedHighlights, getSharedProfile, resolveShareClient } from '../controllers/share.controller';
+import { createTicket, deleteFeedback, submitFeedback } from '../controllers/dashboard.controller';
+import { createClientHighlightZipTicket, createClientZipTicket } from '../controllers/download.controller';
+import { validate } from '../middleware/validate.middleware';
+import { createTicketSchema, submitFeedbackSchema } from '../utils/validators/dashboard.validators';
+import { shareWriteRateLimiter, zipRateLimiter } from '../middleware/rateLimiter.middleware';
 
 const router = Router();
 
@@ -39,5 +44,13 @@ const router = Router();
 router.get('/:token', getSharedProfile);
 router.get('/:token/highlights', getSharedHighlights);
 router.get('/:token/highlights/:id', getSharedHighlight);
+
+// Panel actions on the link: the same handlers as the signed-in portal (/dashboard/...), with the
+// link's client standing in for the signed-in user (resolveShareClient).
+router.patch('/:token/deliverables/:id/feedback', shareWriteRateLimiter, resolveShareClient, validate(submitFeedbackSchema), submitFeedback);
+router.delete('/:token/deliverables/:id/feedback', shareWriteRateLimiter, resolveShareClient, deleteFeedback);
+router.post('/:token/deliverables/:id/zip-ticket', resolveShareClient, zipRateLimiter, createClientZipTicket);
+router.post('/:token/highlights/:id/zip-ticket', resolveShareClient, zipRateLimiter, createClientHighlightZipTicket);
+router.post('/:token/tickets', shareWriteRateLimiter, resolveShareClient, validate(createTicketSchema), createTicket);
 
 export default router;

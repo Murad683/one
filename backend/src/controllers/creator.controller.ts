@@ -16,6 +16,7 @@ export const getCreatorClients = async (_req: Request, res: Response): Promise<v
         igHighlights: true,
         shareToken: true,
         shareTokenExpiresAt: true,
+        shareLastViewedAt: true,
         _count: { select: { highlights: true } },
       },
     });

@@ -1,24 +1,20 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { sendSuccess, sendError } from '../utils/response.util';
 import { getSecureDownloadUrl, getSecureDownloadUrlForDownload, getAttachmentUrl } from '../services/upload.service';
 import { CLIENT_LISTED_WHERE, presentForClient } from '../utils/retention';
 import { getForViewer, listForViewer } from '../services/highlight.service';
+import { isShareLinkValid, SHARE_VIEW_WRITE_INTERVAL_MS } from '../utils/shareLink';
 
 // ─── GET /api/v1/share/:token ───────────────────
-// Public, unauthenticated — read-only view of a client's READY deliverables.
+// Public, unauthenticated — the client's deliverables, as the signed-in portal lists them.
 export const getSharedProfile = async (req: Request, res: Response): Promise<void> => {
   try {
     const token = req.params.token as string;
 
     const client = await prisma.user.findUnique({ where: { shareToken: token } });
 
-    if (
-      !client ||
-      client.role !== 'CLIENT' ||
-      !client.shareTokenExpiresAt ||
-      client.shareTokenExpiresAt < new Date()
-    ) {
+    if (!client || !isShareLinkValid(client)) {
       // Deliberately identical to a missing token — never reveal whether one ever existed.
       sendError(res, 'Link tapılmadı və ya vaxtı bitib', 404);
       return;
@@ -27,6 +23,14 @@ export const getSharedProfile = async (req: Request, res: Response): Promise<voi
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.max(1, parseInt(req.query.limit as string) || 6);
     const skip = (page - 1) * limit;
+
+    // "Last viewed" for the admin panel: only on the first page, and not more often than every few minutes.
+    const now = new Date();
+    if (page === 1 && (!client.shareLastViewedAt || now.getTime() - client.shareLastViewedAt.getTime() > SHARE_VIEW_WRITE_INTERVAL_MS)) {
+      await prisma.user
+        .update({ where: { id: client.id }, data: { shareLastViewedAt: now } })
+        .catch((e) => console.warn('getSharedProfile: could not record last view', e));
+    }
 
     const [deliverables, total] = await Promise.all([
       prisma.deliverable.findMany({
@@ -77,11 +81,9 @@ export const getSharedProfile = async (req: Request, res: Response): Promise<voi
           }
         }
 
-        // clientFeedback and the team's reply are intentionally omitted — never exposed on the public view.
-        const { clientFeedback, staffReply, staffReplyAt, ...rest } = d;
-
+        // Same fields as the portal (feedback and the team's reply included): the link works as the client's panel.
         return presentForClient({
-          ...rest,
+          ...d,
           status: 'READY',
           files: filesWithSignedUrls,
           thumbnailUrl: signedThumbnailUrl,
@@ -118,10 +120,28 @@ export const getSharedProfile = async (req: Request, res: Response): Promise<voi
 // The client behind a valid, unexpired share link; null otherwise (same rule as getSharedProfile).
 const findSharedClient = async (token: string) => {
   const client = await prisma.user.findUnique({ where: { shareToken: token } });
-  if (!client || client.role !== 'CLIENT' || !client.shareTokenExpiresAt || client.shareTokenExpiresAt < new Date()) {
-    return null;
+  return client && isShareLinkValid(client) ? client : null;
+};
+
+/**
+ * For the panel actions on a share link (feedback, ZIP, support message): the link stands in for the
+ * client's sign-in. req.user becomes that client, so the portal's own handlers run unchanged and keep
+ * their checks (a deliverable of another client is still "not found"). res.locals.viaShare marks it.
+ */
+export const resolveShareClient = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const client = await findSharedClient(req.params.token as string);
+    if (!client) {
+      sendError(res, 'Link tapılmadı və ya vaxtı bitib', 404);
+      return;
+    }
+    req.user = { id: client.id, email: client.email, role: 'CLIENT' };
+    res.locals.viaShare = true;
+    next();
+  } catch (err) {
+    console.error('resolveShareClient error:', err);
+    sendError(res, 'Məlumatları yükləmək mümkün olmadı', 500);
   }
-  return client;
 };
 
 // GET /api/v1/share/:token/highlights - public, read-only list of the client's highlights.

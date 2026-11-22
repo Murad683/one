@@ -7,8 +7,7 @@ import { collectDeliverableKeys, deleteUnreferencedDeliverableKeys } from '../se
 import { collectUserHighlightKeys, deleteHighlightFiles, parseLegacy } from '../services/highlight.service';
 import { EMAIL_IN_USE_MESSAGE, isUniqueViolation, looksLikeEmail, normalizeEmail } from '../utils/email';
 import { canReceiveNotices } from '../utils/notices';
-
-const SHARE_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+import { expiryFor, LEGACY_SHARE_LINK_TTL_MS, ShareDuration, shareUrlFor } from '../utils/shareLink';
 
 export const getUsers = async (req: Request, res: Response) => {
   try {
@@ -39,6 +38,7 @@ export const getUsers = async (req: Request, res: Response) => {
           igHighlights: true,
           shareToken: true,
           shareTokenExpiresAt: true,
+          shareLastViewedAt: true,
           emailBouncedAt: true,
           _count: { select: { highlights: true } },
         },
@@ -198,20 +198,50 @@ export const generateShareLink = async (req: Request, res: Response) => {
     }
 
     const shareToken = crypto.randomBytes(32).toString('hex');
-    const shareTokenExpiresAt = new Date(Date.now() + SHARE_LINK_TTL_MS);
+    // No duration in the body: the admin panel from before durations existed (7 days, as it was).
+    const duration = req.body?.duration as ShareDuration | undefined;
+    const shareTokenExpiresAt = duration ? expiryFor(duration) : new Date(Date.now() + LEGACY_SHARE_LINK_TTL_MS);
 
     await prisma.user.update({
       where: { id },
-      data: { shareToken, shareTokenExpiresAt },
+      data: { shareToken, shareTokenExpiresAt, shareLastViewedAt: null },
     });
 
     return sendSuccess(res, {
       token: shareToken,
-      url: `${process.env.FRONTEND_URL}/share/${shareToken}`,
+      url: shareUrlFor(shareToken),
       expiresAt: shareTokenExpiresAt,
     });
   } catch (error) {
     return sendError(res, 'Error generating share link', 500, error);
+  }
+};
+
+// PATCH /api/v1/users/:id/share-link (Admin) and /api/v1/creator/clients/:id/share-link (Creator)
+// Changes how long the existing link opens; the address stays the same, so an expired link opens again.
+export const updateShareLinkExpiry = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const existing = await prisma.user.findUnique({ where: { id }, select: { role: true, shareToken: true } });
+
+    if (!existing) {
+      return sendError(res, 'User not found', 404);
+    }
+
+    if (existing.role !== 'CLIENT') {
+      return sendError(res, 'Share links can only be generated for clients', 400);
+    }
+
+    if (!existing.shareToken) {
+      return sendError(res, 'Bu müştəri üçün paylaşım linki yoxdur', 404);
+    }
+
+    const shareTokenExpiresAt = expiryFor(req.body.duration as ShareDuration);
+    await prisma.user.update({ where: { id }, data: { shareTokenExpiresAt } });
+
+    return sendSuccess(res, { url: shareUrlFor(existing.shareToken), expiresAt: shareTokenExpiresAt });
+  } catch (error) {
+    return sendError(res, 'Error updating share link', 500, error);
   }
 };
 
@@ -227,7 +257,7 @@ export const revokeShareLink = async (req: Request, res: Response) => {
 
     await prisma.user.update({
       where: { id },
-      data: { shareToken: null, shareTokenExpiresAt: null },
+      data: { shareToken: null, shareTokenExpiresAt: null, shareLastViewedAt: null },
     });
 
     return sendSuccess(res, { id, shareToken: null });

@@ -153,3 +153,17 @@ export const highlightUploadRateLimiter = rateLimit({
   legacyHeaders: false,
   skip: (req) => req.method === 'OPTIONS',
 });
+
+// Writes from a client's share link (feedback, support message): no sign-in, so limited per IP and link.
+export const shareWriteRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  keyGenerator: (req: Request) => `${clientKey(req)}:${String(req.params.token ?? '')}`,
+  message: {
+    success: false,
+    message: 'Çox tez-tez sorğu göndərirsiniz, bir az gözləyin.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
+});
