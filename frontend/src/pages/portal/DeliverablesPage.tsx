@@ -17,7 +17,7 @@ function StaffReply({ text }: { text: string }) {
   );
 }
 
-interface Deliverable {
+export interface Deliverable {
   id: string;
   title: string;
   type: string | null;
@@ -41,6 +41,37 @@ interface Deliverable {
   /** When the video leaves the portal (60-day retention); null when the rule does not apply. */
   expiresAt?: string | null;
 }
+
+/**
+ * What the preview modal does with the server. The signed-in portal and a client's share link
+ * (/share/:token) do the same things through different endpoints.
+ */
+export interface PreviewActions {
+  /** Saves the feedback; resolves to the feedback as stored. */
+  submitFeedback: (deliverableId: string, text: string) => Promise<string>;
+  deleteFeedback: (deliverableId: string) => Promise<void>;
+  /** A one-minute ZIP ticket for /api/v1/downloads/:ticket. */
+  zipTicket: (deliverableId: string) => Promise<string>;
+}
+
+export const portalPreviewActions: PreviewActions = {
+  submitFeedback: async (id, text) => {
+    const res = (await apiClient.patch(`/dashboard/deliverables/${id}/feedback`, {
+      clientFeedback: text,
+    })) as { data: { clientFeedback: string } };
+    return res.data.clientFeedback;
+  },
+  deleteFeedback: async (id) => {
+    await apiClient.delete(`/dashboard/deliverables/${id}/feedback`);
+  },
+  zipTicket: async (id) => {
+    // Time limit so "Hazırlanır…" can never spin forever when the storage is slow.
+    const res = (await apiClient.post(`/dashboard/deliverables/${id}/zip-ticket`, undefined, { timeout: 60000 })) as unknown as {
+      data: { ticket: string };
+    };
+    return res.data.ticket;
+  },
+};
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   PENDING: { label: 'Gözləyir', color: 'var(--text-muted)', bg: 'var(--bg-elevated)' },
@@ -176,11 +207,13 @@ export const PreviewModal = ({
   onFeedbackSent,
   readOnly = false,
   profileOverride,
+  actions = portalPreviewActions,
 }: {
   item: Deliverable;
   onClose: () => void;
   onFeedbackSent: (id: string, fullFeedback: string) => void;
   readOnly?: boolean;
+  actions?: PreviewActions;
   profileOverride?: { igUsername?: string | null; igProfilePic?: string | null; name?: string | null };
 }) => {
   const { user } = useAuth();
@@ -230,10 +263,7 @@ export const PreviewModal = ({
     setIsSending(true);
     setError('');
     try {
-      const res = (await apiClient.patch(`/dashboard/deliverables/${item.id}/feedback`, {
-        clientFeedback: newMessage,
-      })) as { data: { clientFeedback: string } };
-      const updated = res.data.clientFeedback;
+      const updated = await actions.submitFeedback(item.id, newMessage);
       setFeedbackHistory(updated);
       setNewMessage('');
       setIsEditingFeedback(false);
@@ -260,7 +290,7 @@ export const PreviewModal = ({
     setIsDeletingFeedback(true);
     setError('');
     try {
-      await apiClient.delete(`/dashboard/deliverables/${item.id}/feedback`);
+      await actions.deleteFeedback(item.id);
       setFeedbackHistory('');
       setNewMessage('');
       setIsEditingFeedback(false);
@@ -284,7 +314,6 @@ export const PreviewModal = ({
       ? 'Bu şəkli yüklə'
       : 'Bu faylı yüklə';
   // One download icon; on a post with several files it opens a small menu (this file / all as ZIP).
-  // The ZIP needs the signed-in portal, so the shared link keeps the plain per-file download.
   const showDownloadMenu = hasMultipleFiles && !readOnly;
   const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
   const [zipBusy, setZipBusy] = useState(false);
@@ -311,11 +340,8 @@ export const PreviewModal = ({
     setZipBusy(true);
     setZipError('');
     try {
-      // Time limit so "Hazırlanır…" can never spin forever when the storage is slow.
-      const res = (await apiClient.post(`/dashboard/deliverables/${item.id}/zip-ticket`, undefined, { timeout: 60000 })) as unknown as {
-        data: { ticket: string };
-      };
-      saveUrl(`${BACKEND}/api/v1/downloads/${res.data.ticket}`);
+      const ticket = await actions.zipTicket(item.id);
+      saveUrl(`${BACKEND}/api/v1/downloads/${ticket}`);
       setDownloadMenuOpen(false);
     } catch (err) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -838,8 +864,40 @@ export const PreviewModal = ({
 // stale signed URLs on visible cards get refreshed.
 const STALE_MS = 30 * 60 * 1000;
 
-const DeliverablesPage = () => {
-  const { user } = useAuth();
+/** Where a profile feed gets its data: the signed-in portal or a client's share link. Keep it stable. */
+export interface FeedSource {
+  fetchPage: (page: number) => Promise<{ items: Deliverable[]; total: number; hasMore: boolean }>;
+  listHighlights: () => Promise<HighlightSummary[]>;
+  loadHighlight: (id: string) => Promise<HighlightDetail>;
+  /** A one-minute ZIP ticket for all images of a highlight. */
+  highlightZipTicket: (id: string) => Promise<string>;
+  actions: PreviewActions;
+}
+
+export interface FeedProfile {
+  name: string;
+  igUsername: string;
+  igBio: string;
+  igFollowers: string;
+  igFollowing: string;
+  igPostsCount: string;
+  igProfilePic: string | null;
+}
+
+/**
+ * The Instagram-style profile: header, highlights, grid and the preview modal. The portal page and the
+ * share link page (/share/:token) render the same feed, so the link works exactly like the panel.
+ */
+export const ProfileFeed = ({
+  source,
+  profile,
+  onMessage,
+}: {
+  source: FeedSource;
+  profile: FeedProfile;
+  /** The "Message" buttons; without it they stay decorative. */
+  onMessage?: () => void;
+}) => {
   const [items, setItems] = useState<Deliverable[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<Deliverable | null>(null);
@@ -855,23 +913,18 @@ const DeliverablesPage = () => {
   // Highlight circles (cover + count); the images are fetched when one is opened.
   const [highlights, setHighlights] = useState<HighlightSummary[]>([]);
   useEffect(() => {
-    (apiClient.get('/dashboard/highlights') as Promise<{ data: HighlightSummary[] }>)
-      .then((res) => setHighlights(Array.isArray(res.data) ? res.data : []))
+    source
+      .listHighlights()
+      .then((list) => setHighlights(Array.isArray(list) ? list : []))
       .catch(() => setHighlights([]));
-  }, []);
-  const loadHighlight = useCallback(
-    (id: string) =>
-      (apiClient.get(`/dashboard/highlights/${id}`) as Promise<{ data: HighlightDetail }>).then((res) => res.data),
-    [],
-  );
+  }, [source]);
+  const loadHighlight = source.loadHighlight;
   // Same 60-second ZIP ticket as posts; the browser then downloads the archive from the ticket link.
   const downloadHighlightZip = useCallback(async (id: string) => {
     try {
-      const res = (await apiClient.post(`/dashboard/highlights/${id}/zip-ticket`, undefined, { timeout: 60000 })) as unknown as {
-        data: { ticket: string };
-      };
+      const ticket = await source.highlightZipTicket(id);
       const link = document.createElement('a');
-      link.href = `${BACKEND}/api/v1/downloads/${res.data.ticket}`;
+      link.href = `${BACKEND}/api/v1/downloads/${ticket}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -880,22 +933,18 @@ const DeliverablesPage = () => {
       const timedOut = (err as { code?: string })?.code === 'ECONNABORTED';
       throw new Error(message || (timedOut ? 'Hazırlanması çox çəkdi, yenidən cəhd edin.' : 'ZIP hazırlana bilmədi. Yenidən cəhd edin.'), { cause: err });
     }
-  }, []);
+  }, [source]);
 
   const fetchItems = useCallback((currentPage: number) => {
     if (currentPage === 1) setLoading(true);
     else setLoadingMore(true);
 
-    (apiClient.get(`/dashboard/deliverables?page=${currentPage}&limit=6`) as Promise<{ data: Deliverable[], meta?: { total: number, hasMore: boolean } }>)
+    source
+      .fetchPage(currentPage)
       .then((res) => {
-        setItems(prev => currentPage === 1 ? res.data : [...prev, ...res.data]);
-        if (res.meta) {
-          setHasMore(res.meta.hasMore);
-          setTotalPosts(res.meta.total);
-        } else {
-          setHasMore(false);
-          setTotalPosts(res.data.length);
-        }
+        setItems(prev => currentPage === 1 ? res.items : [...prev, ...res.items]);
+        setHasMore(res.hasMore);
+        setTotalPosts(res.total);
         lastFetched.current = Date.now();
       })
       .catch(() => {})
@@ -903,7 +952,7 @@ const DeliverablesPage = () => {
         setLoading(false);
         setLoadingMore(false);
       });
-  }, []);
+  }, [source]);
 
   useEffect(() => {
     fetchItems(page);
@@ -948,12 +997,8 @@ const DeliverablesPage = () => {
     );
   };
 
-  const igUsername = user?.igUsername || 'username';
-  const igBio = user?.igBio || 'Creative content ✨ Digital storytelling';
-  const igFollowers = user?.igFollowers || '10K';
-  const igFollowing = user?.igFollowing || '0';
-  const igPostsCount = user?.igPostsCount || '0';
-  const igProfilePic = sanitizeUrl(user?.igProfilePic || null);
+  const { igUsername, igBio, igFollowers, igFollowing, igPostsCount } = profile;
+  const igProfilePic = sanitizeUrl(profile.igProfilePic);
 
   const displayPostCount = igPostsCount !== '0' ? igPostsCount : String(totalPosts);
 
@@ -996,7 +1041,7 @@ const DeliverablesPage = () => {
                   />
                 ) : (
                   <span className="text-2xl sm:text-3xl font-bold text-white select-none">
-                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                    {profile.name?.charAt(0)?.toUpperCase() || 'U'}
                   </span>
                 )}
               </div>
@@ -1035,7 +1080,7 @@ const DeliverablesPage = () => {
                 />
               ) : (
                 <span className="text-5xl font-bold text-white select-none">
-                  {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                  {profile.name?.charAt(0)?.toUpperCase() || 'U'}
                 </span>
               )}
             </div>
@@ -1055,6 +1100,8 @@ const DeliverablesPage = () => {
                   Follow
                 </button>
                 <button 
+                  type="button"
+                  onClick={onMessage}
                   className="px-5 py-1.5 text-[14px] font-semibold rounded-lg transition-all"
                   style={{ backgroundColor: 'var(--ig-btn-gray-bg)', color: 'var(--ig-btn-gray-text)' }}
                 >
@@ -1078,7 +1125,7 @@ const DeliverablesPage = () => {
 
             {/* Bio (Both Mobile & Desktop) */}
             <div className="text-[14px]">
-              <p className="font-semibold">{user?.name || 'User'}</p>
+              <p className="font-semibold">{profile.name || 'User'}</p>
               <p className="whitespace-pre-line leading-[18px]">{igBio}</p>
             </div>
 
@@ -1090,6 +1137,8 @@ const DeliverablesPage = () => {
                 Follow
               </button>
               <button 
+                type="button"
+                onClick={onMessage}
                 className="flex-1 py-1.5 text-[14px] font-semibold rounded-lg transition-all"
                 style={{ backgroundColor: 'var(--ig-btn-gray-bg)', color: 'var(--ig-btn-gray-text)' }}
               >
@@ -1255,11 +1304,49 @@ const DeliverablesPage = () => {
             item={selectedItem}
             onClose={() => setSelectedItem(null)}
             onFeedbackSent={handleFeedbackSent}
+            actions={source.actions}
+            profileOverride={{ igUsername: profile.igUsername, igProfilePic: profile.igProfilePic, name: profile.name }}
           />
         )}
       </AnimatePresence>
     </div>
   );
+};
+
+// The signed-in portal: the client's own data through /dashboard/*.
+const portalSource: FeedSource = {
+  fetchPage: async (page) => {
+    const res = (await apiClient.get(`/dashboard/deliverables?page=${page}&limit=6`)) as {
+      data: Deliverable[];
+      meta?: { total: number; hasMore: boolean };
+    };
+    return {
+      items: res.data,
+      total: res.meta ? res.meta.total : res.data.length,
+      hasMore: res.meta ? res.meta.hasMore : false,
+    };
+  },
+  listHighlights: async () => ((await apiClient.get('/dashboard/highlights')) as { data: HighlightSummary[] }).data,
+  loadHighlight: async (id) => ((await apiClient.get(`/dashboard/highlights/${id}`)) as { data: HighlightDetail }).data,
+  highlightZipTicket: async (id) =>
+    ((await apiClient.post(`/dashboard/highlights/${id}/zip-ticket`, undefined, { timeout: 60000 })) as unknown as {
+      data: { ticket: string };
+    }).data.ticket,
+  actions: portalPreviewActions,
+};
+
+const DeliverablesPage = () => {
+  const { user } = useAuth();
+  const profile: FeedProfile = {
+    name: user?.name || '',
+    igUsername: user?.igUsername || 'username',
+    igBio: user?.igBio || 'Creative content ✨ Digital storytelling',
+    igFollowers: user?.igFollowers || '10K',
+    igFollowing: user?.igFollowing || '0',
+    igPostsCount: user?.igPostsCount || '0',
+    igProfilePic: user?.igProfilePic || null,
+  };
+  return <ProfileFeed source={portalSource} profile={profile} />;
 };
 
 export default DeliverablesPage;

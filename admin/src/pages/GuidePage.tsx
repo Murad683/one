@@ -402,6 +402,41 @@ export const GuidePage = () => {
             növbəti tarix) siyahı şəklində açılır, hər sətirdə silmək düyməsi var.
           </p>
 
+          <h3 className="pt-2 text-base font-semibold text-heading">Paylaşım linki</h3>
+          <p>
+            Sətirdəki <B>zəncir</B> ikonu müştərinin paylaşım linkini açır (Layihə Fayllarında faylın sətrindəki
+            zəncir ikonu da eyni pəncərədir). Müştəri bu linklə login olmadan portaldakı kimi işləyir: postlara,
+            videolara və highlight-lara baxır, rəy yazır, redaktə edir və silir, komandanın cavabını görür, faylları
+            və ZIP-i endirir, <B>Message</B> düyməsi ilə komandaya mesaj göndərir. Ödənişlər linkdə görünmür.
+          </p>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>
+              <B>Müddət:</B> link yaradanda <B>Müddətsiz</B> (defolt) və ya <B>30 gün</B> seçilir.
+            </li>
+            <li>
+              Mövcud linkdə müddəti dəyişmək linkin ünvanını dəyişmir. Vaxtı keçmiş link də belə yenidən açılır,
+              müştəriyə yeni link göndərmək lazım deyil.
+            </li>
+            <li>
+              Linkin altında status görünür: <B>Aktiv</B> (və ya neçə gün qalıb) / <B>Vaxtı bitib</B>, yanında{' '}
+              <B>Son baxış</B> (müştərinin linki sonuncu dəfə açdığı vaxt) və ya "Hələ açılmayıb".
+            </li>
+            <li>
+              Siyahıda zəncir ikonunun küncündəki kiçik nöqtə: yaşıl — link işləyir, boz — vaxtı bitib, nöqtə
+              yoxdursa link yoxdur. İkonun üzərinə gələndə status yazılır.
+            </li>
+            <li>
+              <B>Ləğv et</B> linki dərhal bağlayır. Sonra lazım olsa "Link yarat" ilə yeni link yaradılır, onun
+              ünvanı fərqli olur.
+            </li>
+          </ul>
+          <Callout tone="info" title="Link açar kimidir">
+            <p>
+              Linki olan hər kəs müştərinin adından rəy və mesaj yaza bilər. Linki yalnız müştəriyə göndərin.
+              Şübhə olsa, ləğv edib yenisini yaradın.
+            </p>
+          </Callout>
+
           <Callout tone="warn" title="Müştərini silmək">
             <p>
               Bu əməliyyat geri qaytarıla bilməz — müştəri hesabı, ona bağlı məlumatlar və{' '}
@@ -606,8 +641,8 @@ export const GuidePage = () => {
             <li>
               <B>Endirmək:</B> şəklin ⋯ menyusundan "Yüklə" (yalnız yadda saxlanmış şəkillər). Bütün şəkillər
               üçün "Şəkillər" başlığının sağındakı "Hamısını yüklə (ZIP)". ZIP-də kover faylının adında "-kover" var.
-              Müştəri də öz portalında story-dəki <B>↓</B> düyməsi ilə bu şəkli, koveri və ya hamısını (ZIP) endirir;
-              paylaşım linkində ZIP yoxdur. Yeni yüklənən şəkillər orijinal keyfiyyətdə endirilir.
+              Müştəri də öz portalında və paylaşım linkində story-dəki <B>↓</B> düyməsi ilə bu şəkli, koveri və ya
+              hamısını (ZIP) endirir. Yeni yüklənən şəkillər orijinal keyfiyyətdə endirilir.
             </li>
             <li>
               <B>Şəkli silmək:</B> ⋯ menyusundan "Sil". Şəkil yalnız qaralamadan çıxır, "Yadda saxla"dan sonra
@@ -654,8 +689,8 @@ export const GuidePage = () => {
             </li>
             <li>
               <B>Önə Çıxanlar</B> və <B>müştərinin paylaşım linki</B> ilə də işləyə bilər (baxmaq, yaratmaq,
-              yeniləmək, ləğv etmək). Linki yeniləmək və ya ləğv etmək köhnə linki dərhal işləməz edir, ona
-              görə sistem əvvəl təsdiq soruşur.
+              müddətini dəyişmək, ləğv etmək). Ləğv etmək linki dərhal işləməz edir, ona görə sistem əvvəl
+              təsdiq soruşur.
             </li>
             <li>Növ (kateqoriya) yarada, adını dəyişə və ya silə bilməz — yalnız mövcud növlərdən seçir.</li>
           </ul>
@@ -677,7 +712,10 @@ export const GuidePage = () => {
 
         {/* 09 — SORĞULAR */}
         <Section id="sorgular" icon={LifeBuoy} num="09" title="Sorğular (Tickets)">
-          <p>Müştəri portalından göndərilən dəstək müraciətlərini idarə edir.</p>
+          <p>
+            Müştəri portalından və ya paylaşım linkindəki <B>Message</B> düyməsindən göndərilən dəstək
+            müraciətlərini idarə edir. Linkdən gələn sorğunun mövzusunun yanında <B>Linkdən</B> nişanı var.
+          </p>
           <ul className="list-disc space-y-1 pl-5">
             <li>
               Status sətirdə birbaşa dəyişdirilir (Açıq / İcrada / Bağlı) — seçim edən kimi dərhal tətbiq olunur.

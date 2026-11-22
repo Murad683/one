@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { MAX_PARALLEL_UPLOADS, useDeliverableUpload } from '../context/deliverableUpload';
-import { Archive, Download, Edit2, FileX, Image, Link2, Loader2, MessageCircle, Play, Plus, Search, Trash2, Video, X, Copy } from 'lucide-react';
+import { Archive, Download, Edit2, FileX, Image, Link2, Loader2, MessageCircle, Play, Plus, Search, Trash2, Video, X } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuthStore } from '../store/authStore';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import ShareLinkModal, { ShareStatusDot } from '../components/shared/ShareLinkModal';
+import type { ShareLinkInfo } from '../lib/shareLink';
+import { shareStatusLine } from '../lib/shareLink';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import Select from '../components/ui/Select';
@@ -71,6 +74,7 @@ interface ClientUser extends Record<string, unknown> {
   highlightCount?: number;
   shareUrl?: string | null;
   shareTokenExpiresAt?: string | null;
+  shareLastViewedAt?: string | null;
   /** The client has a real mailbox, so the retention warnings reach them. */
   canReceiveNotices?: boolean;
 }
@@ -493,13 +497,8 @@ export const DeliverablesPage = () => {
   const [replySaving, setReplySaving] = useState(false);
   const [replyError, setReplyError] = useState('');
   const [sharingClient, setSharingClient] = useState<ClientUser | null>(null);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
-  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
-  const [revokingShareLink, setRevokingShareLink] = useState(false);
   const [previewItem, setPreviewItem] = useState<Deliverable | null>(null);
   const [activeTab, setActiveTab] = useState<'files' | 'highlights'>('files');
-  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
   // Creators (videographers) get a restricted view: own uploads, no client
   // emails, no category management; they use /creator/* endpoints for clients.
   const isCreator = useAuthStore((state) => state.user?.role === 'CREATOR');
@@ -775,34 +774,15 @@ export const DeliverablesPage = () => {
     await fetchCategories();
   };
 
-  const openShareModal = (client: ClientUser) => {
-    setSharingClient(client);
-    setShareUrl(client.shareUrl ?? null);
-    setShareExpiresAt(client.shareTokenExpiresAt ?? null);
-  };
+  // The client list (fetchClients) carries the freshest link state, including the last view;
+  // the client embedded in a deliverable row is only the fallback.
+  const clientLink = (client: ClientUser): ClientUser => ({ ...client, ...(clients.find((c) => c.id === client.id) ?? {}) });
 
-  const generateShareLink = async () => {
-    if (!sharingClient) return;
-    setIsGeneratingLink(true);
-    try {
-      const response = await api.post<ApiEnvelope<{ token: string; url: string; expiresAt: string }>>(
-        `${shareLinkBase}/${sharingClient.id}/share-link`,
-      );
-      setShareUrl(response.data.data.url);
-      setShareExpiresAt(response.data.data.expiresAt);
-    } catch (err) {
-      setError(requestErrorMessage(err, 'Link yaradıla bilmədi.'));
-    } finally {
-      setIsGeneratingLink(false);
-    }
-  };
+  const openShareModal = (client: ClientUser) => setSharingClient(clientLink(client));
 
-  const confirmRevokeShareLink = async () => {
-    if (!sharingClient) return;
-    await api.delete(`${shareLinkBase}/${sharingClient.id}/share-link`);
-    setRevokingShareLink(false);
-    setShareUrl(null);
-    setShareExpiresAt(null);
+  const handleShareLinkChanged = (clientId: string, link: ShareLinkInfo) => {
+    setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, ...link } : c)));
+    fetchClients().catch(() => undefined);
   };
 
   // Column headers sort on click; the funnel next to a title filters that column.
@@ -1016,9 +996,11 @@ export const DeliverablesPage = () => {
               size="sm"
               onClick={() => openShareModal(deliverable.client!)}
               aria-label="Müştərinin paylaşım linki"
-              title="Müştərinin paylaşım linki"
+              title={`Müştərinin paylaşım linki — ${shareStatusLine(clientLink(deliverable.client))}`}
+              className="relative"
             >
               <Link2 className="h-4 w-4" />
+              <ShareStatusDot link={clientLink(deliverable.client)} />
             </Button>
           )}
           <span className="inline-flex" title={reason ?? undefined}>
@@ -1483,85 +1465,11 @@ export const DeliverablesPage = () => {
           </Modal>
 
           {/* ── Share Link Modal ── */}
-          <Modal
-            isOpen={Boolean(sharingClient)}
+          <ShareLinkModal
+            client={sharingClient}
+            apiBase={shareLinkBase}
             onClose={() => setSharingClient(null)}
-            title={sharingClient ? `${sharingClient.name} — Paylaşım Linki` : 'Paylaşım Linki'}
-            size="sm"
-          >
-            <div className="space-y-4">
-              {shareUrl ? (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-body">Aktiv link</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        readOnly
-                        value={shareUrl}
-                        className="flex-1 rounded-lg border border-field-border bg-surface-alt px-3 py-2 text-sm text-body outline-none"
-                        onFocus={(e) => e.currentTarget.select()}
-                      />
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => navigator.clipboard.writeText(shareUrl)}
-                        title="Kopyala"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    {shareExpiresAt && (
-                      <p className="text-xs text-muted">
-                        Bitmə tarixi: {new Date(shareExpiresAt).toLocaleString('az-AZ')}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex justify-between gap-2 border-t border-edge pt-4">
-                    <Button variant="danger" size="sm" onClick={() => setRevokingShareLink(true)}>
-                      Ləğv et
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={isCreator ? () => setConfirmRegenerate(true) : generateShareLink}
-                      isLoading={isGeneratingLink}
-                    >
-                      Yenilə
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-muted">
-                    Bu müştərinin bütün layihə fayllarını əhatə edən, login tələb etməyən paylaşım linki yaradılacaq (7 gün etibarlı, istənilən vaxt ləğv edilə bilər).
-                  </p>
-                  <div className="flex justify-end border-t border-edge pt-4">
-                    <Button onClick={generateShareLink} isLoading={isGeneratingLink}>
-                      Link yarat
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          </Modal>
-
-          <ConfirmDialog
-            isOpen={confirmRegenerate}
-            onClose={() => setConfirmRegenerate(false)}
-            onConfirm={async () => {
-              setConfirmRegenerate(false);
-              await generateShareLink();
-            }}
-            title="Paylaşım linkini yenilə"
-            message="Yeni link yaradılacaq və köhnə link işləməyəcək. Kimsə köhnə linki istifadə edirsə, o artıq açılmayacaq. Davam edək?"
-          />
-
-          <ConfirmDialog
-            isOpen={revokingShareLink}
-            onClose={() => setRevokingShareLink(false)}
-            onConfirm={confirmRevokeShareLink}
-            title="Paylaşım linkini ləğv et"
-            message="Bu link artıq işləməyəcək. Davam etmək istədiyinizə əminsiniz?"
+            onChanged={handleShareLinkChanged}
           />
 
         </>

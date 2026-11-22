@@ -1,28 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { AnimatePresence } from 'framer-motion';
-import { Grid3X3, Video, Image as ImageIcon } from 'lucide-react';
-import { PreviewModal } from './portal/DeliverablesPage';
-import { HighlightsSection } from '../components/ui/HighlightsSection';
+import { AnimatePresence, motion } from 'framer-motion';
+import { X } from 'lucide-react';
+import { ProfileFeed } from './portal/DeliverablesPage';
+import type { Deliverable, FeedProfile, FeedSource } from './portal/DeliverablesPage';
 import type { HighlightDetail, HighlightSummary } from '../components/ui/highlightTypes';
-
-interface SharedDeliverable {
-  id: string;
-  title: string;
-  type: string | null;
-  category?: { id: string; name: string; isVideo: boolean } | null;
-  status: string;
-  month: number;
-  year: number;
-  files: { url: string; name: string; size: number; type: string; downloadUrl?: string | null; previewUrl?: string | null; originalDownloadUrl?: string | null }[];
-  notes: string | null;
-  clientFeedback: string | null;
-  thumbnailUrl?: string | null;
-  thumbnailDownloadUrl?: string | null;
-  originalUrl?: string | null;
-  createdAt: string;
-}
 
 interface SharedClientProfile {
   name: string;
@@ -32,108 +15,193 @@ interface SharedClientProfile {
   igFollowing: string | null;
   igPostsCount: string | null;
   igProfilePic: string | null;
-  igHighlights?: { title: string; imageUrl: string }[];
 }
 
 const BACKEND = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-// A separate, interceptor-free instance — this page has no logged-in user,
-// so apiClient's Bearer-token attach and 401→/portal redirect don't apply here.
-const publicApi = axios.create({ baseURL: `${BACKEND}/api/v1` });
+// A separate, interceptor-free instance — this page has no logged-in user, so apiClient's Bearer-token
+// attach and 401→/portal redirect don't apply here. The API asks every write for an x-csrf-token header.
+const publicApi = axios.create({ baseURL: `${BACKEND}/api/v1`, headers: { 'x-csrf-token': '1' } });
 
-const sanitizeUrl = (url: string | null | undefined): string => {
-  if (!url) return '';
-  const lower = url.toLowerCase();
-  if (lower.startsWith('javascript:') || lower.startsWith('data:')) return '';
-  return url;
-};
+const errorMessage = (err: unknown, fallback: string): string =>
+  (err as { response?: { data?: { message?: string } } })?.response?.data?.message || fallback;
 
-const resolveFileUrl = (fileUrl: string | null | undefined): string => {
-  const url = sanitizeUrl(fileUrl);
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
+/** The "Message" button on a share link: a short note to the team, delivered as a support request. */
+const MessageSheet = ({ token, onClose }: { token: string; onClose: () => void }) => {
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+  const [sent, setSent] = useState(false);
 
-  let normalized = url.replace(/\\/g, '/');
-  if (normalized.startsWith('uploads/')) {
-    normalized = normalized.replace('uploads/', '');
-  } else if (normalized.includes('/uploads/')) {
-    normalized = normalized.split('/uploads/').pop() || normalized;
-  }
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
-  return sanitizeUrl(`${BACKEND}/api/v1/uploads/${normalized}`);
-};
+  useEffect(() => {
+    if (!sent) return;
+    const t = window.setTimeout(onClose, 1800);
+    return () => window.clearTimeout(t);
+  }, [sent, onClose]);
 
-const getExt = (fileName: string | null | undefined): string => fileName?.split('.').pop()?.toLowerCase() ?? '';
+  const canSend = subject.trim().length >= 2 && body.trim().length >= 10 && !sending;
 
-const isImageFile = (mimeType: string | null | undefined, fileName: string | null | undefined): boolean => {
-  if (mimeType?.startsWith('image/')) return true;
-  return ['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'].includes(getExt(fileName));
-};
+  const send = async () => {
+    if (!canSend) return;
+    setSending(true);
+    setError('');
+    try {
+      await publicApi.post(`/share/${token}/tickets`, { subject: subject.trim(), body: body.trim() });
+      setSent(true);
+    } catch (err) {
+      setError(errorMessage(err, 'Mesaj göndərilə bilmədi. Yenidən cəhd edin.'));
+    } finally {
+      setSending(false);
+    }
+  };
 
-const getFileUrl = (f: { url: string; downloadUrl?: string | null } | null | undefined): string => {
-  if (!f) return '';
-  if (f.downloadUrl) return sanitizeUrl(f.downloadUrl);
-  return resolveFileUrl(f.url);
+  const field = 'w-full rounded-lg px-3 py-2 text-[14px] outline-none border';
+  const fieldStyle = { backgroundColor: 'var(--ig-btn-gray-bg)', borderColor: 'var(--ig-border)', color: 'var(--ig-text)' };
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Mesaj"
+        className="w-full sm:max-w-md rounded-t-2xl sm:rounded-xl overflow-hidden border"
+        style={{ backgroundColor: 'var(--ig-bg)', color: 'var(--ig-text)', borderColor: 'var(--ig-border)' }}
+        initial={{ y: 24, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 24, opacity: 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative flex items-center justify-center h-12 border-b" style={{ borderColor: 'var(--ig-border)' }}>
+          <p className="text-[16px] font-semibold">Mesaj</p>
+          <button type="button" onClick={onClose} className="absolute right-3 p-1" aria-label="Bağla">
+            <X size={22} />
+          </button>
+        </div>
+
+        {sent ? (
+          <div className="px-6 py-10 text-center">
+            <p className="text-[15px] font-semibold">Mesajınız göndərildi</p>
+            <p className="mt-1 text-[13px]" style={{ color: 'var(--ig-text-secondary)' }}>
+              Komanda mesajınızı aldı.
+            </p>
+          </div>
+        ) : (
+          <div className="p-4 space-y-3">
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Mövzu"
+              maxLength={200}
+              className={field}
+              style={fieldStyle}
+              autoFocus
+            />
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Mesajınızı yazın..."
+              maxLength={5000}
+              rows={5}
+              className={`${field} resize-none`}
+              style={fieldStyle}
+            />
+            {error && <p className="text-[13px] text-red-500">{error}</p>}
+            <button
+              type="button"
+              onClick={send}
+              disabled={!canSend}
+              className="w-full py-2 text-[14px] font-semibold rounded-lg bg-[#0095F6] text-white transition-opacity disabled:opacity-40"
+            >
+              {sending ? 'Göndərilir...' : 'Göndər'}
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
 };
 
 const SharePage = () => {
-  const { token } = useParams<{ token: string }>();
+  const { token = '' } = useParams<{ token: string }>();
   const [client, setClient] = useState<SharedClientProfile | null>(null);
-  const [items, setItems] = useState<SharedDeliverable[]>([]);
-  const [selectedItem, setSelectedItem] = useState<SharedDeliverable | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const [totalPosts, setTotalPosts] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [invalid, setInvalid] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
 
-  const fetchPage = useCallback((currentPage: number) => {
-    if (!token) return;
-    if (currentPage === 1) setLoading(true);
-    else setLoadingMore(true);
-
-    publicApi
-      .get(`/share/${token}?page=${currentPage}&limit=6`)
-      .then((res) => {
-        const data = res.data as { data: SharedDeliverable[]; meta: { hasMore: boolean; total: number; client: SharedClientProfile } };
-        setItems((prev) => (currentPage === 1 ? data.data : [...prev, ...data.data]));
-        setHasMore(data.meta.hasMore);
-        setTotalPosts(data.meta.total);
-        setClient(data.meta.client);
-      })
-      .catch(() => setInvalid(true))
-      .finally(() => {
-        setLoading(false);
-        setLoadingMore(false);
-      });
-  }, [token]);
-
+  // A client's link: keep it out of search engines (the site's own robots tag says "index").
   useEffect(() => {
-    fetchPage(1);
-  }, [fetchPage]);
+    const existing = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    const meta = existing ?? document.head.appendChild(Object.assign(document.createElement('meta'), { name: 'robots' }));
+    const previous = existing?.content;
+    meta.content = 'noindex, nofollow';
+    return () => {
+      if (existing) existing.content = previous ?? '';
+      else meta.remove();
+    };
+  }, []);
 
-  // Highlight circles (cover + count); the images are fetched when one is opened.
-  const [highlights, setHighlights] = useState<HighlightSummary[]>([]);
-  useEffect(() => {
-    if (!token) return;
-    publicApi
-      .get(`/share/${token}/highlights`)
-      .then((res) => setHighlights(Array.isArray(res.data?.data) ? (res.data.data as HighlightSummary[]) : []))
-      .catch(() => setHighlights([]));
-  }, [token]);
-  const loadHighlight = useCallback(
-    (id: string) => publicApi.get(`/share/${token}/highlights/${id}`).then((res) => res.data.data as HighlightDetail),
+  // The same feed as the signed-in portal, through /share/:token/*.
+  const source = useMemo<FeedSource>(
+    () => ({
+      fetchPage: async (page) => {
+        try {
+          const res = await publicApi.get(`/share/${token}?page=${page}&limit=6`);
+          const data = res.data as {
+            data: Deliverable[];
+            meta: { hasMore: boolean; total: number; client: SharedClientProfile };
+          };
+          setClient(data.meta.client);
+          return { items: data.data, total: data.meta.total, hasMore: data.meta.hasMore };
+        } catch (err) {
+          if (page === 1) setInvalid(true);
+          throw err;
+        }
+      },
+      listHighlights: async () => {
+        const res = await publicApi.get(`/share/${token}/highlights`);
+        return (res.data?.data ?? []) as HighlightSummary[];
+      },
+      loadHighlight: async (id) => (await publicApi.get(`/share/${token}/highlights/${id}`)).data.data as HighlightDetail,
+      highlightZipTicket: async (id) =>
+        (await publicApi.post(`/share/${token}/highlights/${id}/zip-ticket`, undefined, { timeout: 60000 })).data.data
+          .ticket as string,
+      actions: {
+        submitFeedback: async (id, text) =>
+          (await publicApi.patch(`/share/${token}/deliverables/${id}/feedback`, { clientFeedback: text })).data.data
+            .clientFeedback as string,
+        deleteFeedback: async (id) => {
+          await publicApi.delete(`/share/${token}/deliverables/${id}/feedback`);
+        },
+        zipTicket: async (id) =>
+          (await publicApi.post(`/share/${token}/deliverables/${id}/zip-ticket`, undefined, { timeout: 60000 })).data
+            .data.ticket as string,
+      },
+    }),
     [token],
   );
 
-  const igUsername = client?.igUsername || 'username';
-  const igProfilePic = sanitizeUrl(client?.igProfilePic || null);
-  const igBio = client?.igBio || '';
-  const igFollowers = client?.igFollowers || '0';
-  const igFollowing = client?.igFollowing || '0';
-  const igPostsCount = client?.igPostsCount || '0';
-  const displayPostCount = igPostsCount !== '0' ? igPostsCount : String(totalPosts);
+  const profile: FeedProfile = {
+    name: client?.name || '',
+    igUsername: client?.igUsername || 'username',
+    igBio: client?.igBio || '',
+    igFollowers: client?.igFollowers || '0',
+    igFollowing: client?.igFollowing || '0',
+    igPostsCount: client?.igPostsCount || '0',
+    igProfilePic: client?.igProfilePic || null,
+  };
 
   if (invalid) {
     return (
@@ -145,215 +213,12 @@ const SharePage = () => {
   }
 
   return (
-    <div className="pb-16 min-h-screen font-sans" style={{ backgroundColor: 'var(--ig-bg)', color: 'var(--ig-text)' }}>
-      {/* ── Mobile Top Nav ── */}
-      <div className="flex md:hidden items-center justify-center px-4 h-11 border-b" style={{ borderColor: 'var(--ig-border)' }}>
-        <div className="flex items-center gap-1 font-bold text-[16px]">
-          {igUsername}
-          <svg aria-label="Verified" color="#0095f6" fill="#0095f6" height="12" role="img" viewBox="0 0 40 40" width="12"><path d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.358 40l3.232-5.6h6.162v-6.01L40 25.359 36.905 20 40 14.641l-5.248-3.03v-6.46h-6.419L25.358 0l-5.36 3.094Zm7.415 11.225 2.254 2.287-11.43 11.5-6.835-6.93 2.244-2.258 4.587 4.581 9.18-9.18Z" fillRule="evenodd"></path></svg>
-        </div>
-      </div>
-
-      {/* ── Profile Header ── */}
-      <div className="px-4 sm:px-6 md:px-10 pt-4 md:pt-10 pb-6 max-w-4xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-16">
-
-          {/* Mobile: Avatar + Stats Row */}
-          <div className="flex items-center gap-6 md:hidden">
-            <div className="shrink-0">
-              <div
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden flex items-center justify-center border-[2px]"
-                style={{
-                  borderColor: 'var(--ig-border)',
-                  background: igProfilePic ? 'transparent' : 'linear-gradient(135deg, #833AB4, #FD1D1D, #F77737)',
-                }}
-              >
-                {igProfilePic ? (
-                  <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-2xl sm:text-3xl font-bold text-white select-none">
-                    {(client?.name || 'U').charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex-1 flex justify-around items-center">
-              <div className="flex flex-col items-center">
-                <span className="text-[16px] font-semibold">{displayPostCount}</span>
-                <span className="text-[13px]" style={{ color: 'var(--ig-text)' }}>posts</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="text-[16px] font-semibold">{igFollowers}</span>
-                <span className="text-[13px]" style={{ color: 'var(--ig-text)' }}>followers</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <span className="text-[16px] font-semibold">{igFollowing}</span>
-                <span className="text-[13px]" style={{ color: 'var(--ig-text)' }}>following</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop Avatar */}
-          <div className="hidden md:block shrink-0">
-            <div
-              className="w-[150px] h-[150px] rounded-full overflow-hidden flex items-center justify-center border-[1px]"
-              style={{
-                borderColor: 'var(--ig-border)',
-                background: igProfilePic ? 'transparent' : 'linear-gradient(135deg, #833AB4, #FD1D1D, #F77737)',
-              }}
-            >
-              {igProfilePic ? (
-                <img src={resolveFileUrl(igProfilePic)} alt={igUsername} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-5xl font-bold text-white select-none">
-                  {(client?.name || 'U').charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex-1 min-w-0">
-            {/* Desktop: Username Row */}
-            <div className="hidden md:flex flex-wrap items-center gap-4 mb-5">
-              <h1 className="text-[20px] font-normal truncate">{igUsername}</h1>
-              <svg aria-label="Verified" color="#0095f6" fill="#0095f6" height="18" role="img" viewBox="0 0 40 40" width="18"><path d="M19.998 3.094 14.638 0l-2.972 5.15H5.432v6.354L0 14.64 3.094 20 0 25.359l5.432 3.137v5.905h5.975L14.638 40l5.36-3.094L25.358 40l3.232-5.6h6.162v-6.01L40 25.359 36.905 20 40 14.641l-5.248-3.03v-6.46h-6.419L25.358 0l-5.36 3.094Zm7.415 11.225 2.254 2.287-11.43 11.5-6.835-6.93 2.244-2.258 4.587 4.581 9.18-9.18Z" fillRule="evenodd"></path></svg>
-              <div className="flex items-center gap-2">
-                <button className="px-5 py-1.5 text-[14px] font-semibold rounded-lg transition-all bg-[#0095F6] text-white hover:bg-[#1877F2]">
-                  Follow
-                </button>
-                <button
-                  className="px-5 py-1.5 text-[14px] font-semibold rounded-lg transition-all"
-                  style={{ backgroundColor: 'var(--ig-btn-gray-bg)', color: 'var(--ig-btn-gray-text)' }}
-                >
-                  Message
-                </button>
-              </div>
-            </div>
-
-            {/* Desktop: Stats Row */}
-            <div className="hidden md:flex items-center gap-10 mb-5 text-[16px]">
-              <div><span className="font-semibold">{displayPostCount}</span> posts</div>
-              <div><span className="font-semibold">{igFollowers}</span> followers</div>
-              <div><span className="font-semibold">{igFollowing}</span> following</div>
-            </div>
-
-            {/* Bio */}
-            <div className="text-[14px]">
-              <p className="font-semibold">{client?.name || 'User'}</p>
-              <p className="whitespace-pre-line leading-[18px]">{igBio}</p>
-            </div>
-
-            <HighlightsSection highlights={highlights} loadDetail={loadHighlight} />
-
-            {/* Mobile: Buttons Row */}
-            <div className="flex md:hidden items-center gap-2 mt-4">
-              <button className="flex-1 py-1.5 text-[14px] font-semibold rounded-lg transition-all bg-[#0095F6] text-white">
-                Follow
-              </button>
-              <button
-                className="flex-1 py-1.5 text-[14px] font-semibold rounded-lg transition-all"
-                style={{ backgroundColor: 'var(--ig-btn-gray-bg)', color: 'var(--ig-btn-gray-text)' }}
-              >
-                Message
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs divider */}
-        <div className="mt-8 border-t flex justify-center gap-12" style={{ borderColor: 'var(--ig-border)' }}>
-          <button
-            className="flex items-center gap-1.5 py-4 text-[12px] uppercase tracking-widest font-semibold border-t-[1px] -mt-[1px]"
-            style={{ borderColor: 'var(--ig-text)', color: 'var(--ig-text)' }}
-          >
-            <Grid3X3 size={12} />
-            Posts
-          </button>
-          <button
-            className="flex items-center gap-1.5 py-4 text-[12px] uppercase tracking-widest font-semibold border-t-[1px] border-transparent -mt-[1px]"
-            style={{ color: 'var(--ig-text-secondary)' }}
-          >
-            <Video size={12} />
-            Reels
-          </button>
-        </div>
-      </div>
-
-      {/* ── Grid ── */}
-      <div style={{ backgroundColor: 'var(--ig-bg)' }}>
-        {loading ? (
-          <div className="grid grid-cols-3 gap-[2px] sm:gap-1 w-full max-w-4xl mx-auto">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="aspect-[3/4] animate-pulse" style={{ backgroundColor: 'var(--ig-empty-bg)' }} />
-            ))}
-          </div>
-        ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-3" style={{ color: 'var(--ig-text-secondary)' }}>
-            <p className="text-sm tracking-wide">Hələ heç bir material yoxdur</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-[2px] sm:gap-1 w-full max-w-4xl mx-auto">
-            {items.map((d) => {
-              const hasFile = d.files && d.files.length > 0;
-              const firstFile = hasFile ? d.files[0] : null;
-              const isVideoType = d.category?.isVideo === true || d.type === 'VIDEO' || (firstFile?.type && firstFile.type.startsWith('video/'));
-              const firstFileUrl = getFileUrl(firstFile);
-              const isFirstFileImage = firstFile ? isImageFile(firstFile.type, firstFile.name) : false;
-              const resolvedThumb = d.thumbnailUrl ? resolveFileUrl(d.thumbnailUrl) : null;
-              const thumbnailSrc: string | null = resolvedThumb ?? (isFirstFileImage && firstFileUrl ? firstFileUrl : null);
-
-              return (
-                <div
-                  key={d.id}
-                  onClick={() => hasFile && setSelectedItem(d)}
-                  className={['relative group aspect-[3/4] overflow-hidden', hasFile ? 'cursor-pointer' : 'cursor-default opacity-60'].join(' ')}
-                  style={{ backgroundColor: 'var(--bg-elevated)' }}
-                >
-                  {thumbnailSrc ? (
-                    <img src={thumbnailSrc} alt={d.title} className="w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-80" loading="lazy" decoding="async" />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ color: 'var(--text-faint)' }}>
-                      <ImageIcon size={28} strokeWidth={1.5} />
-                      <span className="text-[9px] tracking-widest uppercase">Önizləmə yoxdur</span>
-                    </div>
-                  )}
-                  {isVideoType && (
-                    <div className="absolute top-2 right-2 pointer-events-none">
-                      <Video size={16} className="text-white drop-shadow-lg" strokeWidth={2} />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {hasMore && !loading && (
-          <div className="flex justify-center py-6">
-            <button
-              onClick={() => { const next = page + 1; setPage(next); fetchPage(next); }}
-              disabled={loadingMore}
-              className="px-5 py-2 text-sm font-semibold rounded-lg transition-opacity disabled:opacity-50"
-              style={{ backgroundColor: 'var(--ig-btn-gray-bg)', color: 'var(--ig-btn-gray-text)' }}
-            >
-              {loadingMore ? 'Yüklənir...' : 'Daha çox göstər'}
-            </button>
-          </div>
-        )}
-      </div>
-
+    <>
+      <ProfileFeed source={source} profile={profile} onMessage={() => setMessageOpen(true)} />
       <AnimatePresence>
-        {selectedItem && (
-          <PreviewModal
-            item={{ ...selectedItem, clientFeedback: null }}
-            onClose={() => setSelectedItem(null)}
-            onFeedbackSent={() => {}}
-            readOnly
-            profileOverride={{ igUsername: client?.igUsername, igProfilePic: client?.igProfilePic, name: client?.name }}
-          />
-        )}
+        {messageOpen && <MessageSheet token={token} onClose={() => setMessageOpen(false)} />}
       </AnimatePresence>
-    </div>
+    </>
   );
 };
 
