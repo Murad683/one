@@ -22,7 +22,8 @@ model User {
   igProfilePic String?
   igHighlights Json          @default("[]")
   shareToken           String?   @unique
-  shareTokenExpiresAt  DateTime?
+  shareTokenExpiresAt  DateTime?  // null with a token = the link never expires
+  shareLastViewedAt    DateTime?  // last time the share link was opened
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   package      Package?      @relation(fields: [packageId], references: [id], onDelete: SetNull)
@@ -280,6 +281,7 @@ model Ticket {
   userId    String
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   hiddenByAdminAt DateTime?
+  viaShare  Boolean      @default(false) // sent from the client's share link, not the signed-in portal
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 }

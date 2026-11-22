@@ -8,3 +8,10 @@ export const createTicketSchema = z.object({
 export const submitFeedbackSchema = z.object({
   clientFeedback: z.string().min(1, 'Feedback cannot be empty').max(5000, 'Feedback cannot exceed 5000 characters'),
 });
+
+export const shareDurationSchema = z.object({
+  duration: z.enum(['never', '30d'], { error: 'Duration must be never or 30d' }),
+});
+
+/** Creating a link: the duration may be left out (older admin panel → 7 days). */
+export const createShareLinkSchema = shareDurationSchema.partial().optional();

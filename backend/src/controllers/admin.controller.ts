@@ -95,6 +95,7 @@ export const getClientUsers = async (req: Request, res: Response): Promise<void>
         updatedAt: true,
         shareToken: true,
         shareTokenExpiresAt: true,
+        shareLastViewedAt: true,
         package: {
           select: { id: true, name: true, priceLabel: true },
         },

@@ -1,5 +1,7 @@
 import { Router } from 'express';
-import { getUsers, updateUser, deleteUser, generateShareLink, revokeShareLink } from '../controllers/user.controller';
+import { getUsers, updateUser, deleteUser, generateShareLink, revokeShareLink, updateShareLinkExpiry } from '../controllers/user.controller';
+import { validate } from '../middleware/validate.middleware';
+import { createShareLinkSchema, shareDurationSchema } from '../utils/validators/dashboard.validators';
 import { verifyTokenMiddleware as verifyToken } from '../middleware/verifyToken.middleware';
 import { isAdmin } from '../middleware/rbac.middleware';
 
@@ -109,7 +111,8 @@ router.delete('/:id', verifyToken, isAdmin, deleteUser);
  *       404:
  *         description: User not found
  */
-router.post('/:id/share-link', verifyToken, isAdmin, generateShareLink);
+router.post('/:id/share-link', verifyToken, isAdmin, validate(createShareLinkSchema), generateShareLink);
+router.patch('/:id/share-link', verifyToken, isAdmin, validate(shareDurationSchema), updateShareLinkExpiry);
 router.delete('/:id/share-link', verifyToken, isAdmin, revokeShareLink);
 
 export default router;

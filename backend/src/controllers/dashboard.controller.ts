@@ -167,6 +167,7 @@ export const createTicket = async (req: Request, res: Response): Promise<void> =
         body,
         userId,
         status: 'OPEN',
+        viaShare: res.locals.viaShare === true,
       },
     });
 
