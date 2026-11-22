@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /portal
 Disallow: /portal/panel
+Disallow: /share
 
 Sitemap: https://ourneweye.com/sitemap.xml

@@ -19,6 +19,8 @@ interface Ticket extends Record<string, unknown> {
   body: string;
   status: 'OPEN' | 'IN_PROGRESS' | 'CLOSED';
   createdAt: string;
+  /** Sent from the client's share link (no sign-in), not from the portal. */
+  viaShare?: boolean;
   user: { id: string; name: string; email: string };
 }
 
@@ -116,7 +118,20 @@ export const TicketsPage = () => {
         </div>
       ),
     },
-    { key: 'subject', header: 'Mövzu' },
+    {
+      key: 'subject',
+      header: 'Mövzu',
+      render: (t) => (
+        <span className="inline-flex items-center gap-2">
+          <span>{t.subject}</span>
+          {t.viaShare && (
+            <span title="Müştəri bu mesajı paylaşım linkindən göndərib">
+              <Badge>Linkdən</Badge>
+            </span>
+          )}
+        </span>
+      ),
+    },
     {
       key: 'status',
       header: 'Status',
@@ -230,7 +245,10 @@ export const TicketsPage = () => {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Mövzu</p>
-              <p className="text-sm font-medium text-heading">{selectedTicket.subject}</p>
+              <p className="text-sm font-medium text-heading">
+                {selectedTicket.subject}
+                {selectedTicket.viaShare && <Badge className="ml-2">Linkdən</Badge>}
+              </p>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-1">Tarix</p>

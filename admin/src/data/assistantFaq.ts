@@ -50,6 +50,11 @@ const DOWNLOAD_ALL: FaqEntry = {
   a: 'Layihə Faylları səhifəsində başlığa klikləyin, tam ekran önizləmə açılır. **Yüklə** düyməsinə basın:\n- Bir fayl varsa, birbaşa endirilir.\n- Birdən çox fayl varsa menyu açılır: **Bu faylı yüklə** (baxdığınız fayl) və **Hamısını yüklə (ZIP)** (hamısı bir arxivdə).\nZIP limiti: ən çox 30 fayl və 200 MB; aşarsa faylları ayrı-ayrılıqda yükləyin.\nHər şəkil öz orijinalında endirilir. Qeyd: köhnə çox şəkilli postlarda yalnız ilk şəklin orijinalı var, qalanları kiçildilmiş nüsxə kimi endirilir.\nMüştəri də eyni menyunu öz portalında görür.',
 };
 
+const SHARE_LINK: FaqEntry = {
+  q: 'Müştərinin paylaşım linkini necə idarə edim?',
+  a: 'Müştərinin sətrindəki **zəncir** ikonuna basın:\n- Link yaradanda **Müddətsiz** (defolt) və ya **30 gün** seçin.\n- Mövcud linkdə müddəti dəyişmək ünvanı dəyişmir, vaxtı keçmiş link də belə yenidən açılır. Müştəriyə yeni link göndərmək lazım deyil.\n- Altında status və **Son baxış** (müştəri linki sonuncu dəfə nə vaxt açıb) görünür.\n- **Ləğv et** linki dərhal bağlayır, sonra yeni ünvanla yenisini yaratmaq olar.\nLinklə müştəri portaldakı kimi işləyir: baxır, rəy yazır, fayl və ZIP endirir, **Message** ilə mesaj göndərir (Sorğularda **Linkdən** nişanı ilə). Ödənişlər linkdə görünmür.',
+};
+
 const HIGHLIGHT_ADD: FaqEntry = {
   q: 'Müştəri üçün highlight necə əlavə edirəm?',
   a: 'Layihə Faylları səhifəsində **Önə Çıxanlar (Highlights)** tabı:\n1. Müştərini seçin.\n2. **Yeni highlight** dairəsinə basın.\n3. Pəncərədə başlıq yazın (maks. 30 simvol), **Şəkil əlavə et** ilə bir neçə şəkli seçin və ya sürüşdürüb atın (JPG, PNG, WEBP, HEIC, hər biri ən çox 10 MB).\n4. **Yadda saxla**.\nYadda saxlamayana qədər müştəri heç nə görmür. **Ləğv et** hər şeyi atır. Limit: müştəridə 20 highlight, hər birində 30 şəkil. Video hələ dəstəklənmir.',
@@ -109,6 +114,7 @@ export const STAFF_FAQ: FaqEntry[] = [
   REPLACE_BLOCKED,
   VIDEO_RETENTION,
   NOTICE_MAIL,
+  SHARE_LINK,
   DOWNLOAD_ALL,
   HIGHLIGHT_ADD,
   HIGHLIGHT_ARRANGE,
@@ -138,10 +144,7 @@ export const CREATOR_FAQ: FaqEntry[] = [
     q: 'Başqasının yüklədiyi faylı niyə görmürəm?',
     a: 'Creator rolunda siyahıda yalnız özünüzün yüklədiyiniz fayllar görünür. Başqa creator-ın və ya adminin faylına baxa, dəyişə və ya silə bilməzsiniz.',
   },
-  {
-    q: 'Müştərinin paylaşım linkini necə yeniləyim?',
-    a: 'Müştərini seçdikdən sonra paylaşım linkini yarada, yeniləyə və ləğv edə bilərsiniz.\nLinki yeniləmək və ya ləğv etmək köhnə linki dərhal işləməz edir, ona görə sistem əvvəl təsdiq soruşur.',
-  },
+  SHARE_LINK,
   DOWNLOAD_ALL,
   HIGHLIGHT_ADD,
   HIGHLIGHT_ARRANGE,
