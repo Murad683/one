@@ -52,7 +52,7 @@ const DOWNLOAD_ALL: FaqEntry = {
 
 const CATEGORIES: FaqEntry = {
   q: 'Fayl növünü (kateqoriyanı) necə əlavə edim, dəyişim və ya silim?',
-  a: 'Layihə Faylları səhifəsində **Fayl Əlavə Et**in yanındakı **Kateqoriyalar** düyməsinə basın:\n- **Yeni növ:** ad yazın, video növüdürsə **Video** qutusunu işarələyin, **Əlavə et**.\n- **Dəyişmək:** qələm ilə adı və **Video** qutusunu istənilən vaxt dəyişin.\n- **Silmək:** yalnız faylı olmayan növ silinir. Faylı olan növü silmək üçün əvvəl həmin faylların növünü dəyişin.\nKover şəkli sahəsi video növündə və ya video fayl seçiləndə görünür.',
+  a: 'Layihə Faylları səhifəsində **Fayl Əlavə Et**in yanındakı **Kateqoriyalar** düyməsinə basın:\n- **Yeni növ:** ad yazın, **Bu kateqoriyada nə paylaşacaqsınız?** sualına **Şəkillər** və ya **Videolar** seçin (seçməyincə Əlavə et işləmir), sonra **Əlavə et**.\n- **Dəyişmək:** qələm ilə adı və Şəkillər/Videolar seçimini istənilən vaxt dəyişin.\n- **Silmək:** yalnız faylı olmayan növ silinir. Faylı olan növü silmək üçün əvvəl həmin faylların növünü dəyişin.\nKover şəkli sahəsi video növündə və ya video fayl seçiləndə görünür.',
 };
 
 const SHARE_LINK: FaqEntry = {

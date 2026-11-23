@@ -24,17 +24,47 @@ interface CategoryManagerModalProps {
   onChanged: () => Promise<void> | void;
 }
 
-const VideoCheckbox = ({ id, checked, onChange }: { id: string; checked: boolean; onChange: (v: boolean) => void }) => (
-  <label htmlFor={id} className="inline-flex shrink-0 cursor-pointer items-center gap-2 text-sm text-body">
-    <input
-      id={id}
-      type="checkbox"
-      checked={checked}
-      onChange={(e) => onChange(e.target.checked)}
-      className="h-4 w-4 rounded border-field-border text-blue-600 focus:ring-blue-600"
-    />
-    Video
-  </label>
+/** What the category holds. A new category starts with no choice, so it cannot be saved without one. */
+type Kind = 'image' | 'video';
+
+const KindSwitch = ({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: Kind | null;
+  onChange: (k: Kind) => void;
+  disabled?: boolean;
+}) => (
+  <div
+    className="inline-flex shrink-0 rounded-lg border border-edge bg-surface-alt p-0.5"
+    role="radiogroup"
+    aria-label="Bu kateqoriyada nə paylaşacaqsınız?"
+  >
+    {(
+      [
+        { value: 'image', label: 'Şəkillər' },
+        { value: 'video', label: 'Videolar' },
+      ] as const
+    ).map((o) => {
+      const active = value === o.value;
+      return (
+        <button
+          key={o.value}
+          type="button"
+          role="radio"
+          aria-checked={active}
+          disabled={disabled}
+          onClick={() => onChange(o.value)}
+          className={`rounded-md px-3 py-1 text-xs font-medium transition-colors duration-200 disabled:opacity-60 ${
+            active ? 'bg-surface text-heading shadow-sm' : 'text-muted hover:text-body'
+          }`}
+        >
+          {o.label}
+        </button>
+      );
+    })}
+  </div>
 );
 
 /** File categories (types), kept behind the "Kateqoriyalar" button so they are not changed by accident. */
@@ -42,11 +72,11 @@ const CategoryManagerModal = ({ isOpen, onClose, categories, onChanged }: Catego
   // Shown inside the window: the admin has no visible toast area.
   const [error, setError] = useState('');
   const [newName, setNewName] = useState('');
-  const [newIsVideo, setNewIsVideo] = useState(false);
+  const [newKind, setNewKind] = useState<Kind | null>(null);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState('');
   const [editName, setEditName] = useState('');
-  const [editIsVideo, setEditIsVideo] = useState(false);
+  const [editKind, setEditKind] = useState<Kind>('image');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<ManagedCategory | null>(null);
 
@@ -54,17 +84,17 @@ const CategoryManagerModal = ({ isOpen, onClose, categories, onChanged }: Catego
     setError('');
     setEditingId(c.id);
     setEditName(c.name);
-    setEditIsVideo(c.isVideo);
+    setEditKind(c.isVideo ? 'video' : 'image');
   };
 
   const add = async () => {
-    if (!newName.trim()) return;
+    if (!newName.trim() || !newKind) return;
     setAdding(true);
     setError('');
     try {
-      await api.post('/deliverable-categories', { name: newName.trim(), isVideo: newIsVideo });
+      await api.post('/deliverable-categories', { name: newName.trim(), isVideo: newKind === 'video' });
       setNewName('');
-      setNewIsVideo(false);
+      setNewKind(null);
       await onChanged();
     } catch (err) {
       setError(requestErrorMessage(err, 'Kateqoriya əlavə edilə bilmədi.'));
@@ -78,7 +108,7 @@ const CategoryManagerModal = ({ isOpen, onClose, categories, onChanged }: Catego
     setSaving(true);
     setError('');
     try {
-      await api.patch(`/deliverable-categories/${c.id}`, { name: editName.trim(), isVideo: editIsVideo });
+      await api.patch(`/deliverable-categories/${c.id}`, { name: editName.trim(), isVideo: editKind === 'video' });
       setEditingId('');
       await onChanged();
     } catch (err) {
@@ -136,7 +166,7 @@ const CategoryManagerModal = ({ isOpen, onClose, categories, onChanged }: Catego
                             autoFocus
                           />
                         </div>
-                        <VideoCheckbox id={`edit-video-${c.id}`} checked={editIsVideo} onChange={setEditIsVideo} />
+                        <KindSwitch value={editKind} onChange={setEditKind} />
                         <Button size="sm" onClick={() => save(c)} isLoading={saving}>
                           Yadda saxla
                         </Button>
@@ -182,22 +212,33 @@ const CategoryManagerModal = ({ isOpen, onClose, categories, onChanged }: Catego
             </ul>
           )}
 
-          <div className="flex flex-col gap-3 border-t border-edge pt-4 sm:flex-row sm:items-center">
-            <div className="min-w-0 flex-1">
-              <Input
-                placeholder="Yeni kateqoriya adı..."
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && add()}
-                maxLength={50}
-                aria-label="Yeni kateqoriyanın adı"
-              />
+          <div className="space-y-3 border-t border-edge pt-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <Input
+                  placeholder="Yeni kateqoriya adı..."
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && add()}
+                  maxLength={50}
+                  aria-label="Yeni kateqoriyanın adı"
+                />
+              </div>
+              {/* title on the wrapper: a disabled button shows no tooltip */}
+              <span
+                className="inline-flex shrink-0"
+                title={newName.trim() && !newKind ? 'Əvvəl şəkillər, yoxsa videolar olduğunu seçin' : undefined}
+              >
+                <Button onClick={add} isLoading={adding} disabled={!newName.trim() || !newKind} className="w-full sm:w-auto">
+                  <Plus className="h-4 w-4" />
+                  Əlavə et
+                </Button>
+              </span>
             </div>
-            <VideoCheckbox id="new-category-video" checked={newIsVideo} onChange={setNewIsVideo} />
-            <Button onClick={add} isLoading={adding} disabled={!newName.trim()} className="shrink-0">
-              <Plus className="h-4 w-4" />
-              Əlavə et
-            </Button>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="text-sm text-body">Bu kateqoriyada nə paylaşacaqsınız?</span>
+              <KindSwitch value={newKind} onChange={setNewKind} disabled={adding} />
+            </div>
           </div>
           {error && (
             <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500">
@@ -205,10 +246,7 @@ const CategoryManagerModal = ({ isOpen, onClose, categories, onChanged }: Catego
             </p>
           )}
           <div className="space-y-0.5 text-xs text-muted">
-            <p>
-              <span className="font-medium text-body">Video</span> paylaşacaqsınızsa və kover şəkli əlavə etmək
-              istəyirsinizsə, <span className="font-medium text-body">"Video"</span> qutusunu işarələyin.
-            </p>
+            <p>Videolar seçilən kateqoriyada kover şəkli əlavə etmək olur.</p>
             <p>Faylı olan kateqoriya silinmir.</p>
           </div>
         </div>
