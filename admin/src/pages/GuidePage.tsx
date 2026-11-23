@@ -455,10 +455,23 @@ export const GuidePage = () => {
 
           <h3 className="pt-2 text-base font-semibold text-heading">Növ (kateqoriya) idarəsi</h3>
           <p>
-            Portfolio bölməsindəki kimi çip siyahısı, əlavə olaraq yeni növ yaradarkən{' '}
-            <B>"Video kateqoriyasıdır?"</B> qutusu var. Bu seçim yalnız <B>yaradılış anında</B> təyin olunur —
-            sonradan adı dəyişdirmək mümkündür, amma video/foto tipini dəyişmək mümkün deyil.
+            Növlər (məs. Post, Video) <B>"Fayl Əlavə Et"</B>in yanındakı <B>"Kateqoriyalar"</B> düyməsi ilə açılan
+            pəncərədə idarə olunur (yalnız admin görür). Hər sətirdə növün adı, neçə faylda işləndiyi, qələm
+            (redaktə) və zibil qutusu (silmək) var.
           </p>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>
+              <B>Yeni növ:</B> aşağıdakı sahəyə ad yazın, video növüdürsə <B>"Video"</B> qutusunu işarələyin,
+              "Əlavə et" basın.
+            </li>
+            <li>
+              <B>Redaktə:</B> qələm ilə adı və "Video" qutusunu istənilən vaxt dəyişmək olar.
+            </li>
+            <li>
+              <B>Silmək:</B> yalnız heç bir faylda işlənməyən növ silinir. Faylı olan növün zibil qutusu
+              söndürülüb — əvvəl həmin faylların növünü başqasına dəyişin.
+            </li>
+          </ul>
 
           <h3 className="pt-2 text-base font-semibold text-heading">Fayllar cədvəli</h3>
           <p>
@@ -560,7 +573,7 @@ export const GuidePage = () => {
               ['Fayllar', 'Birdən çox fayl seçilə bilər.'],
               [
                 'Kover şəkli',
-                'Yalnız video kateqoriyası seçildikdə görünür. Yükləməsəniz, sistem videodan avtomatik kadr çəkib kover kimi istifadə edir.',
+                'Video növü seçiləndə və ya seçilən fayl video olanda görünür. Yükləməsəniz, sistem videodan avtomatik kadr çəkib kover kimi istifadə edir.',
               ],
             ]}
           />
