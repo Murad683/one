@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { MAX_PARALLEL_UPLOADS, useDeliverableUpload } from '../context/deliverableUpload';
-import { Archive, Download, Edit2, FileX, Image, Link2, Loader2, MessageCircle, Play, Plus, Search, Trash2, Video, X } from 'lucide-react';
+import { Archive, Download, Edit2, FileX, Image, Link2, Loader2, MessageCircle, Play, Plus, Search, Tags, Trash2, Video, X } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuthStore } from '../store/authStore';
 import Badge from '../components/ui/Badge';
@@ -21,6 +21,7 @@ import { api } from '../lib/api';
 import { requestErrorMessage } from '../lib/apiHelpers';
 import type { ApiEnvelope, Paginated } from '../lib/apiHelpers';
 import { HighlightsManager } from '../components/deliverables/HighlightsManager';
+import CategoryManagerModal from '../components/deliverables/CategoryManagerModal';
 import { ColumnFilter, SortHeader } from '../components/deliverables/ColumnHeader';
 import {
   AddedFilterPanel,
@@ -83,6 +84,8 @@ interface DeliverableCategory extends Record<string, unknown> {
   id: string;
   name: string;
   isVideo: boolean;
+  /** Files using it (API); a category with files cannot be deleted. */
+  fileCount?: number;
 }
 
 interface Deliverable extends Record<string, unknown> {
@@ -467,11 +470,8 @@ export const DeliverablesPage = () => {
   const requestId = useRef(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [newCategory, setNewCategory] = useState('');
-  const [isNewCategoryVideo, setIsNewCategoryVideo] = useState(false);
-  const [renamingId, setRenamingId] = useState('');
-  const [renameValue, setRenameValue] = useState('');
-  const [deleteCategory, setDeleteCategory] = useState<DeliverableCategory | null>(null);
+  // File categories live behind the "Kateqoriyalar" button (they were deleted by accident from the open chip row).
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editing, setEditing] = useState<Deliverable | null>(null);
   const [deleting, setDeleting] = useState<Deliverable | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -514,6 +514,12 @@ export const DeliverablesPage = () => {
     const cat = categories.find(c => c.id === watchedCategoryId);
     return cat?.isVideo ?? false;
   }, [watchedCategoryId, categories]);
+  // The cover field: a video category, or a video among the chosen / current files (so a wrong
+  // category never hides it).
+  const showCoverField =
+    isSelectedCategoryVideo ||
+    selectedFiles.some((f) => isVideoFile(f.type, f.name)) ||
+    (editing?.files ?? []).some((f) => isVideoFile(f.type, f.name));
 
   const thumbnailPreview = useMemo(() => {
     if (!selectedThumbnail) return null;
@@ -703,7 +709,7 @@ export const DeliverablesPage = () => {
     // The record is created before the upload starts, so refuse here (not after
     // the POST) when all upload slots are taken — otherwise a file-less
     // "Gözləmədə" record would be left behind.
-    if ((selectedFiles.length > 0 || selectedThumbnail) && !upload.canStart) {
+    if ((selectedFiles.length > 0 || (showCoverField && selectedThumbnail)) && !upload.canStart) {
       setModalError(
         `Eyni anda ən çox ${MAX_PARALLEL_UPLOADS} yükləmə ola bilər. Əvvəlkilərdən biri bitəndən sonra yenidən yadda saxlayın.`,
       );
@@ -729,7 +735,8 @@ export const DeliverablesPage = () => {
 
       const deliverableId = editing?.id || response.data.data.id;
       const filesToUpload = [...selectedFiles];
-      const thumbToUpload = selectedThumbnail;
+      // A cover picked earlier is dropped when the field is hidden now (e.g. the video was swapped for an image).
+      const thumbToUpload = showCoverField ? selectedThumbnail : null;
 
       if (filesToUpload.length === 0 && !thumbToUpload) {
         setIsModalOpen(false);
@@ -753,25 +760,6 @@ export const DeliverablesPage = () => {
       setModalError(requestErrorMessage(err, 'Fayl yadda saxlanıla bilmədi.'));
       setIsSaving(false);
     }
-  };
-
-  const addCategory = async () => {
-    if (!newCategory.trim()) return;
-    await api.post('/deliverable-categories', {
-      name: newCategory.trim(),
-      isVideo: isNewCategoryVideo
-    });
-    setNewCategory('');
-    setIsNewCategoryVideo(false);
-    await fetchCategories();
-  };
-
-  const saveRename = async (category: DeliverableCategory) => {
-    if (!renameValue.trim()) return;
-    await api.patch(`/deliverable-categories/${category.id}`, { name: renameValue.trim() });
-    setRenamingId('');
-    setRenameValue('');
-    await fetchCategories();
   };
 
   // The client list (fetchClients) carries the freshest link state, including the last view;
@@ -1068,76 +1056,24 @@ export const DeliverablesPage = () => {
               </button>
             </div>
           )}
-          {!isCreator && (
-          <section className="space-y-4 pt-2">
-            <div>
-              <h2 className="text-xl font-semibold text-heading">Fayl Kateqoriyaları (Növlər)</h2>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {Array.isArray(categories) && categories.map((category) => (
-                <div key={category.id} className="inline-flex items-center gap-2 rounded-full bg-surface px-3 py-2 text-sm shadow-sm ring-1 ring-edge">
-                  {renamingId === category.id ? (
-                    <>
-                      <input
-                        value={renameValue}
-                        onChange={(event) => setRenameValue(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter') saveRename(category);
-                          if (event.key === 'Escape') setRenamingId('');
-                        }}
-                        className="w-32 rounded border border-field-border bg-field px-2 py-1 text-sm text-heading outline-none"
-                        autoFocus
-                      />
-                      <Button size="sm" onClick={() => saveRename(category)}>Yadda Saxla</Button>
-                    </>
-                  ) : (
-                    <>
-                      <span>{category.name} {category.isVideo && <span className="text-[10px] text-blue-500 font-bold">(VIDEO)</span>}</span>
-                      <button type="button" onClick={() => { setRenamingId(category.id); setRenameValue(category.name); }}>
-                        <Edit2 className="h-3.5 w-3.5 text-muted" />
-                      </button>
-                      <button type="button" onClick={() => setDeleteCategory(category)}>
-                        <X className="h-3.5 w-3.5 text-muted" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-col sm:flex-row max-w-2xl gap-3 w-full bg-surface-alt p-4 rounded-xl border border-edge">
-              <Input
-                placeholder="Yeni növ adı (məs: Drone Çəkiliş)..."
-                value={newCategory}
-                onChange={(event) => setNewCategory(event.target.value)}
-                className="flex-1"
-              />
-              <div className="flex items-center gap-2 px-2">
-                <input
-                  type="checkbox"
-                  id="isVideo"
-                  checked={isNewCategoryVideo}
-                  onChange={(e) => setIsNewCategoryVideo(e.target.checked)}
-                  className="h-4 w-4 rounded border-field-border text-blue-600 focus:ring-blue-600"
-                />
-                <label htmlFor="isVideo" className="text-sm font-medium text-body">Video kateqoriyasıdır?</label>
-              </div>
-              <Button onClick={addCategory} className="shrink-0">
-                <Plus className="h-4 w-4" />
-                Əlavə Et
-              </Button>
-            </div>
-          </section>
-          )}
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4">
             <div>
               <h1 className="text-2xl font-semibold text-heading">Layihə Faylları</h1>
               <p className="mt-1 text-sm text-muted">Müştərilərə göndərilən faylları idarə edin.</p>
             </div>
-            <Button onClick={() => openModal()} className="w-full sm:w-auto">
-              <Plus className="h-4 w-4" />
-              Fayl Əlavə Et
-            </Button>
+            <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row">
+              {!isCreator && (
+                <Button variant="secondary" onClick={() => setIsCategoryModalOpen(true)} className="w-full sm:w-auto">
+                  <Tags className="h-4 w-4" />
+                  Kateqoriyalar
+                </Button>
+              )}
+              <Button onClick={() => openModal()} className="w-full sm:w-auto">
+                <Plus className="h-4 w-4" />
+                Fayl Əlavə Et
+              </Button>
+            </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -1330,7 +1266,7 @@ export const DeliverablesPage = () => {
                 {...register('date', { required: 'Tarix mütləqdir' })}
               />
               {/* Thumbnail Upload - only for video categories */}
-              {isSelectedCategoryVideo && (
+              {showCoverField && (
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-body">
                     {editing?.thumbnailUrl ? 'Hazırkı kover' : 'Kover şəkli (isteğe bağlı)'}
@@ -1395,18 +1331,14 @@ export const DeliverablesPage = () => {
             </form>
           </Modal>
 
-          <ConfirmDialog
-            isOpen={Boolean(deleteCategory)}
-            onClose={() => setDeleteCategory(null)}
-            onConfirm={async () => {
-              if (!deleteCategory) return;
-              await api.delete(`/deliverable-categories/${deleteCategory.id}`);
-              setDeleteCategory(null);
+          <CategoryManagerModal
+            isOpen={isCategoryModalOpen}
+            onClose={() => setIsCategoryModalOpen(false)}
+            categories={categories}
+            onChanged={async () => {
               await fetchCategories();
-              await fetchDeliverables();
+              await fetchDeliverables(true);
             }}
-            title="Kateqoriyanı sil"
-            message="Bu kateqoriyaya aid bütün fayllar kateqoriyasız qalacaq."
           />
 
           {/* ── Delete Confirm ── */}

@@ -50,6 +50,11 @@ const DOWNLOAD_ALL: FaqEntry = {
   a: 'Layihə Faylları səhifəsində başlığa klikləyin, tam ekran önizləmə açılır. **Yüklə** düyməsinə basın:\n- Bir fayl varsa, birbaşa endirilir.\n- Birdən çox fayl varsa menyu açılır: **Bu faylı yüklə** (baxdığınız fayl) və **Hamısını yüklə (ZIP)** (hamısı bir arxivdə).\nZIP limiti: ən çox 30 fayl və 200 MB; aşarsa faylları ayrı-ayrılıqda yükləyin.\nHər şəkil öz orijinalında endirilir. Qeyd: köhnə çox şəkilli postlarda yalnız ilk şəklin orijinalı var, qalanları kiçildilmiş nüsxə kimi endirilir.\nMüştəri də eyni menyunu öz portalında görür.',
 };
 
+const CATEGORIES: FaqEntry = {
+  q: 'Fayl növünü (kateqoriyanı) necə əlavə edim, dəyişim və ya silim?',
+  a: 'Layihə Faylları səhifəsində **Fayl Əlavə Et**in yanındakı **Kateqoriyalar** düyməsinə basın:\n- **Yeni növ:** ad yazın, video növüdürsə **Video** qutusunu işarələyin, **Əlavə et**.\n- **Dəyişmək:** qələm ilə adı və **Video** qutusunu istənilən vaxt dəyişin.\n- **Silmək:** yalnız faylı olmayan növ silinir. Faylı olan növü silmək üçün əvvəl həmin faylların növünü dəyişin.\nKover şəkli sahəsi video növündə və ya video fayl seçiləndə görünür.',
+};
+
 const SHARE_LINK: FaqEntry = {
   q: 'Müştərinin paylaşım linkini necə idarə edim?',
   a: 'Müştərinin sətrindəki **zəncir** ikonuna basın:\n- Link yaradanda **Müddətsiz** (defolt) və ya **30 gün** seçin.\n- Mövcud linkdə müddəti dəyişmək ünvanı dəyişmir, vaxtı keçmiş link də belə yenidən açılır. Müştəriyə yeni link göndərmək lazım deyil.\n- Altında status və **Son baxış** (müştəri linki sonuncu dəfə nə vaxt açıb) görünür.\n- **Ləğv et** linki dərhal bağlayır, sonra yeni ünvanla yenisini yaratmaq olar.\nLinklə müştəri portaldakı kimi işləyir: baxır, rəy yazır, fayl və ZIP endirir, **Message** ilə mesaj göndərir (Sorğularda **Linkdən** nişanı ilə). Ödənişlər linkdə görünmür.',
@@ -114,6 +119,7 @@ export const STAFF_FAQ: FaqEntry[] = [
   REPLACE_BLOCKED,
   VIDEO_RETENTION,
   NOTICE_MAIL,
+  CATEGORIES,
   SHARE_LINK,
   DOWNLOAD_ALL,
   HIGHLIGHT_ADD,
