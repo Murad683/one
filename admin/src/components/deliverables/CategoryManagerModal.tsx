@@ -24,7 +24,7 @@ interface CategoryManagerModalProps {
   onChanged: () => Promise<void> | void;
 }
 
-/** What the category holds. A new category starts with no choice, so it cannot be saved without one. */
+/** What the category holds. A new category asks in a pop-up; editing uses this switch. */
 type Kind = 'image' | 'video';
 
 const KindSwitch = ({
@@ -32,7 +32,7 @@ const KindSwitch = ({
   onChange,
   disabled,
 }: {
-  value: Kind | null;
+  value: Kind;
   onChange: (k: Kind) => void;
   disabled?: boolean;
 }) => (
@@ -72,7 +72,8 @@ const CategoryManagerModal = ({ isOpen, onClose, categories, onChanged }: Catego
   // Shown inside the window: the admin has no visible toast area.
   const [error, setError] = useState('');
   const [newName, setNewName] = useState('');
-  const [newKind, setNewKind] = useState<Kind | null>(null);
+  // "Əlavə et" asks whether the new category holds images or videos before creating it.
+  const [askKind, setAskKind] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState('');
   const [editName, setEditName] = useState('');
@@ -87,14 +88,19 @@ const CategoryManagerModal = ({ isOpen, onClose, categories, onChanged }: Catego
     setEditKind(c.isVideo ? 'video' : 'image');
   };
 
-  const add = async () => {
-    if (!newName.trim() || !newKind) return;
+  const add = () => {
+    if (!newName.trim()) return;
+    setError('');
+    setAskKind(true);
+  };
+
+  const create = async (kind: Kind) => {
+    setAskKind(false);
     setAdding(true);
     setError('');
     try {
-      await api.post('/deliverable-categories', { name: newName.trim(), isVideo: newKind === 'video' });
+      await api.post('/deliverable-categories', { name: newName.trim(), isVideo: kind === 'video' });
       setNewName('');
-      setNewKind(null);
       await onChanged();
     } catch (err) {
       setError(requestErrorMessage(err, 'Kateqoriya əlavə edilə bilmədi.'));
@@ -136,6 +142,7 @@ const CategoryManagerModal = ({ isOpen, onClose, categories, onChanged }: Catego
       <Modal
         isOpen={isOpen}
         onClose={() => {
+          if (askKind) return;
           setError('');
           setEditingId('');
           onClose();
@@ -212,43 +219,55 @@ const CategoryManagerModal = ({ isOpen, onClose, categories, onChanged }: Catego
             </ul>
           )}
 
-          <div className="space-y-3 border-t border-edge pt-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="min-w-0 flex-1">
-                <Input
-                  placeholder="Yeni kateqoriya adı..."
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && add()}
-                  maxLength={50}
-                  aria-label="Yeni kateqoriyanın adı"
-                />
-              </div>
-              {/* title on the wrapper: a disabled button shows no tooltip */}
-              <span
-                className="inline-flex shrink-0"
-                title={newName.trim() && !newKind ? 'Əvvəl şəkillər, yoxsa videolar olduğunu seçin' : undefined}
-              >
-                <Button onClick={add} isLoading={adding} disabled={!newName.trim() || !newKind} className="w-full sm:w-auto">
-                  <Plus className="h-4 w-4" />
-                  Əlavə et
-                </Button>
-              </span>
+          <div className="flex flex-col gap-3 border-t border-edge pt-4 sm:flex-row sm:items-center">
+            <div className="min-w-0 flex-1">
+              <Input
+                placeholder="Yeni kateqoriya adı..."
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && add()}
+                maxLength={50}
+                aria-label="Yeni kateqoriyanın adı"
+              />
             </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <span className="text-sm text-body">Bu kateqoriyada nə paylaşacaqsınız?</span>
-              <KindSwitch value={newKind} onChange={setNewKind} disabled={adding} />
-            </div>
+            <Button onClick={add} isLoading={adding} disabled={!newName.trim()} className="shrink-0">
+              <Plus className="h-4 w-4" />
+              Əlavə et
+            </Button>
           </div>
           {error && (
             <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500">
               {error}
             </p>
           )}
-          <div className="space-y-0.5 text-xs text-muted">
-            <p>Videolar seçilən kateqoriyada kover şəkli əlavə etmək olur.</p>
-            <p>Faylı olan kateqoriya silinmir.</p>
+          <p className="text-xs text-muted">Faylı olan kateqoriya silinmir.</p>
+        </div>
+      </Modal>
+
+      <Modal isOpen={askKind} onClose={() => setAskKind(false)} title="Bu kateqoriyada nə paylaşacaqsınız?" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-muted">
+            <span className="font-medium text-heading">"{newName.trim()}"</span> kateqoriyası üçün birini seçin:
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                { kind: 'image', label: 'Şəkillər', note: 'Şəkil və dizayn faylları' },
+                { kind: 'video', label: 'Videolar', note: 'Kover şəkli əlavə etmək olur' },
+              ] as const
+            ).map((o) => (
+              <button
+                key={o.kind}
+                type="button"
+                onClick={() => create(o.kind)}
+                className="rounded-xl border border-edge bg-surface-alt px-4 py-3 text-left transition-colors hover:border-blue-500 hover:bg-surface-hover focus:outline-none focus:ring-2 focus:ring-blue-600"
+              >
+                <span className="block text-sm font-semibold text-heading">{o.label}</span>
+                <span className="mt-0.5 block text-xs text-muted">{o.note}</span>
+              </button>
+            ))}
           </div>
+          <p className="text-xs text-muted">Seçməsəniz kateqoriya yaranmır.</p>
         </div>
       </Modal>
 

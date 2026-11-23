@@ -461,9 +461,9 @@ export const GuidePage = () => {
           </p>
           <ul className="list-disc space-y-1 pl-5">
             <li>
-              <B>Yeni növ:</B> aşağıdakı sahəyə ad yazın və <B>"Bu kateqoriyada nə paylaşacaqsınız?"</B> sualına{' '}
-              <B>Şəkillər</B> və ya <B>Videolar</B> cavabını seçin (seçməyincə "Əlavə et" işləmir), sonra "Əlavə et"
-              basın. Videolar seçilən növdə kover şəkli əlavə etmək olur.
+              <B>Yeni növ:</B> aşağıdakı sahəyə ad yazıb <B>"Əlavə et"</B> basın. Çıxan pəncərədə{' '}
+              <B>"Bu kateqoriyada nə paylaşacaqsınız?"</B> sualına <B>Şəkillər</B> və ya <B>Videolar</B> seçin, seçən
+              kimi növ yaranır (pəncərəni bağlasanız yaranmır). Videolar seçilən növdə kover şəkli əlavə etmək olur.
             </li>
             <li>
               <B>Redaktə:</B> qələm ilə adı və Şəkillər/Videolar seçimini istənilən vaxt dəyişmək olar.
