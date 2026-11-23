@@ -204,9 +204,13 @@ const CategoryManagerModal = ({ isOpen, onClose, categories, onChanged }: Catego
               {error}
             </p>
           )}
-          <p className="text-xs text-muted">
-            "Video" işarəli kateqoriyada faylı yükləyəndə kover şəkli sahəsi görünür. Faylı olan kateqoriya silinmir.
-          </p>
+          <div className="space-y-0.5 text-xs text-muted">
+            <p>
+              <span className="font-medium text-body">Video</span> paylaşacaqsınızsa və kover şəkli əlavə etmək
+              istəyirsinizsə, <span className="font-medium text-body">"Video"</span> qutusunu işarələyin.
+            </p>
+            <p>Faylı olan kateqoriya silinmir.</p>
+          </div>
         </div>
       </Modal>
 
